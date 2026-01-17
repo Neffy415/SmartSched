@@ -251,13 +251,13 @@ router.post('/analyze/:id', async (req, res) => {
         `, [
             req.session.user.id,
             file.subject_id,
-            `Analyzed file: ${file.original_filename}`,
+            `Analyzed file: ${file.original_name}`,
             JSON.stringify(analysis)
         ]);
 
-        // Update file status to analyzed
+        // Update file - mark as processed with extracted text containing analysis
         await pool.query(`
-            UPDATE user_files SET status = 'analyzed', ai_analysis = $1
+            UPDATE user_files SET is_processed = true, extracted_text = $1
             WHERE id = $2
         `, [JSON.stringify(analysis), req.params.id]);
 
@@ -355,15 +355,15 @@ router.post('/summarize/:id', async (req, res) => {
         `, [
             req.session.user.id,
             file.subject_id,
-            `Summarized: ${file.original_filename}`,
+            `Summarized: ${file.original_name}`,
             JSON.stringify(summary)
         ]);
 
-        // Save summary to file record
+        // Save summary to extracted_text (we'll store both analysis and summary there)
         await pool.query(`
-            UPDATE user_files SET ai_summary = $1
+            UPDATE user_files SET is_processed = true
             WHERE id = $2
-        `, [JSON.stringify(summary), req.params.id]);
+        `, [req.params.id]);
 
         res.json({
             success: true,
@@ -398,16 +398,16 @@ router.post('/create-topics/:id', async (req, res) => {
             return res.status(400).json({ error: 'File must be linked to a subject first' });
         }
 
-        if (!file.ai_analysis) {
+        if (!file.extracted_text) {
             return res.status(400).json({ error: 'Please analyze the file first' });
         }
 
-        // Parse the AI analysis
+        // Parse the AI analysis from extracted_text
         let analysis;
         try {
-            analysis = typeof file.ai_analysis === 'string' 
-                ? JSON.parse(file.ai_analysis) 
-                : file.ai_analysis;
+            analysis = typeof file.extracted_text === 'string' 
+                ? JSON.parse(file.extracted_text) 
+                : file.extracted_text;
         } catch (e) {
             return res.status(400).json({ error: 'Invalid analysis data' });
         }
@@ -498,10 +498,10 @@ router.get('/:id', async (req, res) => {
               AND interaction_type IN ('analysis', 'summary')
               AND prompt LIKE $2
             ORDER BY created_at DESC
-        `, [req.session.user.id, `%${fileResult.rows[0].original_filename}%`]);
+        `, [req.session.user.id, `%${fileResult.rows[0].original_name}%`]);
 
         res.render('materials/view', {
-            title: `${fileResult.rows[0].original_filename} - SmartSched`,
+            title: `${fileResult.rows[0].original_name} - SmartSched`,
             page: 'materials',
             material: fileResult.rows[0],
             linkedTopics: topicsResult.rows,
