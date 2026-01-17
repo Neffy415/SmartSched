@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SmartSched</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar', { page: 'notes' }) %>
+        
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            
+            <div class="content-area">
+                <div class="notes-container">
+                    <!-- Header Section -->
+                    <div class="notes-header">
+                        <div class="header-content">
+                            <h1><i data-lucide="notebook-pen"></i> My Notes</h1>
+                            <p class="subtitle">All your AI-generated notes in one place</p>
+                        </div>
+                        <div class="header-stats">
+                            <div class="stat-badge">
+                                <span class="stat-number"><%= stats.total %></span>
+                                <span class="stat-label">Total Notes</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Section -->
+                    <div class="notes-filters card">
+                        <form id="filterForm" class="filter-form" method="GET" action="/notes">
+                            <div class="filter-group">
+                                <label for="subjectFilter">Subject</label>
+                                <select id="subjectFilter" name="subject">
+                                    <option value="all">All Subjects</option>
+                                    <% subjects.forEach(s => { %>
+                                        <option value="<%= s.id %>" <%= filters.subject === s.id ? 'selected' : '' %>>
+                                            <%= s.name %>
+                                        </option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="typeFilter">Type</label>
+                                <select id="typeFilter" name="type">
+                                    <option value="all" <%= !filters.type || filters.type === 'all' ? 'selected' : '' %>>All Types</option>
+                                    <option value="explanation" <%= filters.type === 'explanation' ? 'selected' : '' %>>Explanations</option>
+                                    <option value="notes" <%= filters.type === 'notes' ? 'selected' : '' %>>Notes</option>
+                                    <option value="questions" <%= filters.type === 'questions' ? 'selected' : '' %>>Questions</option>
+                                    <option value="summary" <%= filters.type === 'summary' ? 'selected' : '' %>>Summaries</option>
+                                    <option value="analysis" <%= filters.type === 'analysis' ? 'selected' : '' %>>Analysis</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group search-group">
+                                <label for="searchFilter">Search</label>
+                                <div class="search-input-wrapper">
+                                    <i data-lucide="search"></i>
+                                    <input type="text" id="searchFilter" name="search" 
+                                           placeholder="Search notes..." 
+                                           value="<%= filters.search || '' %>">
+                                </div>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="sortFilter">Sort By</label>
+                                <select id="sortFilter" name="sort">
+                                    <option value="newest" <%= !filters.sort || filters.sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+                                    <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+                                    <option value="title" <%= filters.sort === 'title' ? 'selected' : '' %>>Title A-Z</option>
+                                    <option value="subject" <%= filters.sort === 'subject' ? 'selected' : '' %>>By Subject</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary filter-btn">
+                                <i data-lucide="filter"></i> Apply
+                            </button>
+                            <a href="/notes" class="btn btn-outline clear-btn">
+                                <i data-lucide="x"></i> Clear
+                            </a>
+                        </form>
+                    </div>
+
+                    <!-- Type Badges -->
+                    <div class="type-badges">
+                        <span class="type-badge <%= !filters.type || filters.type === 'all' ? 'active' : '' %>" data-type="all">
+                            <i data-lucide="layers"></i> All (<%= stats.total %>)
+                        </span>
+                        <span class="type-badge <%= filters.type === 'explanation' ? 'active' : '' %>" data-type="explanation">
+                            <i data-lucide="lightbulb"></i> Explanations (<%= stats.explanation || 0 %>)
+                        </span>
+                        <span class="type-badge <%= filters.type === 'notes' ? 'active' : '' %>" data-type="notes">
+                            <i data-lucide="file-text"></i> Notes (<%= stats.notes || 0 %>)
+                        </span>
+                        <span class="type-badge <%= filters.type === 'questions' ? 'active' : '' %>" data-type="questions">
+                            <i data-lucide="help-circle"></i> Questions (<%= stats.questions || 0 %>)
+                        </span>
+                        <span class="type-badge <%= filters.type === 'summary' ? 'active' : '' %>" data-type="summary">
+                            <i data-lucide="file-scan"></i> Summaries (<%= stats.summary || 0 %>)
+                        </span>
+                    </div>
+
+                    <!-- Notes Grid -->
+                    <% if (notes.length === 0) { %>
+                        <div class="empty-state card">
+                            <i data-lucide="notebook"></i>
+                            <h3>No notes yet</h3>
+                            <p>Generate notes using the AI Assistant and save them here for easy access.</p>
+                            <a href="/ai/assistant" class="btn btn-primary">
+                                <i data-lucide="sparkles"></i> Go to AI Assistant
+                            </a>
+                        </div>
+                    <% } else { %>
+                        <div class="notes-grid">
+                            <% notes.forEach(note => { %>
+                                <div class="note-card card" data-id="<%= note.id %>">
+                                    <div class="note-header">
+                                        <div class="note-type-icon type-<%= note.note_type %>">
+                                            <% if (note.note_type === 'explanation') { %>
+                                                <i data-lucide="lightbulb"></i>
+                                            <% } else if (note.note_type === 'notes') { %>
+                                                <i data-lucide="file-text"></i>
+                                            <% } else if (note.note_type === 'questions') { %>
+                                                <i data-lucide="help-circle"></i>
+                                            <% } else if (note.note_type === 'summary') { %>
+                                                <i data-lucide="file-scan"></i>
+                                            <% } else { %>
+                                                <i data-lucide="scan"></i>
+                                            <% } %>
+                                        </div>
+                                        <button class="favorite-btn <%= note.is_favorite ? 'active' : '' %>" 
+                                                data-id="<%= note.id %>" title="Toggle favorite">
+                                            <i data-lucide="star"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <h3 class="note-title"><%= note.title %></h3>
+                                    
+                                    <% if (note.subject_name) { %>
+                                        <div class="note-subject" style="--subject-color: <%= note.subject_color || '#6366f1' %>">
+                                            <span class="subject-dot"></span>
+                                            <%= note.subject_name %>
+                                            <% if (note.topic_name) { %> › <%= note.topic_name %><% } %>
+                                        </div>
+                                    <% } %>
+                                    
+                                    <div class="note-preview">
+                                        <%= note.content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 150) %>...
+                                    </div>
+                                    
+                                    <div class="note-footer">
+                                        <span class="note-date">
+                                            <i data-lucide="calendar"></i>
+                                            <%= new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                        </span>
+                                        <div class="note-actions">
+                                            <a href="/notes/<%= note.id %>" class="btn btn-sm btn-outline">
+                                                <i data-lucide="eye"></i> View
+                                            </a>
+                                            <button class="btn btn-sm btn-danger delete-btn" data-id="<%= note.id %>">
+                                                <i data-lucide="trash-2"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        .notes-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .notes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .notes-header h1 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin: 0;
+        }
+        
+        .notes-header h1 svg {
+            color: var(--primary);
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            margin: var(--spacing-xs) 0 0;
+        }
+        
+        .header-stats {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+        
+        .stat-badge {
+            background: var(--primary);
+            color: white;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            text-align: center;
+        }
+        
+        .stat-number {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+        
+        /* Filters */
+        .notes-filters {
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .filter-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+            align-items: flex-end;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+        
+        .filter-group label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+        
+        .filter-group select,
+        .filter-group input {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            min-width: 150px;
+        }
+        
+        .search-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .search-input-wrapper {
+            position: relative;
+        }
+        
+        .search-input-wrapper svg {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--text-secondary);
+        }
+        
+        .search-input-wrapper input {
+            padding-left: 36px;
+            width: 100%;
+        }
+        
+        .filter-btn, .clear-btn {
+            height: 38px;
+        }
+        
+        /* Type Badges */
+        .type-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .type-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .type-badge:hover {
+            border-color: var(--primary);
+        }
+        
+        .type-badge.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .type-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        /* Notes Grid */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .note-card {
+            padding: var(--spacing-lg);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .note-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .note-type-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .note-type-icon.type-explanation {
+            background: rgba(251, 191, 36, 0.15);
+            color: #f59e0b;
+        }
+        
+        .note-type-icon.type-notes {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+        
+        .note-type-icon.type-questions {
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+        }
+        
+        .note-type-icon.type-summary,
+        .note-type-icon.type-analysis {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+        
+        .favorite-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--spacing-xs);
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+        
+        .favorite-btn:hover,
+        .favorite-btn.active {
+            color: #f59e0b;
+        }
+        
+        .favorite-btn.active svg {
+            fill: #f59e0b;
+        }
+        
+        .note-title {
+            font-size: 1.1rem;
+            margin: 0 0 var(--spacing-sm);
+            line-height: 1.4;
+        }
+        
+        .note-subject {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .subject-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--subject-color);
+        }
+        
+        .note-preview {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: var(--spacing-md);
+            min-height: 60px;
+        }
+        
+        .note-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border);
+        }
+        
+        .note-date {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .note-date svg {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .note-actions {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+        
+        .btn-sm {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            font-size: 0.75rem;
+        }
+        
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: none;
+        }
+        
+        .btn-danger:hover {
+            background: #ef4444;
+            color: white;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xxl);
+        }
+        
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .empty-state h3 {
+            margin: 0 0 var(--spacing-sm);
+        }
+        
+        .empty-state p {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .notes-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--spacing-md);
+            }
+            
+            .filter-form {
+                flex-direction: column;
+            }
+            
+            .filter-group {
+                width: 100%;
+            }
+            
+            .filter-group select,
+            .filter-group input {
+                width: 100%;
+            }
+            
+            .notes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            // Type badge click filtering
+            document.querySelectorAll('.type-badge').forEach(badge => {
+                badge.addEventListener('click', function() {
+                    const type = this.dataset.type;
+                    document.getElementById('typeFilter').value = type;
+                    document.getElementById('filterForm').submit();
+                });
+            });
+            
+            // Favorite toggle
+            document.querySelectorAll('.favorite-btn').forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const noteId = this.dataset.id;
+                    
+                    try {
+                        const response = await fetch('/notes/' + noteId + '/favorite', {
+                            method: 'POST'
+                        });
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            this.classList.toggle('active', data.is_favorite);
+                        }
+                    } catch (error) {
+                        console.error('Error toggling favorite:', error);
+                    }
+                });
+            });
+            
+            // Delete note
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const noteId = this.dataset.id;
+                    
+                    if (!confirm('Are you sure you want to delete this note?')) {
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch('/notes/' + noteId, {
+                            method: 'DELETE'
+                        });
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                            const card = this.closest('.note-card');
+                            card.style.opacity = '0';
+                            card.style.transform = 'scale(0.9)';
+                            setTimeout(() => card.remove(), 300);
+                        }
+                    } catch (error) {
+                        console.error('Error deleting note:', error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

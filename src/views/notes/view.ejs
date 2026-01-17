@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - SmartSched</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar', { page: 'notes' }) %>
+        
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            
+            <div class="content-area">
+                <div class="note-view-container">
+                    <div class="note-view-header">
+                        <a href="/notes" class="back-link">
+                            <i data-lucide="arrow-left"></i> Back to Notes
+                        </a>
+                        
+                        <div class="note-actions-header">
+                            <button class="btn btn-outline" id="editBtn">
+                                <i data-lucide="edit-3"></i> Edit
+                            </button>
+                            <button class="btn btn-outline" id="copyBtn">
+                                <i data-lucide="copy"></i> Copy
+                            </button>
+                            <button class="btn btn-outline" id="printBtn">
+                                <i data-lucide="printer"></i> Print
+                            </button>
+                            <button class="btn btn-danger" id="deleteBtn">
+                                <i data-lucide="trash-2"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="note-view-card card">
+                        <div class="note-meta">
+                            <div class="note-type-badge type-<%= note.note_type %>">
+                                <% if (note.note_type === 'explanation') { %>
+                                    <i data-lucide="lightbulb"></i> Explanation
+                                <% } else if (note.note_type === 'notes') { %>
+                                    <i data-lucide="file-text"></i> Notes
+                                <% } else if (note.note_type === 'questions') { %>
+                                    <i data-lucide="help-circle"></i> Questions
+                                <% } else if (note.note_type === 'summary') { %>
+                                    <i data-lucide="file-scan"></i> Summary
+                                <% } else { %>
+                                    <i data-lucide="scan"></i> Analysis
+                                <% } %>
+                            </div>
+                            
+                            <% if (note.subject_name) { %>
+                                <div class="note-subject-badge" style="--subject-color: <%= note.subject_color || '#6366f1' %>">
+                                    <span class="subject-dot"></span>
+                                    <%= note.subject_name %>
+                                    <% if (note.topic_name) { %> › <%= note.topic_name %><% } %>
+                                </div>
+                            <% } %>
+                            
+                            <div class="note-date-info">
+                                <i data-lucide="calendar"></i>
+                                Created: <%= new Date(note.created_at).toLocaleDateString('en-US', { 
+                                    weekday: 'long', 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                }) %>
+                            </div>
+                        </div>
+                        
+                        <h1 class="note-title" id="noteTitle"><%= note.title %></h1>
+                        
+                        <div class="note-content" id="noteContent">
+                            <%- note.content %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        .note-view-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .note-view-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        
+        .back-link:hover {
+            color: var(--primary);
+        }
+        
+        .back-link svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .note-actions-header {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        
+        .note-view-card {
+            padding: var(--spacing-xl);
+        }
+        
+        .note-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .note-type-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-md);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .note-type-badge svg {
+            width: 16px;
+            height: 16px;
+        }
+        
+        .note-type-badge.type-explanation {
+            background: rgba(251, 191, 36, 0.15);
+            color: #f59e0b;
+        }
+        
+        .note-type-badge.type-notes {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+        }
+        
+        .note-type-badge.type-questions {
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+        }
+        
+        .note-type-badge.type-summary,
+        .note-type-badge.type-analysis {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+        
+        .note-subject-badge {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-md);
+            background: var(--surface-hover);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+        }
+        
+        .subject-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--subject-color);
+        }
+        
+        .note-date-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-left: auto;
+        }
+        
+        .note-date-info svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .note-title {
+            font-size: 1.75rem;
+            margin: 0 0 var(--spacing-xl);
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+        
+        .note-content {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+        
+        /* Markdown-like content styling */
+        .note-content h1,
+        .note-content h2,
+        .note-content h3 {
+            margin: var(--spacing-lg) 0 var(--spacing-md);
+            color: var(--text-primary);
+        }
+        
+        .note-content h1 { font-size: 1.5rem; }
+        .note-content h2 { font-size: 1.25rem; }
+        .note-content h3 { font-size: 1.1rem; }
+        
+        .note-content p {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .note-content ul,
+        .note-content ol {
+            margin: var(--spacing-md) 0;
+            padding-left: var(--spacing-xl);
+        }
+        
+        .note-content li {
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .note-content strong {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .note-content code {
+            background: var(--surface-hover);
+            padding: 2px 6px;
+            border-radius: var(--radius-sm);
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .note-content pre {
+            background: var(--surface-hover);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+        }
+        
+        .note-content blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: var(--spacing-md);
+            margin: var(--spacing-md) 0;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+        
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-color: transparent;
+        }
+        
+        .btn-danger:hover {
+            background: #ef4444;
+            color: white;
+        }
+        
+        /* Edit mode styling */
+        .note-title.editing,
+        .note-content.editing {
+            border: 2px solid var(--primary);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            outline: none;
+        }
+        
+        @media (max-width: 768px) {
+            .note-view-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: var(--spacing-md);
+            }
+            
+            .note-actions-header {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+            
+            .note-meta {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .note-date-info {
+                margin-left: 0;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            const noteId = '<%= note.id %>';
+            const titleEl = document.getElementById('noteTitle');
+            const contentEl = document.getElementById('noteContent');
+            let isEditing = false;
+            
+            // Edit mode toggle
+            document.getElementById('editBtn').addEventListener('click', function() {
+                if (!isEditing) {
+                    titleEl.contentEditable = true;
+                    contentEl.contentEditable = true;
+                    titleEl.classList.add('editing');
+                    contentEl.classList.add('editing');
+                    this.innerHTML = '<i data-lucide="save"></i> Save';
+                    this.classList.remove('btn-outline');
+                    this.classList.add('btn-primary');
+                    isEditing = true;
+                    titleEl.focus();
+                } else {
+                    // Save changes
+                    saveNote();
+                }
+                lucide.createIcons();
+            });
+            
+            async function saveNote() {
+                try {
+                    const response = await fetch('/notes/' + noteId, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            title: titleEl.textContent,
+                            content: contentEl.innerHTML
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        titleEl.contentEditable = false;
+                        contentEl.contentEditable = false;
+                        titleEl.classList.remove('editing');
+                        contentEl.classList.remove('editing');
+                        document.getElementById('editBtn').innerHTML = '<i data-lucide="edit-3"></i> Edit';
+                        document.getElementById('editBtn').classList.remove('btn-primary');
+                        document.getElementById('editBtn').classList.add('btn-outline');
+                        isEditing = false;
+                        lucide.createIcons();
+                        
+                        // Show success toast
+                        showToast('Note saved successfully!', 'success');
+                    }
+                } catch (error) {
+                    console.error('Error saving:', error);
+                    showToast('Failed to save note', 'error');
+                }
+            }
+            
+            // Copy to clipboard
+            document.getElementById('copyBtn').addEventListener('click', function() {
+                const text = titleEl.textContent + '\n\n' + contentEl.innerText;
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Copied to clipboard!', 'success');
+                });
+            });
+            
+            // Print
+            document.getElementById('printBtn').addEventListener('click', function() {
+                window.print();
+            });
+            
+            // Delete
+            document.getElementById('deleteBtn').addEventListener('click', async function() {
+                if (!confirm('Are you sure you want to delete this note? This cannot be undone.')) {
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/notes/' + noteId, {
+                        method: 'DELETE'
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        window.location.href = '/notes';
+                    }
+                } catch (error) {
+                    console.error('Error deleting:', error);
+                    showToast('Failed to delete note', 'error');
+                }
+            });
+            
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = 'toast toast-' + type;
+                toast.textContent = message;
+                toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; padding: 12px 24px; border-radius: 8px; color: white; z-index: 9999; animation: slideIn 0.3s ease;';
+                toast.style.background = type === 'success' ? '#22c55e' : '#ef4444';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -66,11 +66,18 @@ router.get('/new', async (req, res) => {
             WHERE t.user_id = $1 AND t.status != 'completed'
             ORDER BY t.deadline ASC NULLS LAST
         `, [userId]);
+
+        // Pre-fill from query params (from AI Assistant)
+        const prefillData = {
+            title: req.query.title || '',
+            description: req.query.description || '',
+            reminder_type: req.query.type || 'custom'
+        };
         
         res.render('reminders/form', {
             title: 'New Reminder - SmartSched',
             page: 'reminders',
-            reminder: {},
+            reminder: prefillData,
             tasks: tasksResult.rows,
             editing: false
         });

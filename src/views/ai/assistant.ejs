@@ -236,7 +236,7 @@
                                 <% } else { %>
                                     <div class="recent-list">
                                         <% recentInteractions.forEach(item => { %>
-                                            <div class="recent-item" data-id="<%= item.id %>">
+                                            <div class="recent-item" data-id="<%= item.id %>" data-type="<%= item.interaction_type %>">
                                                 <div class="recent-icon">
                                                     <% if (item.interaction_type === 'explanation') { %>
                                                         <i data-lucide="lightbulb"></i>
@@ -244,12 +244,32 @@
                                                         <i data-lucide="file-text"></i>
                                                     <% } else if (item.interaction_type === 'questions') { %>
                                                         <i data-lucide="help-circle"></i>
+                                                    <% } else if (item.interaction_type === 'analysis' || item.interaction_type === 'summary') { %>
+                                                        <i data-lucide="scan"></i>
                                                     <% } else { %>
                                                         <i data-lucide="message-circle"></i>
                                                     <% } %>
                                                 </div>
                                                 <div class="recent-info">
-                                                    <span class="recent-title"><%= item.prompt?.substring(0, 30) %>...</span>
+                                                    <span class="recent-title">
+                                                        <% 
+                                                            let displayTitle = '';
+                                                            if (item.interaction_type === 'explanation') {
+                                                                displayTitle = 'Explain: ' + (item.prompt || 'Topic').substring(0, 25);
+                                                            } else if (item.interaction_type === 'notes') {
+                                                                displayTitle = 'Notes for: ' + (item.prompt || 'Topic').substring(0, 20);
+                                                            } else if (item.interaction_type === 'questions') {
+                                                                displayTitle = 'Questions for: ' + (item.prompt || 'Topic').substring(0, 18);
+                                                            } else if (item.interaction_type === 'analysis') {
+                                                                displayTitle = 'Analyzed: ' + (item.prompt || 'File').substring(0, 22);
+                                                            } else if (item.interaction_type === 'summary') {
+                                                                displayTitle = 'Summary: ' + (item.prompt || 'Content').substring(0, 22);
+                                                            } else {
+                                                                displayTitle = (item.prompt || 'Question').substring(0, 30);
+                                                            }
+                                                        %>
+                                                        <%= displayTitle %>...
+                                                    </span>
                                                     <span class="recent-time"><%= new Date(item.created_at).toLocaleDateString() %></span>
                                                 </div>
                                             </div>
@@ -269,6 +289,12 @@
                                     AI Response
                                 </h3>
                                 <div class="results-actions" style="display: none;">
+                                    <button class="btn btn-ghost btn-sm" id="saveNoteBtn" title="Save to My Notes">
+                                        <i data-lucide="save"></i>
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm" id="reminderBtn" title="Set Reminder to Review">
+                                        <i data-lucide="bell"></i>
+                                    </button>
                                     <button class="btn btn-ghost btn-sm" id="bookmarkBtn" title="Bookmark">
                                         <i data-lucide="bookmark"></i>
                                     </button>
@@ -755,22 +781,158 @@
         document.getElementById('copyBtn')?.addEventListener('click', function() {
             const text = resultsContainer.innerText;
             navigator.clipboard.writeText(text).then(() => {
-                alert('Copied to clipboard!');
+                // Show success feedback
+                this.innerHTML = '<i data-lucide="check"></i>';
+                lucide.createIcons();
+                setTimeout(() => {
+                    this.innerHTML = '<i data-lucide="copy"></i>';
+                    lucide.createIcons();
+                }, 2000);
             });
         });
 
-        // Recent item click
+        // Save note to My Notes
+        document.getElementById('saveNoteBtn')?.addEventListener('click', async function() {
+            const topicName = customTopic.value || (topicSelect.value ? topicSelect.options[topicSelect.selectedIndex].text : 'AI Study Session');
+            const subjectName = subjectSelect.value ? subjectSelect.options[subjectSelect.selectedIndex].text : '';
+            const subjectId = subjectSelect.value || null;
+            const topicId = topicSelect.value || null;
+            
+            // Get the current AI response content from resultsContainer
+            const contentDiv = document.getElementById('resultsContainer');
+            if (!contentDiv || !contentDiv.innerHTML.trim() || contentDiv.style.display === 'none') {
+                alert('No content to save. Generate AI content first.');
+                return;
+            }
+            
+            // Determine note type based on what was generated
+            let noteType = 'notes';
+            const lastClickedBtn = document.querySelector('.action-btn.active');
+            if (lastClickedBtn) {
+                if (lastClickedBtn.dataset.action === 'explain') noteType = 'explanation';
+                else if (lastClickedBtn.dataset.action === 'notes') noteType = 'notes';
+                else if (lastClickedBtn.dataset.action === 'questions') noteType = 'questions';
+            }
+            
+            // Build title
+            const noteTitle = `${noteType === 'explanation' ? 'Explanation' : noteType === 'questions' ? 'Questions' : 'Notes'}: ${topicName}`;
+            
+            try {
+                this.disabled = true;
+                this.innerHTML = '<i data-lucide="loader" class="spin"></i>';
+                lucide.createIcons();
+                
+                const response = await fetch('/notes/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title: noteTitle,
+                        content: contentDiv.innerHTML,
+                        note_type: noteType,
+                        subject_id: subjectId,
+                        topic_id: topicId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.innerHTML = '<i data-lucide="check"></i>';
+                    this.classList.add('btn-success');
+                    lucide.createIcons();
+                    
+                    // Show success toast
+                    const toast = document.createElement('div');
+                    toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; background: #22c55e; color: white; padding: 12px 24px; border-radius: 8px; z-index: 9999; display: flex; align-items: center; gap: 8px;';
+                    toast.innerHTML = '<i data-lucide="check-circle" style="width:18px;height:18px;"></i> Note saved! <a href="/notes/' + result.noteId + '" style="color: white; text-decoration: underline; margin-left: 8px;">View</a>';
+                    document.body.appendChild(toast);
+                    lucide.createIcons();
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i data-lucide="save"></i>';
+                        this.classList.remove('btn-success');
+                        this.disabled = false;
+                        lucide.createIcons();
+                        toast.remove();
+                    }, 3000);
+                } else {
+                    throw new Error(result.error || 'Failed to save');
+                }
+            } catch (error) {
+                console.error('Error saving note:', error);
+                alert('Failed to save note: ' + error.message);
+                this.innerHTML = '<i data-lucide="save"></i>';
+                this.disabled = false;
+                lucide.createIcons();
+            }
+        });
+
+        // Set reminder for this topic
+        document.getElementById('reminderBtn')?.addEventListener('click', function() {
+            const topicName = customTopic.value || (topicSelect.value ? topicSelect.options[topicSelect.selectedIndex].text : 'AI Study Session');
+            const subjectName = subjectSelect.value ? subjectSelect.options[subjectSelect.selectedIndex].text : '';
+            
+            // Create reminder with pre-filled data
+            const reminderTitle = `Review: ${topicName}`;
+            const reminderDesc = `AI-generated content review for ${subjectName ? subjectName + ' - ' : ''}${topicName}`;
+            
+            // Redirect to reminder form with pre-filled data
+            const params = new URLSearchParams({
+                title: reminderTitle,
+                description: reminderDesc,
+                type: 'review'
+            });
+            
+            window.location.href = `/reminders/new?${params.toString()}`;
+        });
+
+        // Recent item click - load past interaction
         document.querySelectorAll('.recent-item').forEach(item => {
             item.addEventListener('click', async function() {
                 const id = this.dataset.id;
+                if (!id) return;
+                
+                // Add loading state
+                this.classList.add('loading');
+                showLoading();
+                
                 try {
                     const response = await fetch(`/ai/interaction/${id}`);
                     const result = await response.json();
-                    if (result.success) {
-                        displayResults(result.data.interaction_type, JSON.parse(result.data.response));
+                    
+                    if (result.success && result.data) {
+                        // Parse the response if it's a string
+                        let responseData = result.data.response;
+                        if (typeof responseData === 'string') {
+                            try {
+                                responseData = JSON.parse(responseData);
+                            } catch (e) {
+                                responseData = { raw_response: responseData };
+                            }
+                        }
+                        
+                        // Display the results
+                        displayResults(result.data.interaction_type, responseData);
+                        
+                        // Update the title to show what we loaded
+                        const resultsTitle = document.getElementById('resultsTitle');
+                        if (resultsTitle) {
+                            const typeLabel = result.data.interaction_type === 'explanation' ? 'Explanation' :
+                                            result.data.interaction_type === 'notes' ? 'Notes' :
+                                            result.data.interaction_type === 'questions' ? 'Questions' : 'Response';
+                            resultsTitle.innerHTML = `<i data-lucide="history"></i> ${typeLabel} (from history)`;
+                            lucide.createIcons();
+                        }
+                    } else {
+                        showError(result.error || 'Failed to load interaction');
                     }
                 } catch (error) {
                     console.error('Error loading interaction:', error);
+                    showError('Failed to load interaction. Please try again.');
+                } finally {
+                    this.classList.remove('loading');
                 }
             });
         });
@@ -788,11 +950,48 @@
             display: grid;
             grid-template-columns: 380px 1fr;
             gap: var(--spacing-xl);
+            align-items: start;
+        }
+
+        .ai-controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            padding-right: var(--spacing-sm);
+        }
+
+        .ai-controls-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ai-controls-panel::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: 3px;
+        }
+
+        .ai-controls-panel::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 3px;
         }
 
         .ai-controls-panel .card {
-            position: sticky;
-            top: var(--spacing-lg);
+            flex-shrink: 0;
+        }
+
+        .ai-results-panel {
+            min-height: 500px;
+        }
+
+        .ai-results-panel .card {
+            height: 100%;
+            min-height: 500px;
+        }
+
+        .ai-results-panel .card-body {
+            max-height: calc(100vh - 350px);
+            overflow-y: auto;
         }
 
         .ai-actions {
@@ -870,6 +1069,23 @@
             display: flex;
             flex-direction: column;
             gap: var(--spacing-xs);
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: var(--spacing-xs);
+        }
+
+        .recent-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .recent-list::-webkit-scrollbar-track {
+            background: var(--gray-100);
+            border-radius: 2px;
+        }
+
+        .recent-list::-webkit-scrollbar-thumb {
+            background: var(--gray-300);
+            border-radius: 2px;
         }
 
         .recent-item {
@@ -879,11 +1095,18 @@
             padding: var(--spacing-sm);
             border-radius: var(--radius-md);
             cursor: pointer;
-            transition: background var(--transition-fast);
+            transition: all var(--transition-fast);
+            border: 1px solid transparent;
         }
 
         .recent-item:hover {
-            background: var(--gray-50);
+            background: var(--primary-50);
+            border-color: var(--primary-200);
+        }
+
+        .recent-item.loading {
+            opacity: 0.6;
+            pointer-events: none;
         }
 
         .recent-icon {
@@ -1231,9 +1454,61 @@
                 grid-template-columns: 1fr;
             }
             
-            .ai-controls-panel .card {
-                position: static;
+            .ai-controls-panel {
+                max-height: none;
+                overflow-y: visible;
             }
+
+            .ai-results-panel .card-body {
+                max-height: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .ai-action-btn {
+                padding: var(--spacing-sm);
+            }
+
+            .action-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .action-desc {
+                display: none;
+            }
+        }
+
+        /* Empty state small */
+        .empty-state-small {
+            text-align: center;
+            padding: var(--spacing-lg);
+            color: var(--gray-500);
+        }
+
+        .empty-state-small p {
+            margin: 0;
+            font-size: 0.875rem;
+        }
+        
+        /* Save button animations */
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-success {
+            background: #22c55e !important;
+            color: white !important;
+            border-color: #22c55e !important;
         }
     </style>
 </body>

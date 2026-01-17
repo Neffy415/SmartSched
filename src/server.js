@@ -52,6 +52,7 @@ app.use('/settings', require('./routes/settings'));
 app.use('/reminders', require('./routes/reminders'));
 app.use('/ai', require('./routes/ai'));
 app.use('/materials', require('./routes/materials'));
+app.use('/notes', require('./routes/notes'));
 
 // 404 handler
 app.use((req, res) => {

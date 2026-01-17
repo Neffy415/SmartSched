@@ -56,6 +56,10 @@
                 <span>AI Assistant</span>
                 <span class="nav-badge">New</span>
             </a>
+            <a href="/notes" class="nav-item <%= typeof page !== 'undefined' && page === 'notes' ? 'active' : '' %>">
+                <i data-lucide="notebook-pen"></i>
+                <span>My Notes</span>
+            </a>
             <a href="/materials" class="nav-item <%= typeof page !== 'undefined' && page === 'materials' ? 'active' : '' %>">
                 <i data-lucide="folder"></i>
                 <span>Materials</span>

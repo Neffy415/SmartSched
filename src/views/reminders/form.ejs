@@ -60,6 +60,7 @@
                                         <label for="reminder_type">Reminder Type</label>
                                         <select id="reminder_type" name="reminder_type">
                                             <option value="custom" <%= reminder.reminder_type === 'custom' ? 'selected' : '' %>>🔔 Custom</option>
+                                            <option value="review" <%= reminder.reminder_type === 'review' ? 'selected' : '' %>>📝 Review Session</option>
                                             <option value="task_deadline" <%= reminder.reminder_type === 'task_deadline' ? 'selected' : '' %>>🎯 Task Deadline</option>
                                             <option value="study_session" <%= reminder.reminder_type === 'study_session' ? 'selected' : '' %>>📖 Study Session</option>
                                             <option value="exam" <%= reminder.reminder_type === 'exam' ? 'selected' : '' %>>🎓 Exam</option>
