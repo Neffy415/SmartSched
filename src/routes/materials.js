@@ -359,10 +359,10 @@ router.post('/summarize/:id', async (req, res) => {
             JSON.stringify(summary)
         ]);
 
-        // Save summary to extracted_text (we'll store both analysis and summary there)
+        // Mark file as processed
         await pool.query(`
             UPDATE user_files SET is_processed = true
-            WHERE id = $2
+            WHERE id = $1
         `, [req.params.id]);
 
         res.json({
