@@ -11,7 +11,10 @@ const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'password',
     // SSL is REQUIRED for cloud databases (Render, Aiven, etc.)
-    ssl: isProduction ? { rejectUnauthorized: false } : false
+    ssl: isProduction ? {
+        rejectUnauthorized: false,  // Accept self-signed certificates
+        require: true                // Force SSL connection
+    } : false
 });
 
 // Test database connection
