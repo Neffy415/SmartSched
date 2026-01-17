@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <p><%= error_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>Subjects</h1>
+                        <p>Manage your academic subjects and track your progress</p>
+                    </div>
+                    <div class="page-header-actions">
+                        <a href="/subjects/new" class="btn btn-primary">
+                            <i data-lucide="plus"></i>
+                            Add Subject
+                        </a>
+                    </div>
+                </div>
+
+                <% if (subjects.length === 0) { %>
+                    <!-- Empty State -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i data-lucide="book-open"></i>
+                                </div>
+                                <h4>No subjects yet</h4>
+                                <p>Add your first subject to start organizing your study schedule</p>
+                                <a href="/subjects/new" class="btn btn-primary">
+                                    <i data-lucide="plus"></i>
+                                    Add Your First Subject
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <!-- Subjects Grid -->
+                    <div class="subjects-grid">
+                        <% subjects.forEach(subject => { %>
+                            <div class="subject-card" style="--subject-color: <%= subject.color %>">
+                                <div class="subject-card-header">
+                                    <div class="subject-color-bar"></div>
+                                    <div class="subject-info">
+                                        <h3><a href="/subjects/<%= subject.id %>"><%= subject.name %></a></h3>
+                                        <% if (subject.description) { %>
+                                            <p class="subject-description"><%= subject.description.substring(0, 100) %><%= subject.description.length > 100 ? '...' : '' %></p>
+                                        <% } %>
+                                    </div>
+                                    <div class="subject-menu">
+                                        <button class="icon-btn" onclick="toggleMenu(this)">
+                                            <i data-lucide="more-vertical"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a href="/subjects/<%= subject.id %>" class="dropdown-item">
+                                                <i data-lucide="eye"></i> View
+                                            </a>
+                                            <a href="/subjects/<%= subject.id %>/edit" class="dropdown-item">
+                                                <i data-lucide="edit"></i> Edit
+                                            </a>
+                                            <form action="/subjects/<%= subject.id %>/delete" method="POST" 
+                                                  onsubmit="return confirm('Are you sure you want to delete this subject? All topics and tasks will be deleted.')">
+                                                <button type="submit" class="dropdown-item text-error">
+                                                    <i data-lucide="trash-2"></i> Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="subject-card-body">
+                                    <div class="subject-stats">
+                                        <div class="subject-stat">
+                                            <i data-lucide="layers"></i>
+                                            <span><%= subject.topic_count %> topics</span>
+                                        </div>
+                                        <div class="subject-stat">
+                                            <i data-lucide="clock"></i>
+                                            <span><%= parseFloat(subject.total_hours).toFixed(1) %>h estimated</span>
+                                        </div>
+                                    </div>
+
+                                    <% if (subject.exam_date) { 
+                                        const examDate = new Date(subject.exam_date);
+                                        const today = new Date();
+                                        const daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+                                    %>
+                                        <div class="subject-exam <%= daysLeft <= 7 ? 'urgent' : '' %>">
+                                            <i data-lucide="calendar"></i>
+                                            <span>
+                                                <% if (daysLeft < 0) { %>
+                                                    Exam passed
+                                                <% } else if (daysLeft === 0) { %>
+                                                    Exam today!
+                                                <% } else if (daysLeft === 1) { %>
+                                                    Exam tomorrow
+                                                <% } else { %>
+                                                    <%= daysLeft %> days until exam
+                                                <% } %>
+                                            </span>
+                                        </div>
+                                    <% } %>
+
+                                    <div class="subject-progress">
+                                        <div class="progress-header">
+                                            <span>Progress</span>
+                                            <span><%= subject.progress_percentage %>%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: <%= subject.progress_percentage %>%"></div>
+                                        </div>
+                                        <div class="progress-detail">
+                                            <%= subject.completed_topics %>/<%= subject.topic_count %> topics completed
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="subject-card-footer">
+                                    <a href="/subjects/<%= subject.id %>" class="btn btn-secondary btn-sm btn-block">
+                                        <i data-lucide="folder-open"></i>
+                                        View Topics
+                                    </a>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+
+        // Dropdown menu toggle
+        function toggleMenu(btn) {
+            const menu = btn.nextElementSibling;
+            document.querySelectorAll('.dropdown-menu.show').forEach(m => {
+                if (m !== menu) m.classList.remove('show');
+            });
+            menu.classList.toggle('show');
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.subject-menu')) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(m => m.classList.remove('show'));
+            }
+        });
+    </script>
+</body>
+</html>

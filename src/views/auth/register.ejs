@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Left Panel - Branding -->
+        <div class="auth-brand">
+            <div class="brand-content">
+                <a href="/" class="logo">
+                    <div class="logo-icon">
+                        <i data-lucide="calendar-check"></i>
+                    </div>
+                    <span class="logo-text">SmartSched</span>
+                </a>
+                <div class="brand-message">
+                    <h1>Start Your Journey</h1>
+                    <p>Create an account to unlock personalized study schedules powered by AI.</p>
+                </div>
+                <div class="brand-features">
+                    <div class="feature">
+                        <i data-lucide="check-circle"></i>
+                        <span>Free to get started</span>
+                    </div>
+                    <div class="feature">
+                        <i data-lucide="check-circle"></i>
+                        <span>No credit card required</span>
+                    </div>
+                    <div class="feature">
+                        <i data-lucide="check-circle"></i>
+                        <span>Setup in under 5 minutes</span>
+                    </div>
+                </div>
+            </div>
+            <div class="brand-decoration">
+                <div class="decoration-circle circle-1"></div>
+                <div class="decoration-circle circle-2"></div>
+                <div class="decoration-circle circle-3"></div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Register Form -->
+        <div class="auth-form-container">
+            <div class="auth-form-wrapper">
+                <div class="mobile-logo">
+                    <a href="/" class="logo">
+                        <div class="logo-icon">
+                            <i data-lucide="calendar-check"></i>
+                        </div>
+                        <span class="logo-text">SmartSched</span>
+                    </a>
+                </div>
+
+                <div class="auth-header">
+                    <h2>Create your account</h2>
+                    <p>Fill in your details to get started</p>
+                </div>
+
+                <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+                    <div class="alert alert-error">
+                        <i data-lucide="alert-circle"></i>
+                        <div>
+                            <% errors.forEach(error => { %>
+                                <p><%= error.msg %></p>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <form action="/auth/register" method="POST" class="auth-form">
+                    <div class="form-group">
+                        <label class="form-label" for="fullName">Full Name</label>
+                        <div class="input-group">
+                            <i data-lucide="user" class="input-icon"></i>
+                            <input 
+                                type="text" 
+                                id="fullName" 
+                                name="fullName" 
+                                class="form-input"
+                                placeholder="John Doe"
+                                value="<%= typeof oldInput !== 'undefined' ? oldInput.fullName || '' : '' %>"
+                                required
+                                autocomplete="name"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <div class="input-group">
+                            <i data-lucide="mail" class="input-icon"></i>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="form-input"
+                                placeholder="you@example.com"
+                                value="<%= typeof oldInput !== 'undefined' ? oldInput.email || '' : '' %>"
+                                required
+                                autocomplete="email"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="password">Password</label>
+                            <div class="input-group">
+                                <i data-lucide="lock" class="input-icon"></i>
+                                <input 
+                                    type="password" 
+                                    id="password" 
+                                    name="password" 
+                                    class="form-input"
+                                    placeholder="Min. 8 characters"
+                                    required
+                                    autocomplete="new-password"
+                                >
+                                <i data-lucide="eye" class="input-icon input-icon-right toggle-password" data-target="password"></i>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="confirmPassword">Confirm Password</label>
+                            <div class="input-group">
+                                <i data-lucide="lock" class="input-icon"></i>
+                                <input 
+                                    type="password" 
+                                    id="confirmPassword" 
+                                    name="confirmPassword" 
+                                    class="form-input"
+                                    placeholder="Repeat password"
+                                    required
+                                    autocomplete="new-password"
+                                >
+                                <i data-lucide="eye" class="input-icon input-icon-right toggle-password" data-target="confirmPassword"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="password-requirements">
+                        <p class="form-hint">Password must:</p>
+                        <ul>
+                            <li id="req-length" class="requirement">
+                                <i data-lucide="circle"></i>
+                                Be at least 8 characters
+                            </li>
+                            <li id="req-number" class="requirement">
+                                <i data-lucide="circle"></i>
+                                Include a number
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="terms" class="checkbox-input" required>
+                            <span class="checkbox-custom"></span>
+                            <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">
+                        <i data-lucide="user-plus"></i>
+                        Create Account
+                    </button>
+                </form>
+
+                <p class="auth-footer">
+                    Already have an account? 
+                    <a href="/auth/login">Log in</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Toggle password visibility
+        document.querySelectorAll('.toggle-password').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const input = document.getElementById(targetId);
+                const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+                input.setAttribute('type', type);
+                this.setAttribute('data-lucide', type === 'password' ? 'eye' : 'eye-off');
+                lucide.createIcons();
+            });
+        });
+
+        // Password validation
+        const passwordInput = document.getElementById('password');
+        const reqLength = document.getElementById('req-length');
+        const reqNumber = document.getElementById('req-number');
+
+        passwordInput.addEventListener('input', function() {
+            const value = this.value;
+            
+            // Check length
+            if (value.length >= 8) {
+                reqLength.classList.add('valid');
+                reqLength.querySelector('i').setAttribute('data-lucide', 'check-circle');
+            } else {
+                reqLength.classList.remove('valid');
+                reqLength.querySelector('i').setAttribute('data-lucide', 'circle');
+            }
+
+            // Check number
+            if (/\d/.test(value)) {
+                reqNumber.classList.add('valid');
+                reqNumber.querySelector('i').setAttribute('data-lucide', 'check-circle');
+            } else {
+                reqNumber.classList.remove('valid');
+                reqNumber.querySelector('i').setAttribute('data-lucide', 'circle');
+            }
+
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

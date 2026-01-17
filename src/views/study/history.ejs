@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>Session History</h1>
+                        <p>Review your past study sessions</p>
+                    </div>
+                    <a href="/study/start" class="btn btn-primary">
+                        <i data-lucide="play"></i>
+                        New Session
+                    </a>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters-bar">
+                    <form action="/study/history" method="GET" class="filters-form">
+                        <div class="filter-group">
+                            <label>Subject</label>
+                            <select name="subject" onchange="this.form.submit()">
+                                <option value="">All Subjects</option>
+                                <% subjects.forEach(subject => { %>
+                                    <option value="<%= subject.id %>" <%= filters.subject === subject.id ? 'selected' : '' %>>
+                                        <%= subject.name %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>From</label>
+                            <input type="date" name="from" value="<%= filters.from || '' %>" onchange="this.form.submit()">
+                        </div>
+                        <div class="filter-group">
+                            <label>To</label>
+                            <input type="date" name="to" value="<%= filters.to || '' %>" onchange="this.form.submit()">
+                        </div>
+                        <% if (filters.subject || filters.from || filters.to) { %>
+                            <a href="/study/history" class="btn btn-secondary btn-sm">
+                                <i data-lucide="x"></i>
+                                Clear
+                            </a>
+                        <% } %>
+                    </form>
+                </div>
+
+                <!-- Sessions List -->
+                <div class="card">
+                    <div class="card-body no-padding">
+                        <% if (sessions.length === 0) { %>
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i data-lucide="history"></i>
+                                </div>
+                                <h4>No sessions found</h4>
+                                <p>
+                                    <% if (filters.subject || filters.from || filters.to) { %>
+                                        Try adjusting your filters
+                                    <% } else { %>
+                                        Start studying to see your history
+                                    <% } %>
+                                </p>
+                            </div>
+                        <% } else { %>
+                            <div class="history-table">
+                                <div class="history-header">
+                                    <div class="history-col-subject">Subject / Topic</div>
+                                    <div class="history-col-task">Task</div>
+                                    <div class="history-col-duration">Duration</div>
+                                    <div class="history-col-date">Date</div>
+                                    <div class="history-col-rating">Rating</div>
+                                </div>
+                                <% sessions.forEach(session => { %>
+                                    <div class="history-row">
+                                        <div class="history-col-subject">
+                                            <div class="session-color" style="background: <%= session.subject_color %>"></div>
+                                            <div>
+                                                <span class="subject-name"><%= session.subject_name %></span>
+                                                <span class="topic-name"><%= session.topic_name %></span>
+                                            </div>
+                                        </div>
+                                        <div class="history-col-task">
+                                            <% if (session.task_title) { %>
+                                                <%= session.task_title %>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </div>
+                                        <div class="history-col-duration">
+                                            <i data-lucide="clock"></i>
+                                            <%= session.actual_minutes %> min
+                                        </div>
+                                        <div class="history-col-date">
+                                            <%= new Date(session.start_time).toLocaleDateString('en-US', { 
+                                                weekday: 'short',
+                                                month: 'short', 
+                                                day: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            }) %>
+                                        </div>
+                                        <div class="history-col-rating">
+                                            <% if (session.quality_rating) { %>
+                                                <div class="star-rating">
+                                                    <% for (let i = 1; i <= 5; i++) { %>
+                                                        <i data-lucide="star" class="star <%= i <= session.quality_rating ? 'filled' : '' %>"></i>
+                                                    <% } %>
+                                                </div>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+
+                            <!-- Pagination -->
+                            <% if (pagination.totalPages > 1) { %>
+                                <div class="pagination">
+                                    <% if (pagination.page > 1) { %>
+                                        <a href="/study/history?page=<%= pagination.page - 1 %>&subject=<%= filters.subject || '' %>&from=<%= filters.from || '' %>&to=<%= filters.to || '' %>" 
+                                           class="pagination-btn">
+                                            <i data-lucide="chevron-left"></i>
+                                            Previous
+                                        </a>
+                                    <% } %>
+                                    <span class="pagination-info">
+                                        Page <%= pagination.page %> of <%= pagination.totalPages %>
+                                    </span>
+                                    <% if (pagination.page < pagination.totalPages) { %>
+                                        <a href="/study/history?page=<%= pagination.page + 1 %>&subject=<%= filters.subject || '' %>&from=<%= filters.from || '' %>&to=<%= filters.to || '' %>" 
+                                           class="pagination-btn">
+                                            Next
+                                            <i data-lucide="chevron-right"></i>
+                                        </a>
+                                    <% } %>
+                                </div>
+                            <% } %>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+</body>
+</html>

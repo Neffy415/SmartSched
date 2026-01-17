@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Left Panel - Branding -->
+        <div class="auth-brand">
+            <div class="brand-content">
+                <a href="/" class="logo">
+                    <div class="logo-icon">
+                        <i data-lucide="calendar-check"></i>
+                    </div>
+                    <span class="logo-text">SmartSched</span>
+                </a>
+                <div class="brand-message">
+                    <h1>Welcome Back!</h1>
+                    <p>Log in to access your personalized study schedule and continue your learning journey.</p>
+                </div>
+                <div class="brand-features">
+                    <div class="feature">
+                        <i data-lucide="check-circle"></i>
+                        <span>AI-powered scheduling</span>
+                    </div>
+                    <div class="feature">
+                        <i data-lucide="check-circle"></i>
+                        <span>Progress tracking</span>
+                    </div>
+                    <div class="feature">
+                        <i data-lucide="check-circle"></i>
+                        <span>Smart revisions</span>
+                    </div>
+                </div>
+            </div>
+            <div class="brand-decoration">
+                <div class="decoration-circle circle-1"></div>
+                <div class="decoration-circle circle-2"></div>
+                <div class="decoration-circle circle-3"></div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Login Form -->
+        <div class="auth-form-container">
+            <div class="auth-form-wrapper">
+                <div class="mobile-logo">
+                    <a href="/" class="logo">
+                        <div class="logo-icon">
+                            <i data-lucide="calendar-check"></i>
+                        </div>
+                        <span class="logo-text">SmartSched</span>
+                    </a>
+                </div>
+
+                <div class="auth-header">
+                    <h2>Log in to your account</h2>
+                    <p>Enter your credentials to access your dashboard</p>
+                </div>
+
+                <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+                    <div class="alert alert-error">
+                        <i data-lucide="alert-circle"></i>
+                        <div>
+                            <% errors.forEach(error => { %>
+                                <p><%= error.msg %></p>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <form action="/auth/login" method="POST" class="auth-form">
+                    <div class="form-group">
+                        <label class="form-label" for="email">Email Address</label>
+                        <div class="input-group">
+                            <i data-lucide="mail" class="input-icon"></i>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email" 
+                                class="form-input"
+                                placeholder="you@example.com"
+                                required
+                                autocomplete="email"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="form-label-row">
+                            <label class="form-label" for="password">Password</label>
+                            <a href="#" class="form-link">Forgot password?</a>
+                        </div>
+                        <div class="input-group">
+                            <i data-lucide="lock" class="input-icon"></i>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password" 
+                                class="form-input"
+                                placeholder="Enter your password"
+                                required
+                                autocomplete="current-password"
+                            >
+                            <i data-lucide="eye" class="input-icon input-icon-right" id="togglePassword"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="remember" class="checkbox-input">
+                            <span class="checkbox-custom"></span>
+                            <span>Remember me for 30 days</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">
+                        <i data-lucide="log-in"></i>
+                        Log In
+                    </button>
+                </form>
+
+                <p class="auth-footer">
+                    Don't have an account? 
+                    <a href="/auth/register">Create one</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Toggle password visibility
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.setAttribute('data-lucide', type === 'password' ? 'eye' : 'eye-off');
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>

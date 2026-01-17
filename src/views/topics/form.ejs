@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb">
+                    <a href="/subjects">Subjects</a>
+                    <i data-lucide="chevron-right"></i>
+                    <span><%= topic && topic.id ? 'Edit Topic' : 'New Topic' %></span>
+                </nav>
+
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1><%= topic && topic.id ? 'Edit Topic' : 'Add New Topic' %></h1>
+                        <p><%= topic && topic.id ? 'Update topic details' : 'Break down your subject into manageable topics' %></p>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <% if (errors && errors.length > 0) { %>
+                        <div class="alert alert-error">
+                            <i data-lucide="alert-circle"></i>
+                            <div>
+                                <% errors.forEach(error => { %>
+                                    <p><%= error.msg %></p>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <form action="<%= topic && topic.id ? '/topics/' + topic.id : '/topics' %>" method="POST" class="topic-form">
+                        <div class="form-section">
+                            <h3>Topic Information</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="subject_id">Subject *</label>
+                                <select id="subject_id" name="subject_id" class="form-input form-select" required>
+                                    <option value="">Select a subject</option>
+                                    <% subjects.forEach(subject => { %>
+                                        <option 
+                                            value="<%= subject.id %>" 
+                                            <%= topic && topic.subject_id === subject.id ? 'selected' : '' %>
+                                            data-color="<%= subject.color %>"
+                                        >
+                                            <%= subject.name %>
+                                        </option>
+                                    <% }); %>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="name">Topic Name *</label>
+                                <div class="input-group">
+                                    <i data-lucide="layers" class="input-icon"></i>
+                                    <input 
+                                        type="text" 
+                                        id="name" 
+                                        name="name" 
+                                        class="form-input"
+                                        placeholder="e.g., Binary Trees, Memory Management"
+                                        value="<%= topic ? topic.name || '' : '' %>"
+                                        required
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="description">Description</label>
+                                <textarea 
+                                    id="description" 
+                                    name="description" 
+                                    class="form-input form-textarea"
+                                    placeholder="What will you learn in this topic?"
+                                    rows="3"
+                                ><%= topic ? topic.description || '' : '' %></textarea>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Difficulty & Time</h3>
+                            
+                            <div class="form-row form-row-3">
+                                <div class="form-group">
+                                    <label class="form-label" for="difficulty">Difficulty</label>
+                                    <select id="difficulty" name="difficulty" class="form-input form-select">
+                                        <option value="easy" <%= topic && topic.difficulty === 'easy' ? 'selected' : '' %>>Easy</option>
+                                        <option value="medium" <%= !topic || topic.difficulty === 'medium' ? 'selected' : '' %>>Medium</option>
+                                        <option value="hard" <%= topic && topic.difficulty === 'hard' ? 'selected' : '' %>>Hard</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="importance">Importance (1-5)</label>
+                                    <select id="importance" name="importance" class="form-input form-select">
+                                        <% for(let i = 1; i <= 5; i++) { %>
+                                            <option value="<%= i %>" <%= topic && topic.importance == i ? 'selected' : (i === 3 && !topic ? 'selected' : '') %>><%= i %> - <%= ['Low', 'Below Avg', 'Medium', 'High', 'Critical'][i-1] %></option>
+                                        <% } %>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="estimated_hours">Estimated Hours</label>
+                                    <div class="input-group">
+                                        <i data-lucide="clock" class="input-icon"></i>
+                                        <input 
+                                            type="number" 
+                                            id="estimated_hours" 
+                                            name="estimated_hours" 
+                                            class="form-input"
+                                            placeholder="1.0"
+                                            value="<%= topic ? topic.estimated_hours || 1.0 : 1.0 %>"
+                                            step="0.5"
+                                            min="0.5"
+                                            max="100"
+                                        >
+                                    </div>
+                                    <span class="form-hint">How long to fully cover this topic?</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <a href="<%= topic && topic.subject_id ? '/subjects/' + topic.subject_id : '/subjects' %>" class="btn btn-secondary">
+                                <i data-lucide="x"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="<%= topic && topic.id ? 'check' : 'plus' %>"></i>
+                                <%= topic && topic.id ? 'Update Topic' : 'Create Topic' %>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+</body>
+</html>

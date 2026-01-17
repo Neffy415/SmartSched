@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb">
+                    <a href="/subjects">Subjects</a>
+                    <i data-lucide="chevron-right"></i>
+                    <a href="/subjects/<%= topic.subject_id %>"><%= topic.subject_name %></a>
+                    <i data-lucide="chevron-right"></i>
+                    <span><%= topic.name %></span>
+                </nav>
+
+                <!-- Topic Header -->
+                <div class="topic-header" style="--topic-color: <%= topic.subject_color %>">
+                    <div class="topic-header-info">
+                        <div class="topic-badges">
+                            <span class="difficulty-badge <%= topic.difficulty %>"><%= topic.difficulty %></span>
+                            <span class="importance-badge">Importance: <%= topic.importance %>/5</span>
+                            <% if (topic.is_completed) { %>
+                                <span class="status-badge completed">
+                                    <i data-lucide="check-circle"></i> Completed
+                                </span>
+                            <% } %>
+                        </div>
+                        <h1><%= topic.name %></h1>
+                        <% if (topic.description) { %>
+                            <p class="topic-description"><%= topic.description %></p>
+                        <% } %>
+                    </div>
+                    <div class="topic-header-actions">
+                        <form action="/topics/<%= topic.id %>/toggle" method="POST" style="display: inline;">
+                            <button type="submit" class="btn <%= topic.is_completed ? 'btn-secondary' : 'btn-primary' %>">
+                                <i data-lucide="<%= topic.is_completed ? 'rotate-ccw' : 'check' %>"></i>
+                                <%= topic.is_completed ? 'Mark Incomplete' : 'Mark Complete' %>
+                            </button>
+                        </form>
+                        <a href="/topics/<%= topic.id %>/edit" class="btn btn-secondary">
+                            <i data-lucide="edit"></i>
+                            Edit
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid stats-grid-4">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, <%= topic.subject_color %>, <%= topic.subject_color %>dd);">
+                            <i data-lucide="check-square"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.total_tasks %></span>
+                            <span class="stat-label">Total Tasks</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                            <i data-lucide="check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.completed_tasks %>/<%= stats.total_tasks %></span>
+                            <span class="stat-label">Completed</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= topic.estimated_hours %>h</span>
+                            <span class="stat-label">Estimated</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+                            <i data-lucide="timer"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= Math.round(stats.total_actual / 60 * 10) / 10 %>h</span>
+                            <span class="stat-label">Time Spent</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <!-- Tasks List -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="list-checks"></i>
+                                Tasks
+                            </h3>
+                            <a href="/tasks/new?topic=<%= topic.id %>" class="btn btn-primary btn-sm">
+                                <i data-lucide="plus"></i>
+                                Add Task
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <% if (tasks.length === 0) { %>
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i data-lucide="list-plus"></i>
+                                    </div>
+                                    <h4>No tasks yet</h4>
+                                    <p>Break this topic into smaller tasks for better tracking</p>
+                                    <a href="/tasks/new?topic=<%= topic.id %>" class="btn btn-primary btn-sm">
+                                        <i data-lucide="plus"></i>
+                                        Add First Task
+                                    </a>
+                                </div>
+                            <% } else { %>
+                                <div class="tasks-list">
+                                    <% tasks.forEach(task => { %>
+                                        <div class="task-item <%= task.status %>">
+                                            <div class="task-checkbox">
+                                                <form action="/tasks/<%= task.id %>/status" method="POST" class="status-form">
+                                                    <input type="hidden" name="status" value="<%= task.status === 'completed' ? 'pending' : 'completed' %>">
+                                                    <button type="submit" class="checkbox-btn <%= task.status === 'completed' ? 'checked' : '' %>">
+                                                        <i data-lucide="<%= task.status === 'completed' ? 'check-circle' : 'circle' %>"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                            <div class="task-info">
+                                                <span class="task-title"><%= task.title %></span>
+                                                <div class="task-meta">
+                                                    <span class="task-type <%= task.task_type %>"><%= task.task_type %></span>
+                                                    <span><%= task.estimated_minutes %> min</span>
+                                                    <% if (task.deadline) { %>
+                                                        <span class="task-deadline">
+                                                            <i data-lucide="calendar"></i>
+                                                            <%= new Date(task.deadline).toLocaleDateString() %>
+                                                        </span>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                            <div class="task-priority">
+                                                <span class="priority-indicator priority-<%= task.priority %>">P<%= task.priority %></span>
+                                            </div>
+                                            <div class="task-actions">
+                                                <a href="/tasks/<%= task.id %>/edit" class="icon-btn" title="Edit">
+                                                    <i data-lucide="edit"></i>
+                                                </a>
+                                                <form action="/tasks/<%= task.id %>/delete" method="POST" style="display: inline;"
+                                                      onsubmit="return confirm('Delete this task?')">
+                                                    <button type="submit" class="icon-btn text-error" title="Delete">
+                                                        <i data-lucide="trash-2"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Sessions & Quick Actions -->
+                    <div class="sidebar-content">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>
+                                    <i data-lucide="play-circle"></i>
+                                    Study Session
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <a href="/study/start?topic=<%= topic.id %>" class="btn btn-primary btn-block btn-lg">
+                                    <i data-lucide="play"></i>
+                                    Start Studying
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>
+                                    <i data-lucide="history"></i>
+                                    Recent Sessions
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <% if (sessions.length === 0) { %>
+                                    <div class="empty-state small">
+                                        <i data-lucide="clock"></i>
+                                        <p>No sessions yet</p>
+                                    </div>
+                                <% } else { %>
+                                    <div class="sessions-list">
+                                        <% sessions.forEach(session => { %>
+                                            <div class="session-item">
+                                                <div class="session-icon">
+                                                    <i data-lucide="book-open"></i>
+                                                </div>
+                                                <div class="session-info">
+                                                    <span class="session-duration"><%= session.actual_minutes || 0 %> minutes</span>
+                                                    <span class="session-time">
+                                                        <%= new Date(session.start_time).toLocaleDateString() %>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+</body>
+</html>

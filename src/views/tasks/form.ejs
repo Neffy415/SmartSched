@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof errors !== 'undefined' && errors.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <ul>
+                            <% errors.forEach(error => { %>
+                                <li><%= error.msg %></li>
+                            <% }); %>
+                        </ul>
+                    </div>
+                <% } %>
+
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb">
+                    <a href="/tasks">Tasks</a>
+                    <i data-lucide="chevron-right"></i>
+                    <span><%= editing ? 'Edit Task' : 'New Task' %></span>
+                </nav>
+
+                <!-- Form Card -->
+                <div class="card form-card">
+                    <div class="card-header">
+                        <h2>
+                            <i data-lucide="<%= editing ? 'edit' : 'plus-circle' %>"></i>
+                            <%= editing ? 'Edit Task' : 'Create New Task' %>
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <form action="<%= editing ? '/tasks/' + task.id : '/tasks' %>" method="POST" class="form">
+                            <div class="form-row">
+                                <div class="form-group form-group-full">
+                                    <label for="title">Task Title <span class="required">*</span></label>
+                                    <input type="text" id="title" name="title" 
+                                           value="<%= task.title || '' %>" 
+                                           placeholder="e.g., Complete Chapter 5 exercises"
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group form-group-full">
+                                    <label for="description">Description</label>
+                                    <textarea id="description" name="description" rows="3"
+                                              placeholder="Add details about this task..."><%= task.description || '' %></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-row form-row-2">
+                                <div class="form-group">
+                                    <label for="subject_id">Subject <span class="required">*</span></label>
+                                    <select id="subject_id" name="subject_id" required onchange="updateTopics()">
+                                        <option value="">Select a subject</option>
+                                        <% subjects.forEach(subject => { %>
+                                            <option value="<%= subject.id %>" 
+                                                    data-topics='<%= JSON.stringify(subject.topics) %>'
+                                                    <%= task.subject_id === subject.id ? 'selected' : '' %>>
+                                                <%= subject.name %>
+                                            </option>
+                                        <% }); %>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="topic_id">Topic <span class="required">*</span></label>
+                                    <select id="topic_id" name="topic_id" required>
+                                        <option value="">Select subject first</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row form-row-2">
+                                <div class="form-group">
+                                    <label for="task_type">Task Type <span class="required">*</span></label>
+                                    <select id="task_type" name="task_type" required>
+                                        <option value="">Select type</option>
+                                        <option value="reading" <%= task.task_type === 'reading' ? 'selected' : '' %>>📖 Reading</option>
+                                        <option value="notes" <%= task.task_type === 'notes' ? 'selected' : '' %>>📝 Notes</option>
+                                        <option value="practice" <%= task.task_type === 'practice' ? 'selected' : '' %>>✏️ Practice</option>
+                                        <option value="revision" <%= task.task_type === 'revision' ? 'selected' : '' %>>🔄 Revision</option>
+                                        <option value="project" <%= task.task_type === 'project' ? 'selected' : '' %>>💻 Project</option>
+                                        <option value="other" <%= task.task_type === 'other' ? 'selected' : '' %>>📋 Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="estimated_minutes">Estimated Time (minutes) <span class="required">*</span></label>
+                                    <input type="number" id="estimated_minutes" name="estimated_minutes" 
+                                           value="<%= task.estimated_minutes || 30 %>" 
+                                           min="5" max="480" required>
+                                    <span class="form-hint">Between 5 and 480 minutes</span>
+                                </div>
+                            </div>
+
+                            <div class="form-row form-row-2">
+                                <div class="form-group">
+                                    <label for="priority">Priority</label>
+                                    <select id="priority" name="priority">
+                                        <option value="1" <%= task.priority === 1 ? 'selected' : '' %>>🔴 P1 - Highest</option>
+                                        <option value="2" <%= task.priority === 2 ? 'selected' : '' %>>🟠 P2 - High</option>
+                                        <option value="3" <%= task.priority === 3 || !task.priority ? 'selected' : '' %>>🟡 P3 - Medium</option>
+                                        <option value="4" <%= task.priority === 4 ? 'selected' : '' %>>🟢 P4 - Low</option>
+                                        <option value="5" <%= task.priority === 5 ? 'selected' : '' %>>⚪ P5 - Lowest</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="deadline">Deadline</label>
+                                    <input type="date" id="deadline" name="deadline" 
+                                           value="<%= task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '' %>">
+                                    <span class="form-hint">Optional - helps with scheduling</span>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <a href="/tasks" class="btn btn-secondary">
+                                    <i data-lucide="x"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-lucide="<%= editing ? 'save' : 'plus' %>"></i>
+                                    <%= editing ? 'Save Changes' : 'Create Task' %>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+
+        // Topic dropdown population
+        const subjectSelect = document.getElementById('subject_id');
+        const topicSelect = document.getElementById('topic_id');
+        const currentTopicId = '<%= task.topic_id || '' %>';
+
+        function updateTopics() {
+            const selected = subjectSelect.options[subjectSelect.selectedIndex];
+            const topics = selected.dataset.topics ? JSON.parse(selected.dataset.topics) : [];
+            
+            topicSelect.innerHTML = '<option value="">Select a topic</option>';
+            
+            topics.forEach(topic => {
+                if (topic && topic.id) {
+                    const option = document.createElement('option');
+                    option.value = topic.id;
+                    option.textContent = topic.name;
+                    if (topic.id === currentTopicId) {
+                        option.selected = true;
+                    }
+                    topicSelect.appendChild(option);
+                }
+            });
+        }
+
+        // Initialize topics if subject is selected
+        if (subjectSelect.value) {
+            updateTopics();
+        }
+    </script>
+</body>
+</html>

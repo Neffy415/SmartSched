@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .completion-page {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .completion-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: 3rem;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .completion-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--success), #14b8a6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            animation: pop 0.5s ease-out;
+        }
+
+        .completion-icon i {
+            width: 50px;
+            height: 50px;
+            color: white;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .completion-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .completion-subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .completion-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .completion-stat {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+        }
+
+        .completion-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .completion-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .session-details {
+            text-align: left;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            margin-bottom: 2rem;
+        }
+
+        .session-detail {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .session-detail:last-child {
+            border-bottom: none;
+        }
+
+        .session-detail-label {
+            color: var(--text-secondary);
+        }
+
+        .session-detail-value {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .completion-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .motivational-quote {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--bg-secondary));
+            border-radius: var(--radius-md);
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .daily-progress {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+        }
+
+        .daily-progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .daily-progress-bar {
+            height: 8px;
+            background: var(--border);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+
+        .daily-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: var(--radius-full);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <div class="completion-page">
+                <div class="completion-card animate-fade-in">
+                    <div class="completion-icon">
+                        <i data-lucide="check"></i>
+                    </div>
+                    <h1 class="completion-title">Great Work! 🎉</h1>
+                    <p class="completion-subtitle">You completed a study session</p>
+
+                    <div class="completion-stats">
+                        <div class="completion-stat">
+                            <div class="completion-stat-value"><%= session.actual_minutes %></div>
+                            <div class="completion-stat-label">Minutes Studied</div>
+                        </div>
+                        <div class="completion-stat">
+                            <div class="completion-stat-value"><%= session.quality_rating || '-' %>/5</div>
+                            <div class="completion-stat-label">Focus Rating</div>
+                        </div>
+                    </div>
+
+                    <div class="session-details">
+                        <div class="session-detail">
+                            <span class="session-detail-label">Subject</span>
+                            <span class="session-detail-value" style="color: <%= session.subject_color %>">
+                                <%= session.subject_name %>
+                            </span>
+                        </div>
+                        <div class="session-detail">
+                            <span class="session-detail-label">Topic</span>
+                            <span class="session-detail-value"><%= session.topic_name %></span>
+                        </div>
+                        <% if (session.task_title) { %>
+                            <div class="session-detail">
+                                <span class="session-detail-label">Task</span>
+                                <span class="session-detail-value"><%= session.task_title %></span>
+                            </div>
+                        <% } %>
+                        <div class="session-detail">
+                            <span class="session-detail-label">Planned</span>
+                            <span class="session-detail-value"><%= session.planned_minutes %> min</span>
+                        </div>
+                        <div class="session-detail">
+                            <span class="session-detail-label">Actual</span>
+                            <span class="session-detail-value"><%= session.actual_minutes %> min</span>
+                        </div>
+                    </div>
+
+                    <% 
+                        const dailyGoal = 120; // 2 hours goal
+                        const dailyProgress = Math.min((todayTotal / dailyGoal) * 100, 100);
+                    %>
+                    <div class="daily-progress">
+                        <div class="daily-progress-header">
+                            <span>Today's Progress</span>
+                            <span><%= todayTotal %> / <%= dailyGoal %> min</span>
+                        </div>
+                        <div class="daily-progress-bar">
+                            <div class="daily-progress-fill" style="width: <%= dailyProgress %>%"></div>
+                        </div>
+                    </div>
+
+                    <div class="completion-actions">
+                        <a href="/study/start?topic=<%= session.topic_id %>" class="btn btn-primary btn-lg">
+                            <i data-lucide="play"></i>
+                            Start Another Session
+                        </a>
+                        <a href="/study" class="btn btn-secondary">
+                            <i data-lucide="layout-dashboard"></i>
+                            Back to Study Hub
+                        </a>
+                        <a href="/topics/<%= session.topic_id %>" class="btn btn-ghost">
+                            <i data-lucide="book-open"></i>
+                            View Topic
+                        </a>
+                    </div>
+
+                    <div class="motivational-quote">
+                        <% const quotes = [
+                            "Success is the sum of small efforts repeated day in and day out.",
+                            "The secret of getting ahead is getting started.",
+                            "Don't watch the clock; do what it does. Keep going.",
+                            "Every expert was once a beginner.",
+                            "The only way to do great work is to love what you do."
+                        ]; %>
+                        "<%= quotes[Math.floor(Math.random() * quotes.length)] %>"
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

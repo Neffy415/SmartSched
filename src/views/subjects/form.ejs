@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb">
+                    <a href="/subjects">Subjects</a>
+                    <i data-lucide="chevron-right"></i>
+                    <span><%= subject ? 'Edit Subject' : 'New Subject' %></span>
+                </nav>
+
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1><%= subject && subject.id ? 'Edit Subject' : 'Add New Subject' %></h1>
+                        <p><%= subject && subject.id ? 'Update subject details' : 'Create a new subject for your study plan' %></p>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <% if (errors && errors.length > 0) { %>
+                        <div class="alert alert-error">
+                            <i data-lucide="alert-circle"></i>
+                            <div>
+                                <% errors.forEach(error => { %>
+                                    <p><%= error.msg %></p>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <form action="<%= subject && subject.id ? '/subjects/' + subject.id : '/subjects' %>" method="POST" class="subject-form">
+                        <div class="form-section">
+                            <h3>Basic Information</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label" for="name">Subject Name *</label>
+                                <div class="input-group">
+                                    <i data-lucide="book" class="input-icon"></i>
+                                    <input 
+                                        type="text" 
+                                        id="name" 
+                                        name="name" 
+                                        class="form-input"
+                                        placeholder="e.g., Data Structures, Operating Systems"
+                                        value="<%= subject ? subject.name || '' : '' %>"
+                                        required
+                                        autofocus
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="description">Description</label>
+                                <textarea 
+                                    id="description" 
+                                    name="description" 
+                                    class="form-input form-textarea"
+                                    placeholder="Brief description of the subject..."
+                                    rows="3"
+                                ><%= subject ? subject.description || '' : '' %></textarea>
+                                <span class="form-hint">Optional: Add notes about syllabus, professor, etc.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Schedule & Priority</h3>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="exam_date">Exam Date</label>
+                                    <div class="input-group">
+                                        <i data-lucide="calendar" class="input-icon"></i>
+                                        <input 
+                                            type="date" 
+                                            id="exam_date" 
+                                            name="exam_date" 
+                                            class="form-input"
+                                            value="<%= subject && subject.exam_date ? new Date(subject.exam_date).toISOString().split('T')[0] : '' %>"
+                                            min="<%= new Date().toISOString().split('T')[0] %>"
+                                        >
+                                    </div>
+                                    <span class="form-hint">When is your exam for this subject?</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="priority_level">Priority Level</label>
+                                    <select id="priority_level" name="priority_level" class="form-input form-select">
+                                        <option value="1" <%= subject && subject.priority_level == 1 ? 'selected' : '' %>>1 - Low Priority</option>
+                                        <option value="2" <%= subject && subject.priority_level == 2 ? 'selected' : '' %>>2 - Below Average</option>
+                                        <option value="3" <%= !subject || subject.priority_level == 3 ? 'selected' : '' %>>3 - Medium Priority</option>
+                                        <option value="4" <%= subject && subject.priority_level == 4 ? 'selected' : '' %>>4 - High Priority</option>
+                                        <option value="5" <%= subject && subject.priority_level == 5 ? 'selected' : '' %>>5 - Critical</option>
+                                    </select>
+                                    <span class="form-hint">Higher priority subjects get scheduled first</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Appearance</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Subject Color</label>
+                                <div class="color-picker">
+                                    <% const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#ef4444', '#f59e0b', '#10b981', '#14b8a6', '#3b82f6']; %>
+                                    <% colors.forEach(color => { %>
+                                        <label class="color-option">
+                                            <input 
+                                                type="radio" 
+                                                name="color" 
+                                                value="<%= color %>"
+                                                <%= (subject && subject.color === color) || (!subject && color === '#6366f1') ? 'checked' : '' %>
+                                            >
+                                            <span class="color-swatch" style="background: <%= color %>"></span>
+                                        </label>
+                                    <% }); %>
+                                </div>
+                                <span class="form-hint">Choose a color to identify this subject</span>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <a href="/subjects" class="btn btn-secondary">
+                                <i data-lucide="x"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="<%= subject && subject.id ? 'check' : 'plus' %>"></i>
+                                <%= subject && subject.id ? 'Update Subject' : 'Create Subject' %>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+</body>
+</html>

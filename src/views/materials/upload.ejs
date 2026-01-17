@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <p><%= error_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>
+                            <i data-lucide="upload" style="color: var(--primary);"></i>
+                            Upload Material
+                        </h1>
+                        <p>Upload study materials for AI-powered analysis</p>
+                    </div>
+                    <div class="page-header-actions">
+                        <a href="/materials" class="btn btn-ghost">
+                            <i data-lucide="arrow-left"></i>
+                            Back to Materials
+                        </a>
+                    </div>
+                </div>
+
+                <div class="upload-container">
+                    <div class="card">
+                        <div class="card-body">
+                            <form action="/materials/upload" method="POST" enctype="multipart/form-data" id="uploadForm">
+                                <!-- Drop Zone -->
+                                <div class="drop-zone" id="dropZone">
+                                    <div class="drop-zone-content">
+                                        <div class="drop-zone-icon">
+                                            <i data-lucide="cloud-upload"></i>
+                                        </div>
+                                        <h3>Drop files here or click to upload</h3>
+                                        <p>Supports PDF, DOC, DOCX, TXT, PNG, JPG (Max 10MB)</p>
+                                        <input type="file" name="file" id="fileInput" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" required>
+                                    </div>
+                                </div>
+
+                                <!-- File Preview -->
+                                <div class="file-preview" id="filePreview" style="display: none;">
+                                    <div class="preview-icon" id="previewIcon">
+                                        <i data-lucide="file"></i>
+                                    </div>
+                                    <div class="preview-info">
+                                        <span class="preview-name" id="previewName"></span>
+                                        <span class="preview-size" id="previewSize"></span>
+                                    </div>
+                                    <button type="button" class="btn btn-ghost btn-sm" id="removeFile">
+                                        <i data-lucide="x"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Subject Selection -->
+                                <div class="form-group mt-lg">
+                                    <label for="subjectSelect">Link to Subject (Optional)</label>
+                                    <select name="subject_id" id="subjectSelect" class="form-control">
+                                        <option value="">No subject</option>
+                                        <% subjects.forEach(subject => { %>
+                                            <option value="<%= subject.id %>"><%= subject.name %></option>
+                                        <% }); %>
+                                    </select>
+                                    <small class="form-hint">Associate this material with a specific subject</small>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="form-group">
+                                    <label for="description">Description (Optional)</label>
+                                    <textarea name="description" id="description" class="form-control" rows="3" 
+                                              placeholder="Brief description of this material..."></textarea>
+                                </div>
+
+                                <!-- Auto Analyze Option -->
+                                <div class="form-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="auto_analyze" checked>
+                                        <span class="checkbox-custom"></span>
+                                        <span>Automatically analyze with AI after upload</span>
+                                    </label>
+                                </div>
+
+                                <div class="form-actions">
+                                    <a href="/materials" class="btn btn-ghost">Cancel</a>
+                                    <button type="submit" class="btn btn-primary" id="uploadBtn">
+                                        <i data-lucide="upload"></i>
+                                        Upload Material
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Tips Card -->
+                    <div class="card mt-lg">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="lightbulb"></i>
+                                Tips for Best Results
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <ul class="tips-list">
+                                <li>
+                                    <i data-lucide="check"></i>
+                                    <span><strong>Clear Documents:</strong> Use text-based PDFs for best analysis results</span>
+                                </li>
+                                <li>
+                                    <i data-lucide="check"></i>
+                                    <span><strong>Organized Content:</strong> Materials with clear headings work better</span>
+                                </li>
+                                <li>
+                                    <i data-lucide="check"></i>
+                                    <span><strong>Subject Linking:</strong> Link to a subject for better topic suggestions</span>
+                                </li>
+                                <li>
+                                    <i data-lucide="check"></i>
+                                    <span><strong>Image Quality:</strong> For images, ensure text is readable</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const filePreview = document.getElementById('filePreview');
+        const previewName = document.getElementById('previewName');
+        const previewSize = document.getElementById('previewSize');
+        const previewIcon = document.getElementById('previewIcon');
+        const removeFile = document.getElementById('removeFile');
+        const uploadForm = document.getElementById('uploadForm');
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        // Click to upload
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Drag and drop handlers
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                showPreview(files[0]);
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                showPreview(e.target.files[0]);
+            }
+        });
+
+        // Show file preview
+        function showPreview(file) {
+            previewName.textContent = file.name;
+            previewSize.textContent = formatFileSize(file.size);
+            
+            // Update icon based on file type
+            let iconName = 'file';
+            if (file.type.includes('pdf')) iconName = 'file-text';
+            else if (file.type.includes('image')) iconName = 'image';
+            else if (file.name.match(/\.(doc|docx)$/i)) iconName = 'file-text';
+            
+            previewIcon.innerHTML = `<i data-lucide="${iconName}"></i>`;
+            
+            dropZone.style.display = 'none';
+            filePreview.style.display = 'flex';
+            lucide.createIcons();
+        }
+
+        // Remove file
+        removeFile.addEventListener('click', () => {
+            fileInput.value = '';
+            dropZone.style.display = 'block';
+            filePreview.style.display = 'none';
+        });
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Form submit
+        uploadForm.addEventListener('submit', (e) => {
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                alert('Please select a file to upload');
+                return;
+            }
+            
+            // Check file size (10MB max)
+            if (fileInput.files[0].size > 10 * 1024 * 1024) {
+                e.preventDefault();
+                alert('File size must be less than 10MB');
+                return;
+            }
+            
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i data-lucide="loader" class="spin"></i> Uploading...';
+            lucide.createIcons();
+        });
+
+        // Sidebar toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+
+    <style>
+        .upload-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--gray-300);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-3xl);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .drop-zone:hover {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .drop-zone.drag-over {
+            border-color: var(--primary);
+            background: var(--primary-100);
+        }
+
+        .drop-zone-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--spacing-lg);
+        }
+
+        .drop-zone-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--primary);
+        }
+
+        .drop-zone h3 {
+            margin: 0 0 var(--spacing-sm);
+            color: var(--gray-800);
+        }
+
+        .drop-zone p {
+            color: var(--gray-500);
+            margin: 0;
+        }
+
+        .drop-zone input {
+            display: none;
+        }
+
+        .file-preview {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--gray-200);
+        }
+
+        .preview-icon {
+            width: 48px;
+            height: 48px;
+            background: white;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--gray-200);
+        }
+
+        .preview-icon svg {
+            width: 24px;
+            height: 24px;
+            color: var(--primary);
+        }
+
+        .preview-info {
+            flex: 1;
+        }
+
+        .preview-name {
+            display: block;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .preview-size {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            cursor: pointer;
+        }
+
+        .checkbox-label input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+        }
+
+        .tips-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .tips-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) 0;
+        }
+
+        .tips-list li svg {
+            width: 18px;
+            height: 18px;
+            color: var(--success);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</body>
+</html>

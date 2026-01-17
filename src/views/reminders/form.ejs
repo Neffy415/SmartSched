@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb">
+                    <a href="/reminders">Reminders</a>
+                    <i data-lucide="chevron-right"></i>
+                    <span><%= editing ? 'Edit Reminder' : 'New Reminder' %></span>
+                </nav>
+
+                <!-- Form Card -->
+                <div class="card form-card">
+                    <div class="card-header">
+                        <h2>
+                            <i data-lucide="<%= editing ? 'edit' : 'bell-plus' %>"></i>
+                            <%= editing ? 'Edit Reminder' : 'Create New Reminder' %>
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <form action="<%= editing ? '/reminders/' + reminder.id : '/reminders' %>" method="POST" class="form">
+                            <div class="form-section">
+                                <h3>Reminder Details</h3>
+                                
+                                <div class="form-group">
+                                    <label for="title">Title <span class="required">*</span></label>
+                                    <input type="text" id="title" name="title" 
+                                           value="<%= reminder.title || '' %>" 
+                                           placeholder="e.g., Study for Database exam"
+                                           required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <textarea id="description" name="description" rows="3"
+                                              placeholder="Add more details about this reminder..."><%= reminder.description || '' %></textarea>
+                                </div>
+
+                                <div class="form-row form-row-2">
+                                    <div class="form-group">
+                                        <label for="reminder_type">Reminder Type</label>
+                                        <select id="reminder_type" name="reminder_type">
+                                            <option value="custom" <%= reminder.reminder_type === 'custom' ? 'selected' : '' %>>🔔 Custom</option>
+                                            <option value="task_deadline" <%= reminder.reminder_type === 'task_deadline' ? 'selected' : '' %>>🎯 Task Deadline</option>
+                                            <option value="study_session" <%= reminder.reminder_type === 'study_session' ? 'selected' : '' %>>📖 Study Session</option>
+                                            <option value="exam" <%= reminder.reminder_type === 'exam' ? 'selected' : '' %>>🎓 Exam</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="task_id">Link to Task (Optional)</label>
+                                        <select id="task_id" name="task_id">
+                                            <option value="">No linked task</option>
+                                            <% tasks.forEach(task => { %>
+                                                <option value="<%= task.id %>" <%= reminder.task_id === task.id ? 'selected' : '' %>>
+                                                    <%= task.title %> (<%= task.subject_name %>)
+                                                </option>
+                                            <% }); %>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3>When to Remind</h3>
+
+                                <div class="form-row form-row-2">
+                                    <div class="form-group">
+                                        <label for="remind_date">Date <span class="required">*</span></label>
+                                        <input type="date" id="remind_date" name="remind_date" 
+                                               value="<%= reminder.remind_at ? new Date(reminder.remind_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>"
+                                               required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="remind_time">Time <span class="required">*</span></label>
+                                        <input type="time" id="remind_time" name="remind_time" 
+                                               value="<%= reminder.remind_at ? new Date(reminder.remind_at).toTimeString().substring(0,5) : '09:00' %>"
+                                               required>
+                                    </div>
+                                </div>
+
+                                <!-- Quick Time Presets -->
+                                <div class="form-group">
+                                    <label>Quick Presets</label>
+                                    <div class="time-presets">
+                                        <button type="button" class="preset-btn" data-preset="in30min">
+                                            <i data-lucide="clock"></i>
+                                            In 30 min
+                                        </button>
+                                        <button type="button" class="preset-btn" data-preset="in1hour">
+                                            <i data-lucide="clock"></i>
+                                            In 1 hour
+                                        </button>
+                                        <button type="button" class="preset-btn" data-preset="tomorrow9am">
+                                            <i data-lucide="sun"></i>
+                                            Tomorrow 9 AM
+                                        </button>
+                                        <button type="button" class="preset-btn" data-preset="tomorrow6pm">
+                                            <i data-lucide="sunset"></i>
+                                            Tomorrow 6 PM
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="repeat_type">Repeat</label>
+                                    <select id="repeat_type" name="repeat_type">
+                                        <option value="none" <%= reminder.repeat_type === 'none' || !reminder.repeat_type ? 'selected' : '' %>>Don't repeat</option>
+                                        <option value="daily" <%= reminder.repeat_type === 'daily' ? 'selected' : '' %>>Daily</option>
+                                        <option value="weekly" <%= reminder.repeat_type === 'weekly' ? 'selected' : '' %>>Weekly</option>
+                                        <option value="monthly" <%= reminder.repeat_type === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <a href="/reminders" class="btn btn-secondary">
+                                    <i data-lucide="x"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-lucide="<%= editing ? 'save' : 'bell-plus' %>"></i>
+                                    <%= editing ? 'Save Changes' : 'Create Reminder' %>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+
+        // Time preset buttons
+        document.querySelectorAll('.time-presets .preset-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const preset = this.dataset.preset;
+                const dateInput = document.getElementById('remind_date');
+                const timeInput = document.getElementById('remind_time');
+                const now = new Date();
+                
+                let targetDate = new Date();
+                
+                switch(preset) {
+                    case 'in30min':
+                        targetDate = new Date(now.getTime() + 30 * 60 * 1000);
+                        break;
+                    case 'in1hour':
+                        targetDate = new Date(now.getTime() + 60 * 60 * 1000);
+                        break;
+                    case 'tomorrow9am':
+                        targetDate = new Date(now);
+                        targetDate.setDate(targetDate.getDate() + 1);
+                        targetDate.setHours(9, 0, 0, 0);
+                        break;
+                    case 'tomorrow6pm':
+                        targetDate = new Date(now);
+                        targetDate.setDate(targetDate.getDate() + 1);
+                        targetDate.setHours(18, 0, 0, 0);
+                        break;
+                }
+                
+                dateInput.value = targetDate.toISOString().split('T')[0];
+                timeInput.value = targetDate.toTimeString().substring(0, 5);
+                
+                // Visual feedback
+                document.querySelectorAll('.time-presets .preset-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

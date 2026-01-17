@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <p><%= error_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Welcome Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>Welcome back, <%= user.fullName ? user.fullName.split(' ')[0] : 'Student' %>! 👋</h1>
+                        <p>Here's an overview of your study progress</p>
+                    </div>
+                    <a href="/study/start" class="btn btn-primary btn-lg">
+                        <i data-lucide="play"></i>
+                        Start Studying
+                    </a>
+                </div>
+
+                <% if (activeSession) { %>
+                    <!-- Active Session Banner -->
+                    <div class="active-session-banner animate-pulse-border">
+                        <div class="banner-content">
+                            <div class="banner-icon">
+                                <i data-lucide="loader" class="spinning"></i>
+                            </div>
+                            <div class="banner-info">
+                                <h3>Active Session in Progress</h3>
+                                <p>
+                                    <span style="color: <%= activeSession.subject_color %>">
+                                        <%= activeSession.subject_name %>
+                                    </span> / <%= activeSession.topic_name %>
+                                </p>
+                            </div>
+                        </div>
+                        <a href="/study/active/<%= activeSession.id %>" class="btn btn-primary">
+                            <i data-lucide="arrow-right"></i>
+                            Continue Session
+                        </a>
+                    </div>
+                <% } %>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid stats-grid-4">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= Math.round(stats.minutesToday / 60 * 10) / 10 %>h</span>
+                            <span class="stat-label">Study Time Today</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                            <i data-lucide="zap"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.sessionsToday %></span>
+                            <span class="stat-label">Sessions Today</span>
+                        </div>
+                    </div>
+                    <div class="stat-card <%= parseInt(stats.overdueTasks) > 0 ? 'stat-warning' : '' %>">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                            <i data-lucide="list-todo"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.pendingTasks %></span>
+                            <span class="stat-label">Pending Tasks</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">
+                            <i data-lucide="flame"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.streak %></span>
+                            <span class="stat-label">Day Streak</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Today's Smart Schedule -->
+                <div class="smart-schedule-card">
+                    <div class="smart-schedule-header">
+                        <div class="smart-schedule-title">
+                            <i data-lucide="sparkles"></i>
+                            <div>
+                                <h3>Today's Smart Schedule</h3>
+                                <p><%= scheduleStats.todayPending %> tasks • <%= Math.round(scheduleStats.todayMinutes / 60 * 10) / 10 %>h remaining</p>
+                            </div>
+                        </div>
+                        <div class="smart-schedule-actions">
+                            <a href="/schedule/today" class="btn btn-ghost btn-sm">View All</a>
+                            <form action="/schedule/generate" method="POST" style="display: inline;">
+                                <input type="hidden" name="days" value="7">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i data-lucide="wand-2"></i>
+                                    Generate
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <% if (typeof todayTasks !== 'undefined' && todayTasks.length > 0) { %>
+                        <div class="smart-schedule-tasks">
+                            <% todayTasks.forEach((task, index) => { %>
+                                <div class="smart-task-item">
+                                    <div class="smart-task-order"><%= index + 1 %></div>
+                                    <div class="smart-task-color" style="background: <%= task.subject_color %>"></div>
+                                    <div class="smart-task-info">
+                                        <span class="smart-task-title"><%= task.title.replace('Study: ', '') %></span>
+                                        <span class="smart-task-meta">
+                                            <%= task.subject_name %> • <%= task.estimated_minutes %> min
+                                        </span>
+                                    </div>
+                                    <div class="smart-task-actions">
+                                        <a href="/study/start?topic=<%= task.topic_id %>&task=<%= task.id %>" class="btn btn-primary btn-sm">
+                                            <i data-lucide="play"></i>
+                                            Start
+                                        </a>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                        <% if (scheduleStats.todayPending > 3) { %>
+                            <div class="smart-schedule-more">
+                                <a href="/schedule/today">+ <%= scheduleStats.todayPending - 3 %> more tasks</a>
+                            </div>
+                        <% } %>
+                    <% } else { %>
+                        <div class="smart-schedule-empty">
+                            <i data-lucide="calendar-plus"></i>
+                            <p>No tasks scheduled for today</p>
+                            <form action="/schedule/generate" method="POST">
+                                <input type="hidden" name="days" value="7">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i data-lucide="sparkles"></i>
+                                    Generate Smart Schedule
+                                </button>
+                            </form>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="dashboard-grid">
+                    <!-- Upcoming Tasks -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="calendar-clock"></i>
+                                Upcoming Deadlines
+                            </h3>
+                            <a href="/tasks" class="card-link">View All</a>
+                        </div>
+                        <div class="card-body">
+                            <% if (upcomingTasks.length === 0) { %>
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i data-lucide="calendar-check"></i>
+                                    </div>
+                                    <h4>No upcoming deadlines</h4>
+                                    <p>Add tasks with deadlines to see them here</p>
+                                    <a href="/tasks/new" class="btn btn-primary btn-sm">
+                                        <i data-lucide="plus"></i>
+                                        Add Task
+                                    </a>
+                                </div>
+                            <% } else { %>
+                                <div class="tasks-list">
+                                    <% upcomingTasks.forEach(task => { 
+                                        const daysUntil = Math.ceil((new Date(task.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                                        const isOverdue = daysUntil < 0;
+                                        const isUrgent = daysUntil <= 2 && daysUntil >= 0;
+                                    %>
+                                        <div class="task-item <%= isOverdue ? 'overdue' : '' %>">
+                                            <div class="task-checkbox">
+                                                <form action="/tasks/<%= task.id %>/status" method="POST" class="status-form">
+                                                    <input type="hidden" name="status" value="completed">
+                                                    <button type="submit" class="checkbox-btn">
+                                                        <i data-lucide="circle"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                            <div class="task-info">
+                                                <a href="/tasks/<%= task.id %>" class="task-title"><%= task.title %></a>
+                                                <div class="task-meta">
+                                                    <span class="task-subject" style="--subject-color: <%= task.subject_color %>">
+                                                        <%= task.subject_name %>
+                                                    </span>
+                                                    <span class="task-deadline <%= isOverdue ? 'overdue' : isUrgent ? 'urgent' : '' %>">
+                                                        <i data-lucide="calendar"></i>
+                                                        <% if (isOverdue) { %>
+                                                            <%= Math.abs(daysUntil) %> day<%= Math.abs(daysUntil) !== 1 ? 's' : '' %> overdue
+                                                        <% } else if (daysUntil === 0) { %>
+                                                            Due today
+                                                        <% } else if (daysUntil === 1) { %>
+                                                            Due tomorrow
+                                                        <% } else { %>
+                                                            <%= daysUntil %> days left
+                                                        <% } %>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <span class="priority-badge priority-<%= task.priority %>">P<%= task.priority %></span>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="zap"></i>
+                                Quick Actions
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="quick-actions">
+                                <a href="/study/start" class="quick-action">
+                                    <div class="quick-action-icon" style="background: #dcfce7; color: #16a34a;">
+                                        <i data-lucide="play-circle"></i>
+                                    </div>
+                                    <span>Start Session</span>
+                                </a>
+                                <a href="/tasks/new" class="quick-action">
+                                    <div class="quick-action-icon" style="background: #dbeafe; color: #2563eb;">
+                                        <i data-lucide="plus-square"></i>
+                                    </div>
+                                    <span>New Task</span>
+                                </a>
+                                <a href="/subjects/new" class="quick-action">
+                                    <div class="quick-action-icon" style="background: #fef3c7; color: #d97706;">
+                                        <i data-lucide="book-plus"></i>
+                                    </div>
+                                    <span>Add Subject</span>
+                                </a>
+                                <a href="/analytics" class="quick-action">
+                                    <div class="quick-action-icon" style="background: #fce7f3; color: #db2777;">
+                                        <i data-lucide="bar-chart-3"></i>
+                                    </div>
+                                    <span>Analytics</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subjects Overview -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="book-open"></i>
+                                Your Subjects
+                            </h3>
+                            <a href="/subjects" class="card-link">View All</a>
+                        </div>
+                        <div class="card-body">
+                            <% if (subjects.length === 0) { %>
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i data-lucide="book-plus"></i>
+                                    </div>
+                                    <h4>No subjects yet</h4>
+                                    <p>Add your first subject to get started</p>
+                                    <a href="/subjects/new" class="btn btn-primary btn-sm">
+                                        <i data-lucide="plus"></i>
+                                        Add Subject
+                                    </a>
+                                </div>
+                            <% } else { %>
+                                <div class="subjects-mini-grid">
+                                    <% subjects.forEach(subject => { 
+                                        const progress = subject.topic_count > 0 
+                                            ? Math.round((parseInt(subject.completed_topics) / parseInt(subject.topic_count)) * 100) 
+                                            : 0;
+                                    %>
+                                        <a href="/subjects/<%= subject.id %>" class="subject-mini-card" style="--subject-color: <%= subject.color %>">
+                                            <div class="subject-mini-header">
+                                                <div class="subject-mini-color"></div>
+                                                <span class="subject-mini-name"><%= subject.name %></span>
+                                            </div>
+                                            <div class="subject-mini-progress">
+                                                <div class="progress-bar">
+                                                    <div class="progress-fill" style="width: <%= progress %>%"></div>
+                                                </div>
+                                                <span class="progress-text"><%= progress %>% complete</span>
+                                            </div>
+                                        </a>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Recent Sessions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="history"></i>
+                                Recent Sessions
+                            </h3>
+                            <a href="/study/history" class="card-link">View All</a>
+                        </div>
+                        <div class="card-body">
+                            <% if (recentSessions.length === 0) { %>
+                                <div class="empty-state small">
+                                    <i data-lucide="clock"></i>
+                                    <p>No study sessions yet</p>
+                                    <a href="/study/start" class="btn btn-primary btn-sm">Start Studying</a>
+                                </div>
+                            <% } else { %>
+                                <div class="sessions-list">
+                                    <% recentSessions.forEach(session => { %>
+                                        <div class="session-row">
+                                            <div class="session-color" style="background: <%= session.subject_color %>"></div>
+                                            <div class="session-info">
+                                                <span class="session-subject"><%= session.subject_name %></span>
+                                                <span class="session-time">
+                                                    <%= new Date(session.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                                                </span>
+                                            </div>
+                                            <div class="session-duration">
+                                                <i data-lucide="clock"></i>
+                                                <%= session.actual_minutes %> min
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && menuToggle && !menuToggle.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+    </script>
+
+    <style>
+        /* Smart Schedule Card Styles */
+        .smart-schedule-card {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            color: white;
+        }
+
+        .smart-schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .smart-schedule-title {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+        }
+
+        .smart-schedule-title > svg {
+            width: 28px;
+            height: 28px;
+            margin-top: 2px;
+        }
+
+        .smart-schedule-title h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem 0;
+        }
+
+        .smart-schedule-title p {
+            margin: 0;
+            opacity: 0.85;
+            font-size: 0.875rem;
+        }
+
+        .smart-schedule-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .smart-schedule-actions .btn-ghost {
+            color: white !important;
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.15);
+        }
+
+        .smart-schedule-actions .btn-ghost:hover {
+            background: rgba(255,255,255,0.25);
+            color: white !important;
+        }
+
+        .smart-schedule-actions .btn-primary {
+            background: white !important;
+            color: #6366f1 !important;
+        }
+
+        .smart-schedule-actions .btn-primary:hover {
+            background: rgba(255,255,255,0.9) !important;
+            color: #6366f1 !important;
+        }
+
+        /* Ensure button text is always visible */
+        .smart-schedule-actions .btn {
+            font-weight: 600 !important;
+        }
+
+        .smart-schedule-actions .btn svg {
+            color: inherit !important;
+        }
+
+        .smart-schedule-tasks {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .smart-task-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            background: rgba(255,255,255,0.15);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md) var(--spacing-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .smart-task-order {
+            width: 28px;
+            height: 28px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        .smart-task-color {
+            width: 4px;
+            height: 32px;
+            border-radius: 100px;
+        }
+
+        .smart-task-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .smart-task-title {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.125rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .smart-task-meta {
+            font-size: 0.75rem;
+            opacity: 0.85;
+        }
+
+        .smart-task-actions .btn {
+            background: white !important;
+            color: #6366f1 !important;
+            padding: 0.375rem 0.75rem;
+            font-weight: 600 !important;
+        }
+
+        .smart-task-actions .btn svg {
+            color: #6366f1 !important;
+        }
+
+        .smart-task-actions .btn:hover {
+            background: rgba(255,255,255,0.9) !important;
+            transform: translateY(-1px);
+        }
+
+        .smart-schedule-more {
+            text-align: center;
+            margin-top: var(--spacing-md);
+        }
+
+        .smart-schedule-more a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .smart-schedule-more a:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .smart-schedule-empty {
+            text-align: center;
+            padding: var(--spacing-xl);
+        }
+
+        .smart-schedule-empty svg {
+            width: 48px;
+            height: 48px;
+            opacity: 0.7;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .smart-schedule-empty p {
+            margin: 0 0 var(--spacing-md) 0;
+            opacity: 0.85;
+        }
+
+        .smart-schedule-empty .btn-primary {
+            background: white !important;
+            color: var(--primary) !important;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-xl);
+        }
+
+        .subjects-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+        }
+
+        .subject-mini-card {
+            display: block;
+            padding: var(--spacing-md);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            border-left: 3px solid var(--subject-color);
+            transition: all var(--transition-fast);
+        }
+
+        .subject-mini-card:hover {
+            background: var(--bg-tertiary);
+            transform: translateX(2px);
+        }
+
+        .subject-mini-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .subject-mini-color {
+            width: 10px;
+            height: 10px;
+            background: var(--subject-color);
+            border-radius: 50%;
+        }
+
+        .subject-mini-name {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .subject-mini-progress .progress-bar {
+            height: 4px;
+            margin-bottom: 0.25rem;
+        }
+
+        .subject-mini-progress .progress-text {
+            font-size: 0.6875rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-warning {
+            border: 1px solid #fbbf24;
+        }
+
+        .task-deadline.urgent {
+            color: var(--warning);
+            font-weight: 500;
+        }
+
+        .task-item.overdue {
+            background: #fef2f2;
+        }
+
+        .tasks-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+        }
+
+        .checkbox-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            padding: 0;
+        }
+
+        .checkbox-btn:hover {
+            color: var(--success);
+        }
+
+        .task-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .task-title {
+            display: block;
+            font-weight: 500;
+            color: var(--text-primary);
+            text-decoration: none;
+            margin-bottom: 0.25rem;
+        }
+
+        .task-title:hover {
+            color: var(--primary);
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            font-size: 0.75rem;
+        }
+
+        .task-subject {
+            color: var(--subject-color);
+            font-weight: 500;
+        }
+
+        .task-deadline {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--text-secondary);
+        }
+
+        .task-deadline svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .task-deadline.overdue {
+            color: var(--danger);
+        }
+
+        .priority-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.6875rem;
+            font-weight: 600;
+        }
+
+        .priority-1 { background: #fee2e2; color: #dc2626; }
+        .priority-2 { background: #fef3c7; color: #d97706; }
+        .priority-3 { background: #dbeafe; color: #2563eb; }
+        .priority-4 { background: #e0e7ff; color: #4f46e5; }
+        .priority-5 { background: #f3f4f6; color: #6b7280; }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+        }
+
+        .quick-action {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-lg);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            text-decoration: none;
+            transition: all var(--transition-fast);
+        }
+
+        .quick-action:hover {
+            background: var(--bg-tertiary);
+            transform: translateY(-2px);
+        }
+
+        .quick-action-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .quick-action-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .quick-action span {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .sessions-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .session-row {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+        }
+
+        .session-color {
+            width: 4px;
+            height: 32px;
+            border-radius: 2px;
+        }
+
+        .session-info {
+            flex: 1;
+        }
+
+        .session-subject {
+            display: block;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .session-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .session-duration {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .session-duration svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .active-session-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-lg);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .banner-content {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+
+        .banner-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.2);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .banner-info h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.25rem;
+        }
+
+        .banner-info p {
+            color: rgba(255,255,255,0.9);
+            font-size: 0.875rem;
+        }
+
+        .active-session-banner .btn {
+            background: white;
+            color: #059669;
+        }
+
+        .active-session-banner .btn:hover {
+            background: #f0fdf4;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .spinning {
+            animation: spin 2s linear infinite;
+        }
+
+        .empty-state.small {
+            padding: var(--spacing-lg);
+            text-align: center;
+        }
+
+        .empty-state.small svg {
+            width: 32px;
+            height: 32px;
+            color: var(--text-tertiary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .empty-state.small p {
+            margin-bottom: var(--spacing-md);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .subjects-mini-grid,
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .active-session-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: var(--spacing-lg);
+            }
+
+            .banner-content {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

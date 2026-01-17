@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .history-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: var(--spacing-xl);
+        }
+        
+        @media (max-width: 1024px) {
+            .history-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .calendar-sidebar {
+            position: sticky;
+            top: var(--spacing-xl);
+            height: fit-content;
+        }
+        
+        .calendar-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-100);
+        }
+        
+        .calendar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .calendar-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        
+        .calendar-days {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .calendar-day {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+        }
+        
+        .calendar-day:hover {
+            background: var(--gray-50);
+        }
+        
+        .calendar-day.selected {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+        
+        .calendar-day.today {
+            border: 2px solid var(--primary);
+        }
+        
+        .day-date {
+            width: 45px;
+            text-align: center;
+        }
+        
+        .day-num {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+        
+        .calendar-day.selected .day-num {
+            color: white;
+        }
+        
+        .day-name {
+            font-size: 0.6875rem;
+            color: var(--gray-500);
+            text-transform: uppercase;
+        }
+        
+        .calendar-day.selected .day-name {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .day-stats {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .day-bar {
+            flex: 1;
+            height: 6px;
+            background: var(--gray-100);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+        
+        .calendar-day.selected .day-bar {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .day-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: var(--radius-full);
+            transition: width var(--transition-normal);
+        }
+        
+        .calendar-day.selected .day-bar-fill {
+            background: white;
+        }
+        
+        .day-minutes {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            min-width: 45px;
+            text-align: right;
+        }
+        
+        .calendar-day.selected .day-minutes {
+            color: white;
+        }
+        
+        .history-main {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xl);
+        }
+        
+        .date-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-100);
+        }
+        
+        .date-nav h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+        
+        .date-nav-btns {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            background: white;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+        }
+        
+        .nav-btn:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+        }
+        
+        .nav-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--spacing-md);
+        }
+        
+        @media (max-width: 768px) {
+            .summary-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        .summary-card {
+            background: white;
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-100);
+            text-align: center;
+        }
+        
+        .summary-card-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto var(--spacing-sm);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .summary-card-icon svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+        
+        .summary-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: 0.25rem;
+        }
+        
+        .summary-label {
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+        }
+        
+        .summary-compare {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: var(--spacing-xs);
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            font-size: 0.6875rem;
+            font-weight: 600;
+        }
+        
+        .summary-compare.up {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .summary-compare.down {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .summary-compare.same {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+        
+        .summary-compare svg {
+            width: 12px;
+            height: 12px;
+        }
+        
+        .sessions-section, .tasks-section {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-100);
+            overflow: hidden;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        
+        .section-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        
+        .section-header svg {
+            width: 20px;
+            height: 20px;
+            color: var(--primary);
+        }
+        
+        .session-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-50);
+        }
+        
+        .session-item:last-child {
+            border-bottom: none;
+        }
+        
+        .session-color {
+            width: 4px;
+            height: 50px;
+            border-radius: var(--radius-full);
+            flex-shrink: 0;
+        }
+        
+        .session-info {
+            flex: 1;
+        }
+        
+        .session-topic {
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 2px;
+        }
+        
+        .session-subject {
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+        }
+        
+        .session-time {
+            text-align: right;
+        }
+        
+        .session-duration {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+        
+        .session-hours {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+        
+        .session-quality {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        
+        .star {
+            color: var(--gray-300);
+        }
+        
+        .star.filled {
+            color: #f59e0b;
+        }
+        
+        .star svg {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-50);
+        }
+        
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        
+        .task-check {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .task-check svg {
+            width: 14px;
+            height: 14px;
+            color: white;
+        }
+        
+        .task-info {
+            flex: 1;
+        }
+        
+        .task-title {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+        
+        .task-meta {
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+        }
+        
+        .empty-history {
+            padding: var(--spacing-2xl);
+            text-align: center;
+            color: var(--gray-500);
+        }
+        
+        .empty-history svg {
+            width: 48px;
+            height: 48px;
+            color: var(--gray-300);
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .empty-history h4 {
+            font-size: 1rem;
+            color: var(--gray-700);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .quick-nav {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .quick-nav-btn {
+            padding: 0.5rem 1rem;
+            background: var(--gray-100);
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-decoration: none;
+        }
+        
+        .quick-nav-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .quick-nav-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>
+                            <i data-lucide="history" style="color: var(--primary);"></i>
+                            Study History
+                        </h1>
+                        <p>Review your past study sessions and track your progress over time</p>
+                    </div>
+                    <a href="/analytics" class="btn btn-secondary">
+                        <i data-lucide="bar-chart-3"></i>
+                        Back to Analytics
+                    </a>
+                </div>
+                
+                <!-- Quick Navigation -->
+                <div class="quick-nav">
+                    <a href="/analytics/history" class="quick-nav-btn <%= selectedDate === new Date().toISOString().split('T')[0] ? 'active' : '' %>">Today</a>
+                    <% 
+                        const yesterday = new Date();
+                        yesterday.setDate(yesterday.getDate() - 1);
+                        const yesterdayStr = yesterday.toISOString().split('T')[0];
+                    %>
+                    <a href="/analytics/history?date=<%= yesterdayStr %>" class="quick-nav-btn <%= selectedDate === yesterdayStr ? 'active' : '' %>">Yesterday</a>
+                    <% 
+                        const lastWeek = new Date();
+                        lastWeek.setDate(lastWeek.getDate() - 7);
+                        const lastWeekStr = lastWeek.toISOString().split('T')[0];
+                    %>
+                    <a href="/analytics/history?date=<%= lastWeekStr %>" class="quick-nav-btn <%= selectedDate === lastWeekStr ? 'active' : '' %>">Last Week</a>
+                </div>
+
+                <div class="history-layout">
+                    <!-- Calendar Sidebar -->
+                    <div class="calendar-sidebar">
+                        <div class="calendar-card">
+                            <div class="calendar-header">
+                                <h3>
+                                    <i data-lucide="calendar"></i>
+                                    Last 30 Days
+                                </h3>
+                            </div>
+                            <div class="calendar-days">
+                                <% 
+                                    const maxMinutes = Math.max(...calendar.map(d => d.minutes), 1);
+                                    calendar.forEach(day => { 
+                                        const barWidth = (day.minutes / maxMinutes) * 100;
+                                %>
+                                    <a href="/analytics/history?date=<%= day.date %>" 
+                                       class="calendar-day <%= day.isToday ? 'today' : '' %> <%= day.isSelected ? 'selected' : '' %>">
+                                        <div class="day-date">
+                                            <div class="day-num"><%= day.dayNum %></div>
+                                            <div class="day-name"><%= day.dayName %></div>
+                                        </div>
+                                        <div class="day-stats">
+                                            <div class="day-bar">
+                                                <div class="day-bar-fill" style="width: <%= barWidth %>%"></div>
+                                            </div>
+                                        </div>
+                                        <div class="day-minutes">
+                                            <% if (day.minutes > 0) { %>
+                                                <%= day.minutes >= 60 ? Math.round(day.minutes / 60 * 10) / 10 + 'h' : day.minutes + 'm' %>
+                                            <% } else { %>
+                                                —
+                                            <% } %>
+                                        </div>
+                                    </a>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div class="history-main">
+                        <!-- Date Navigation -->
+                        <div class="date-nav">
+                            <% 
+                                const prevDay = new Date(selectedDate);
+                                prevDay.setDate(prevDay.getDate() - 1);
+                                const nextDay = new Date(selectedDate);
+                                nextDay.setDate(nextDay.getDate() + 1);
+                                const isToday = selectedDate === new Date().toISOString().split('T')[0];
+                            %>
+                            <a href="/analytics/history?date=<%= prevDay.toISOString().split('T')[0] %>" class="nav-btn">
+                                <i data-lucide="chevron-left"></i>
+                            </a>
+                            <h2><%= displayDate %></h2>
+                            <% if (!isToday) { %>
+                                <a href="/analytics/history?date=<%= nextDay.toISOString().split('T')[0] %>" class="nav-btn">
+                                    <i data-lucide="chevron-right"></i>
+                                </a>
+                            <% } else { %>
+                                <span class="nav-btn" style="opacity: 0.3; cursor: not-allowed;">
+                                    <i data-lucide="chevron-right"></i>
+                                </span>
+                            <% } %>
+                        </div>
+
+                        <!-- Summary Cards -->
+                        <div class="summary-cards">
+                            <div class="summary-card">
+                                <div class="summary-card-icon" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">
+                                    <i data-lucide="clock"></i>
+                                </div>
+                                <div class="summary-value">
+                                    <% const hours = Math.floor(summary.total_minutes / 60); %>
+                                    <% const mins = summary.total_minutes % 60; %>
+                                    <%= hours > 0 ? hours + 'h ' : '' %><%= mins %>m
+                                </div>
+                                <div class="summary-label">Study Time</div>
+                                <% 
+                                    const diff = summary.total_minutes - prevDayMinutes;
+                                    const diffClass = diff > 0 ? 'up' : diff < 0 ? 'down' : 'same';
+                                %>
+                                <span class="summary-compare <%= diffClass %>">
+                                    <% if (diff > 0) { %>
+                                        <i data-lucide="trending-up"></i> +<%= diff %>m vs prev
+                                    <% } else if (diff < 0) { %>
+                                        <i data-lucide="trending-down"></i> <%= diff %>m vs prev
+                                    <% } else { %>
+                                        <i data-lucide="minus"></i> Same as prev
+                                    <% } %>
+                                </span>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);">
+                                    <i data-lucide="play-circle"></i>
+                                </div>
+                                <div class="summary-value"><%= summary.session_count || 0 %></div>
+                                <div class="summary-label">Sessions</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);">
+                                    <i data-lucide="star"></i>
+                                </div>
+                                <div class="summary-value"><%= parseFloat(summary.avg_quality || 0).toFixed(1) %></div>
+                                <div class="summary-label">Avg Quality</div>
+                            </div>
+                            <div class="summary-card">
+                                <div class="summary-card-icon" style="background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);">
+                                    <i data-lucide="check-circle"></i>
+                                </div>
+                                <div class="summary-value"><%= tasksCompleted.length %></div>
+                                <div class="summary-label">Tasks Done</div>
+                            </div>
+                        </div>
+
+                        <!-- Study Sessions -->
+                        <div class="sessions-section">
+                            <div class="section-header">
+                                <i data-lucide="book-open"></i>
+                                <h3>Study Sessions</h3>
+                            </div>
+                            <% if (sessions.length === 0) { %>
+                                <div class="empty-history">
+                                    <i data-lucide="coffee"></i>
+                                    <h4>No study sessions</h4>
+                                    <p>No study sessions were recorded on this day</p>
+                                </div>
+                            <% } else { %>
+                                <% sessions.forEach(session => { %>
+                                    <div class="session-item">
+                                        <div class="session-color" style="background: <%= session.subject_color || 'var(--primary)' %>;"></div>
+                                        <div class="session-info">
+                                            <div class="session-topic"><%= session.topic_name || 'Unknown Topic' %></div>
+                                            <div class="session-subject">
+                                                <%= session.subject_name || 'Unknown Subject' %>
+                                                <% if (session.task_title) { %>
+                                                    • <%= session.task_title %>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        <div class="session-time">
+                                            <div class="session-duration"><%= session.actual_minutes || 0 %> min</div>
+                                            <div class="session-hours">
+                                                <%= new Date(session.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) %>
+                                            </div>
+                                        </div>
+                                        <div class="session-quality">
+                                            <% for (let i = 1; i <= 5; i++) { %>
+                                                <span class="star <%= i <= (session.quality_rating || 0) ? 'filled' : '' %>">
+                                                    <i data-lucide="star"></i>
+                                                </span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } %>
+                        </div>
+
+                        <!-- Completed Tasks -->
+                        <div class="tasks-section">
+                            <div class="section-header">
+                                <i data-lucide="check-square"></i>
+                                <h3>Tasks Completed</h3>
+                            </div>
+                            <% if (tasksCompleted.length === 0) { %>
+                                <div class="empty-history">
+                                    <i data-lucide="clipboard"></i>
+                                    <h4>No tasks completed</h4>
+                                    <p>No tasks were marked as completed on this day</p>
+                                </div>
+                            <% } else { %>
+                                <% tasksCompleted.forEach(task => { %>
+                                    <div class="task-item">
+                                        <div class="task-check">
+                                            <i data-lucide="check"></i>
+                                        </div>
+                                        <div class="task-info">
+                                            <div class="task-title"><%= task.title %></div>
+                                            <div class="task-meta">
+                                                <span style="color: <%= task.subject_color %>;">●</span>
+                                                <%= task.subject_name %> / <%= task.topic_name %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+</body>
+</html>

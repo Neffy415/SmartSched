@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb">
+                    <a href="/study">Study Sessions</a>
+                    <i data-lucide="chevron-right"></i>
+                    <span>Start New Session</span>
+                </nav>
+
+                <!-- Form Card -->
+                <div class="card form-card">
+                    <div class="card-header">
+                        <h2>
+                            <i data-lucide="play-circle"></i>
+                            Start Study Session
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <form action="/study/start" method="POST" class="form">
+                            <div class="form-row form-row-2">
+                                <div class="form-group">
+                                    <label for="subject_id">Subject <span class="required">*</span></label>
+                                    <select id="subject_id" name="subject_id" required onchange="updateTopics()">
+                                        <option value="">Select a subject</option>
+                                        <% subjects.forEach(subject => { %>
+                                            <option value="<%= subject.id %>" 
+                                                    data-topics='<%= JSON.stringify(subject.topics) %>'
+                                                    <%= selectedTopic && subject.topics.some(t => t && t.id === selectedTopic.id) ? 'selected' : '' %>>
+                                                <%= subject.name %>
+                                            </option>
+                                        <% }); %>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="topic_id">Topic <span class="required">*</span></label>
+                                    <select id="topic_id" name="topic_id" required onchange="updateTasks()">
+                                        <option value="">Select subject first</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row form-row-2">
+                                <div class="form-group">
+                                    <label for="task_id">Task (Optional)</label>
+                                    <select id="task_id" name="task_id">
+                                        <option value="">No specific task</option>
+                                        <% tasks.forEach(task => { %>
+                                            <option value="<%= task.id %>" <%= selectedTask && selectedTask.id === task.id ? 'selected' : '' %>>
+                                                <%= task.title %> (<%= task.estimated_minutes %> min)
+                                            </option>
+                                        <% }); %>
+                                    </select>
+                                    <span class="form-hint">Link this session to a specific task</span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="planned_minutes">Planned Duration (minutes)</label>
+                                    <input type="number" id="planned_minutes" name="planned_minutes" 
+                                           value="<%= selectedTask ? selectedTask.estimated_minutes : 25 %>" 
+                                           min="5" max="180">
+                                    <span class="form-hint">Recommended: 25-50 minutes</span>
+                                </div>
+                            </div>
+
+                            <!-- Pomodoro Presets -->
+                            <div class="form-group">
+                                <label>Quick Duration Presets</label>
+                                <div class="duration-presets">
+                                    <button type="button" class="preset-btn" data-duration="15">
+                                        <i data-lucide="coffee"></i>
+                                        15 min
+                                    </button>
+                                    <button type="button" class="preset-btn active" data-duration="25">
+                                        <i data-lucide="timer"></i>
+                                        25 min
+                                        <span class="preset-label">Pomodoro</span>
+                                    </button>
+                                    <button type="button" class="preset-btn" data-duration="45">
+                                        <i data-lucide="clock"></i>
+                                        45 min
+                                    </button>
+                                    <button type="button" class="preset-btn" data-duration="60">
+                                        <i data-lucide="hourglass"></i>
+                                        60 min
+                                    </button>
+                                    <button type="button" class="preset-btn" data-duration="90">
+                                        <i data-lucide="brain"></i>
+                                        90 min
+                                        <span class="preset-label">Deep Work</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <a href="/study" class="btn btn-secondary">
+                                    <i data-lucide="x"></i>
+                                    Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i data-lucide="play"></i>
+                                    Start Session
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Tips Card -->
+                <div class="card tips-card">
+                    <div class="card-header">
+                        <h3>
+                            <i data-lucide="lightbulb"></i>
+                            Study Tips
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="tips-grid">
+                            <div class="tip">
+                                <i data-lucide="target"></i>
+                                <p><strong>Set clear goals</strong> - Know what you want to accomplish before starting</p>
+                            </div>
+                            <div class="tip">
+                                <i data-lucide="smartphone-off"></i>
+                                <p><strong>Minimize distractions</strong> - Put your phone away and close unnecessary tabs</p>
+                            </div>
+                            <div class="tip">
+                                <i data-lucide="clock"></i>
+                                <p><strong>Use the Pomodoro technique</strong> - 25 minutes focused work, 5 minute break</p>
+                            </div>
+                            <div class="tip">
+                                <i data-lucide="droplet"></i>
+                                <p><strong>Stay hydrated</strong> - Keep water nearby and take short breaks</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+
+        // Topic dropdown population
+        const subjectSelect = document.getElementById('subject_id');
+        const topicSelect = document.getElementById('topic_id');
+        const taskSelect = document.getElementById('task_id');
+        const plannedMinutes = document.getElementById('planned_minutes');
+        const currentTopicId = '<%= selectedTopic ? selectedTopic.id : '' %>';
+
+        function updateTopics() {
+            const selected = subjectSelect.options[subjectSelect.selectedIndex];
+            const topics = selected.dataset.topics ? JSON.parse(selected.dataset.topics) : [];
+            
+            topicSelect.innerHTML = '<option value="">Select a topic</option>';
+            taskSelect.innerHTML = '<option value="">No specific task</option>';
+            
+            topics.forEach(topic => {
+                if (topic && topic.id) {
+                    const option = document.createElement('option');
+                    option.value = topic.id;
+                    option.textContent = topic.name;
+                    if (topic.id === currentTopicId) {
+                        option.selected = true;
+                    }
+                    topicSelect.appendChild(option);
+                }
+            });
+        }
+
+        async function updateTasks() {
+            const topicId = topicSelect.value;
+            if (!topicId) {
+                taskSelect.innerHTML = '<option value="">No specific task</option>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/topics/${topicId}/tasks`);
+                if (response.ok) {
+                    const tasks = await response.json();
+                    taskSelect.innerHTML = '<option value="">No specific task</option>';
+                    tasks.forEach(task => {
+                        const option = document.createElement('option');
+                        option.value = task.id;
+                        option.textContent = `${task.title} (${task.estimated_minutes} min)`;
+                        taskSelect.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.log('Could not fetch tasks');
+            }
+        }
+
+        // Duration presets
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                plannedMinutes.value = btn.dataset.duration;
+            });
+        });
+
+        // Initialize topics if subject is selected
+        if (subjectSelect.value) {
+            updateTopics();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <p><%= error_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>Weekly Study Plan</h1>
+                        <p>Your intelligent study schedule</p>
+                    </div>
+                    <div class="page-header-actions">
+                        <a href="/schedule/today" class="btn btn-ghost">
+                            <i data-lucide="calendar-check"></i>
+                            Today's Plan
+                        </a>
+                        <form action="/schedule/generate" method="POST" style="display: inline;">
+                            <input type="hidden" name="days" value="7">
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="sparkles"></i>
+                                Regenerate Schedule
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Week Navigation -->
+                <div class="week-navigation">
+                    <a href="/schedule/week?start=<%= prevWeekStr %>" class="btn btn-ghost">
+                        <i data-lucide="chevron-left"></i>
+                        Previous
+                    </a>
+                    <div class="week-label">
+                        <i data-lucide="calendar"></i>
+                        <span><%= weekStart %> - <%= weekEnd %></span>
+                    </div>
+                    <a href="/schedule/week?start=<%= nextWeekStr %>" class="btn btn-ghost">
+                        Next
+                        <i data-lucide="chevron-right"></i>
+                    </a>
+                </div>
+
+                <!-- Week Summary -->
+                <div class="week-summary-bar">
+                    <div class="summary-item">
+                        <i data-lucide="list-checks"></i>
+                        <span><strong><%= stats.weekTasks %></strong> tasks this week</span>
+                    </div>
+                </div>
+
+                <!-- Week Grid -->
+                <div class="week-grid">
+                    <% weekDays.forEach(day => { %>
+                        <div class="week-day-column <%= day.isToday ? 'today' : '' %>">
+                            <div class="day-header">
+                                <span class="day-name"><%= day.dayName %></span>
+                                <span class="day-number <%= day.isToday ? 'today-badge' : '' %>"><%= day.dayNum %></span>
+                            </div>
+                            
+                            <div class="day-tasks-container">
+                                <% if (day.tasks.length === 0) { %>
+                                    <div class="no-tasks-placeholder">
+                                        <i data-lucide="coffee"></i>
+                                        <span>Free day</span>
+                                    </div>
+                                <% } else { %>
+                                    <% day.tasks.forEach(task => { %>
+                                        <div class="week-task-card <%= task.status %>" style="border-left-color: <%= task.subject_color %>">
+                                            <div class="week-task-header">
+                                                <span class="week-task-subject" style="color: <%= task.subject_color %>">
+                                                    <%= task.subject_name %>
+                                                </span>
+                                                <span class="week-task-duration">
+                                                    <%= task.estimated_minutes %>m
+                                                </span>
+                                            </div>
+                                            <div class="week-task-title"><%= task.title.replace('Study: ', '') %></div>
+                                            <div class="week-task-topic"><%= task.topic_name %></div>
+                                            
+                                            <% if (day.isToday && task.status !== 'completed') { %>
+                                                <div class="week-task-actions">
+                                                    <a href="/study/start?topic=<%= task.topic_id %>&task=<%= task.id %>" 
+                                                       class="week-action-btn start" title="Start">
+                                                        <i data-lucide="play"></i>
+                                                    </a>
+                                                    <form action="/schedule/task/<%= task.id %>/complete" method="POST" class="inline-form">
+                                                        <button type="submit" class="week-action-btn complete" title="Complete">
+                                                            <i data-lucide="check"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            <% } else if (task.status === 'completed') { %>
+                                                <div class="week-task-completed">
+                                                    <i data-lucide="check-circle"></i>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% }); %>
+                                <% } %>
+                            </div>
+                            
+                            <% if (day.tasks.length > 0) { %>
+                                <div class="day-footer">
+                                    <span class="task-count"><%= day.tasks.length %> task<%= day.tasks.length > 1 ? 's' : '' %></span>
+                                    <span class="time-total">
+                                        <%= Math.round(day.tasks.reduce((sum, t) => sum + (t.estimated_minutes || 0), 0) / 60 * 10) / 10 %>h
+                                    </span>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                </div>
+
+                <!-- Legend -->
+                <div class="schedule-legend">
+                    <div class="legend-item">
+                        <div class="legend-color pending"></div>
+                        <span>Pending</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color completed"></div>
+                        <span>Completed</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color skipped"></div>
+                        <span>Skipped</span>
+                    </div>
+                </div>
+
+                <!-- Info Box -->
+                <div class="info-box">
+                    <div class="info-icon">
+                        <i data-lucide="info"></i>
+                    </div>
+                    <div class="info-content">
+                        <h4>How Intelligent Scheduling Works</h4>
+                        <p>SmartSched automatically prioritizes your topics based on:</p>
+                        <ul>
+                            <li><strong>Exam proximity:</strong> Topics for upcoming exams get higher priority</li>
+                            <li><strong>Subject importance:</strong> Critical subjects are scheduled first</li>
+                            <li><strong>Topic difficulty:</strong> Harder topics get more focus</li>
+                            <li><strong>Your performance:</strong> Weak areas are reinforced with more study time</li>
+                            <li><strong>Spaced repetition:</strong> Topics you haven't studied recently get a boost</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+
+    <style>
+        /* Weekly Schedule Specific Styles */
+        .week-navigation {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-primary);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .week-label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .week-label svg {
+            width: 20px;
+            height: 20px;
+            color: var(--primary);
+        }
+
+        .week-summary-bar {
+            display: flex;
+            gap: var(--spacing-xl);
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            color: var(--primary-700);
+        }
+
+        .summary-item svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .week-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .week-day-column {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+        }
+
+        .week-day-column.today {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px var(--primary-100);
+        }
+
+        .day-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: var(--spacing-md);
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .week-day-column.today .day-header {
+            background: var(--primary);
+            color: white;
+        }
+
+        .day-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray-500);
+        }
+
+        .week-day-column.today .day-name {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .day-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+
+        .week-day-column.today .day-number {
+            color: white;
+        }
+
+        .today-badge {
+            background: white;
+            color: var(--primary) !important;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        /* Ensure today's day number is visible */
+        .week-day-column.today .day-number.today-badge {
+            color: var(--primary) !important;
+        }
+
+        .day-tasks-container {
+            flex: 1;
+            padding: var(--spacing-sm);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            overflow-y: auto;
+        }
+
+        .no-tasks-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--gray-400);
+            font-size: 0.75rem;
+        }
+
+        .no-tasks-placeholder svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .week-task-card {
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm);
+            border-left: 3px solid var(--primary);
+            font-size: 0.75rem;
+            position: relative;
+            transition: all var(--transition-fast);
+        }
+
+        .week-task-card:hover {
+            background: var(--gray-100);
+        }
+
+        .week-task-card.completed {
+            opacity: 0.5;
+            background: #d1fae5;
+        }
+
+        .week-task-card.skipped {
+            opacity: 0.5;
+            background: #fee2e2;
+        }
+
+        .week-task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+
+        .week-task-subject {
+            font-weight: 600;
+            font-size: 0.625rem;
+            text-transform: uppercase;
+        }
+
+        .week-task-duration {
+            font-size: 0.625rem;
+            color: var(--gray-500);
+        }
+
+        .week-task-title {
+            font-weight: 600;
+            color: var(--gray-800);
+            margin-bottom: 0.125rem;
+            line-height: 1.3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .week-task-topic {
+            color: var(--gray-500);
+            font-size: 0.625rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .week-task-actions {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: var(--spacing-xs);
+        }
+
+        .week-action-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: none;
+            transition: all var(--transition-fast);
+        }
+
+        .week-action-btn svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .week-action-btn.start {
+            background: var(--primary);
+            color: white;
+            opacity: 1;
+        }
+
+        .week-action-btn.start:hover {
+            background: var(--primary-600);
+            transform: scale(1.1);
+        }
+
+        .week-action-btn.complete {
+            background: var(--success);
+            color: white;
+            opacity: 1;
+        }
+
+        .week-action-btn.complete:hover {
+            background: #059669;
+            transform: scale(1.1);
+        }
+
+        /* Ensure action buttons are always visible for today's tasks */
+        .week-day-column.today .week-task-actions {
+            display: flex !important;
+            opacity: 1 !important;
+        }
+
+        .week-day-column.today .week-action-btn {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .week-task-completed {
+            position: absolute;
+            top: var(--spacing-sm);
+            right: var(--spacing-sm);
+            color: var(--success);
+        }
+
+        .week-task-completed svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .day-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-sm);
+            background: var(--gray-50);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.625rem;
+            color: var(--gray-500);
+        }
+
+        .schedule-legend {
+            display: flex;
+            gap: var(--spacing-lg);
+            justify-content: center;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: var(--radius-sm);
+        }
+
+        .legend-color.pending {
+            background: var(--gray-100);
+            border: 1px solid var(--gray-300);
+        }
+
+        .legend-color.completed {
+            background: #d1fae5;
+        }
+
+        .legend-color.skipped {
+            background: #fee2e2;
+        }
+
+        .info-box {
+            display: flex;
+            gap: var(--spacing-lg);
+            padding: var(--spacing-xl);
+            background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-color);
+        }
+
+        .info-icon {
+            flex-shrink: 0;
+            width: 48px;
+            height: 48px;
+            background: var(--primary-100);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .info-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .info-content h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 0 0 var(--spacing-sm) 0;
+            color: var(--gray-800);
+        }
+
+        .info-content p {
+            margin: 0 0 var(--spacing-sm) 0;
+            color: var(--gray-600);
+        }
+
+        .info-content ul {
+            margin: 0;
+            padding-left: var(--spacing-lg);
+            color: var(--gray-600);
+        }
+
+        .info-content li {
+            margin-bottom: 0.25rem;
+        }
+
+        .inline-form {
+            display: inline;
+        }
+
+        @media (max-width: 1024px) {
+            .week-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .week-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .week-day-column {
+                min-height: 200px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .week-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

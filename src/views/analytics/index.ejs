@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-lg);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .metric-title {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .metric-change {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .metric-change.positive {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .metric-change.negative {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .metric-change svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .metric-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .weak-topics-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .weak-topic-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+        }
+
+        .weak-topic-color {
+            width: 4px;
+            height: 40px;
+            border-radius: var(--radius-full);
+        }
+
+        .weak-topic-info {
+            flex: 1;
+        }
+
+        .weak-topic-name {
+            font-weight: 500;
+            margin-bottom: 0.125rem;
+        }
+
+        .weak-topic-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .weak-topic-progress {
+            width: 100px;
+        }
+
+        .progress-mini {
+            height: 6px;
+            background: var(--border);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+            margin-bottom: 0.25rem;
+        }
+
+        .progress-mini-fill {
+            height: 100%;
+            background: var(--warning);
+            border-radius: var(--radius-full);
+        }
+
+        .progress-mini-text {
+            font-size: 0.6875rem;
+            color: var(--text-secondary);
+            text-align: right;
+        }
+
+        .subject-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 0.8125rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .streak-display {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg);
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .streak-icon {
+            font-size: 3rem;
+        }
+
+        .streak-info h3 {
+            font-size: 0.875rem;
+            color: #92400e;
+            margin-bottom: 0.25rem;
+        }
+
+        .streak-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #78350f;
+        }
+
+        .task-completion-chart {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+
+        .donut-container {
+            width: 120px;
+            height: 120px;
+            position: relative;
+        }
+
+        .task-legend {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .task-legend-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .task-legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .task-legend-label {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .task-legend-value {
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        @media (max-width: 1024px) {
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>Analytics</h1>
+                        <p>Track your study performance and progress</p>
+                    </div>
+                    <div class="page-header-actions" style="display: flex; gap: var(--spacing-sm);">
+                        <a href="/analytics/history" class="btn btn-primary">
+                            <i data-lucide="history"></i>
+                            View History
+                        </a>
+                        <a href="/analytics/reports" class="btn btn-secondary">
+                            <i data-lucide="file-text"></i>
+                            Weekly Reports
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Streak Banner -->
+                <% if (stats.streak > 0) { %>
+                    <div class="streak-display">
+                        <span class="streak-icon">🔥</span>
+                        <div class="streak-info">
+                            <h3>Current Streak</h3>
+                            <span class="streak-value"><%= stats.streak %> Day<%= stats.streak !== 1 ? 's' : '' %></span>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Key Metrics -->
+                <div class="stats-grid stats-grid-4">
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div>
+                                <div class="metric-title">This Week</div>
+                                <div class="metric-value"><%= Math.round(stats.week.minutes / 60 * 10) / 10 %>h</div>
+                            </div>
+                            <div class="metric-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+                                <i data-lucide="clock"></i>
+                            </div>
+                        </div>
+                        <% if (stats.weekChange !== 0) { %>
+                            <span class="metric-change <%= stats.weekChange > 0 ? 'positive' : 'negative' %>">
+                                <i data-lucide="<%= stats.weekChange > 0 ? 'trending-up' : 'trending-down' %>"></i>
+                                <%= Math.abs(stats.weekChange) %>% vs last week
+                            </span>
+                        <% } %>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div>
+                                <div class="metric-title">Total Study Time</div>
+                                <div class="metric-value"><%= Math.round(stats.total.total_minutes / 60) %>h</div>
+                            </div>
+                            <div class="metric-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                                <i data-lucide="timer"></i>
+                            </div>
+                        </div>
+                        <span class="metric-change positive">
+                            <%= stats.total.total_sessions %> sessions completed
+                        </span>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div>
+                                <div class="metric-title">Avg Session</div>
+                                <div class="metric-value"><%= Math.round(stats.total.avg_session_length) %> min</div>
+                            </div>
+                            <div class="metric-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                                <i data-lucide="activity"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-header">
+                            <div>
+                                <div class="metric-title">Consistency</div>
+                                <div class="metric-value"><%= stats.consistencyScore %>%</div>
+                            </div>
+                            <div class="metric-icon" style="background: linear-gradient(135deg, #8b5cf6, #a855f7);">
+                                <i data-lucide="target"></i>
+                            </div>
+                        </div>
+                        <span class="metric-change positive">
+                            This month's study days
+                        </span>
+                    </div>
+                </div>
+
+                <div class="analytics-grid">
+                    <!-- Daily Activity Chart -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="bar-chart-3"></i>
+                                Last 7 Days
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="dailyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subject Distribution -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="pie-chart"></i>
+                                Time by Subject
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="subjectChart"></canvas>
+                            </div>
+                            <div class="subject-legend">
+                                <% chartData.subjects.forEach(subject => { %>
+                                    <div class="legend-item">
+                                        <span class="legend-color" style="background: <%= subject.color %>"></span>
+                                        <span><%= subject.name %></span>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Task Completion -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="check-square"></i>
+                                Task Overview
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="task-completion-chart">
+                                <div class="donut-container">
+                                    <canvas id="taskChart"></canvas>
+                                </div>
+                                <div class="task-legend">
+                                    <div class="task-legend-item">
+                                        <span class="task-legend-color" style="background: #10b981"></span>
+                                        <span class="task-legend-label">Completed</span>
+                                        <span class="task-legend-value"><%= stats.tasks.completed %></span>
+                                    </div>
+                                    <div class="task-legend-item">
+                                        <span class="task-legend-color" style="background: #3b82f6"></span>
+                                        <span class="task-legend-label">In Progress</span>
+                                        <span class="task-legend-value"><%= stats.tasks.in_progress %></span>
+                                    </div>
+                                    <div class="task-legend-item">
+                                        <span class="task-legend-color" style="background: #f59e0b"></span>
+                                        <span class="task-legend-label">Pending</span>
+                                        <span class="task-legend-value"><%= stats.tasks.pending %></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Weak Topics -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="alert-triangle"></i>
+                                Topics Needing Attention
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <% if (weakTopics.length === 0) { %>
+                                <div class="empty-state small">
+                                    <i data-lucide="check-circle"></i>
+                                    <p>Great job! All topics are on track.</p>
+                                </div>
+                            <% } else { %>
+                                <div class="weak-topics-list">
+                                    <% weakTopics.forEach(topic => { %>
+                                        <div class="weak-topic-item">
+                                            <div class="weak-topic-color" style="background: <%= topic.subject_color %>"></div>
+                                            <div class="weak-topic-info">
+                                                <div class="weak-topic-name"><%= topic.name %></div>
+                                                <div class="weak-topic-meta">
+                                                    <%= topic.subject_name %> • <%= topic.difficulty %>
+                                                </div>
+                                            </div>
+                                            <div class="weak-topic-progress">
+                                                <div class="progress-mini">
+                                                    <div class="progress-mini-fill" style="width: <%= topic.progress_percent %>%"></div>
+                                                </div>
+                                                <div class="progress-mini-text"><%= topic.progress_percent %>% complete</div>
+                                            </div>
+                                            <a href="/study/start?topic=<%= topic.id %>" class="btn btn-primary btn-sm">
+                                                <i data-lucide="play"></i>
+                                                Study
+                                            </a>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+
+                <% if (stats.bestDay) { %>
+                    <!-- Achievement Banner -->
+                    <div class="card" style="margin-top: var(--spacing-lg);">
+                        <div class="card-body">
+                            <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                                <span style="font-size: 2rem;">🏆</span>
+                                <div>
+                                    <h4 style="margin-bottom: 0.25rem;">Personal Best</h4>
+                                    <p style="color: var(--text-secondary); margin: 0;">
+                                        You studied <%= stats.bestDay.minutes %> minutes on 
+                                        <%= new Date(stats.bestDay.date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) %>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+
+        // Chart.js Configuration
+        Chart.defaults.font.family = 'Inter, sans-serif';
+        Chart.defaults.color = '#6b7280';
+
+        // Daily Activity Chart
+        const dailyData = <%- JSON.stringify(chartData.daily) %>;
+        new Chart(document.getElementById('dailyChart'), {
+            type: 'bar',
+            data: {
+                labels: dailyData.map(d => d.dayName),
+                datasets: [{
+                    label: 'Minutes',
+                    data: dailyData.map(d => d.minutes),
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 6,
+                    barThickness: 32
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f3f4f6' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Subject Distribution Chart
+        const subjectData = <%- JSON.stringify(chartData.subjects) %>;
+        new Chart(document.getElementById('subjectChart'), {
+            type: 'doughnut',
+            data: {
+                labels: subjectData.map(s => s.name),
+                datasets: [{
+                    data: subjectData.map(s => s.total_minutes),
+                    backgroundColor: subjectData.map(s => s.color),
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        // Task Completion Chart
+        const taskData = {
+            completed: <%= stats.tasks.completed %>,
+            in_progress: <%= stats.tasks.in_progress %>,
+            pending: <%= stats.tasks.pending %>
+        };
+        new Chart(document.getElementById('taskChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'In Progress', 'Pending'],
+                datasets: [{
+                    data: [taskData.completed, taskData.in_progress, taskData.pending],
+                    backgroundColor: ['#10b981', '#3b82f6', '#f59e0b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

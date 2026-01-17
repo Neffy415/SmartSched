@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/landing.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-content">
+                <a href="/" class="logo">
+                    <div class="logo-icon">
+                        <i data-lucide="calendar-check"></i>
+                    </div>
+                    <span class="logo-text">SmartSched</span>
+                </a>
+                <div class="navbar-actions">
+                    <a href="/auth/login" class="btn btn-ghost">Log In</a>
+                    <a href="/auth/register" class="btn btn-primary">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg">
+            <div class="hero-gradient"></div>
+            <div class="hero-pattern"></div>
+        </div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge animate-fade-in">
+                    <i data-lucide="sparkles"></i>
+                    <span>AI-Powered Study Scheduling</span>
+                </div>
+                <h1 class="hero-title animate-slide-up">
+                    Study Smarter,<br>
+                    <span class="text-gradient">Not Harder</span>
+                </h1>
+                <p class="hero-subtitle animate-slide-up">
+                    SmartSched creates personalized study schedules that adapt to your learning pace, 
+                    track your progress, and help you excel in your exams.
+                </p>
+                <div class="hero-actions animate-slide-up">
+                    <a href="/auth/register" class="btn btn-primary btn-lg">
+                        <i data-lucide="rocket"></i>
+                        Start Free Today
+                    </a>
+                    <a href="#features" class="btn btn-secondary btn-lg">
+                        <i data-lucide="play-circle"></i>
+                        See How It Works
+                    </a>
+                </div>
+                <div class="hero-stats animate-fade-in">
+                    <div class="stat">
+                        <span class="stat-value">10,000+</span>
+                        <span class="stat-label">Study Sessions</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <span class="stat-value">95%</span>
+                        <span class="stat-label">Success Rate</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat">
+                        <span class="stat-value">4.9/5</span>
+                        <span class="stat-label">Student Rating</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-image animate-slide-up">
+                <div class="dashboard-preview">
+                    <div class="preview-header">
+                        <div class="preview-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <span class="preview-title">Dashboard</span>
+                    </div>
+                    <div class="preview-content">
+                        <div class="preview-sidebar">
+                            <div class="preview-menu-item active"></div>
+                            <div class="preview-menu-item"></div>
+                            <div class="preview-menu-item"></div>
+                            <div class="preview-menu-item"></div>
+                        </div>
+                        <div class="preview-main">
+                            <div class="preview-card"></div>
+                            <div class="preview-cards-row">
+                                <div class="preview-card-sm"></div>
+                                <div class="preview-card-sm"></div>
+                                <div class="preview-card-sm"></div>
+                            </div>
+                            <div class="preview-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Features</span>
+                <h2>Everything You Need to Excel</h2>
+                <p>Powerful tools designed to optimize your study sessions and boost your academic performance.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                        <i data-lucide="brain"></i>
+                    </div>
+                    <h3>AI-Powered Scheduling</h3>
+                    <p>Our intelligent algorithm creates personalized study schedules based on your syllabus, deadlines, and learning patterns.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                    <h3>Progress Tracking</h3>
+                    <p>Monitor your study sessions, identify weak topics, and watch your improvement with detailed analytics.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                        <i data-lucide="book-open"></i>
+                    </div>
+                    <h3>Smart Revisions</h3>
+                    <p>Spaced repetition and intelligent revision scheduling to ensure long-term retention of concepts.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">
+                        <i data-lucide="message-square"></i>
+                    </div>
+                    <h3>AI Study Assistant</h3>
+                    <p>Get instant explanations, generate notes, practice questions, and personalized learning advice.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+                        <i data-lucide="file-text"></i>
+                    </div>
+                    <h3>Notes Management</h3>
+                    <p>Upload your study materials and let our AI extract key topics and integrate them into your schedule.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #a855f7);">
+                        <i data-lucide="bell"></i>
+                    </div>
+                    <h3>Smart Reminders</h3>
+                    <p>Never miss a study session with intelligent notifications that respect your preferences.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">How It Works</span>
+                <h2>Get Started in Minutes</h2>
+                <p>Simple setup, powerful results. Start optimizing your study sessions today.</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>Add Your Subjects</h3>
+                        <p>Enter your subjects, topics, and exam dates. Upload your syllabus or notes for automatic topic extraction.</p>
+                    </div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>Get Your Schedule</h3>
+                        <p>Our AI generates an optimized study plan considering difficulty, importance, and your available time.</p>
+                    </div>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>Study & Track</h3>
+                        <p>Follow your personalized schedule, log your progress, and watch as the system adapts to help you improve.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-card">
+                <div class="cta-content">
+                    <h2>Ready to Transform Your Study Routine?</h2>
+                    <p>Join thousands of students who are already studying smarter with SmartSched.</p>
+                    <a href="/auth/register" class="btn btn-primary btn-lg">
+                        <i data-lucide="arrow-right"></i>
+                        Get Started for Free
+                    </a>
+                </div>
+                <div class="cta-decoration">
+                    <div class="floating-card card-1">
+                        <i data-lucide="check-circle"></i>
+                        <span>Task Completed!</span>
+                    </div>
+                    <div class="floating-card card-2">
+                        <i data-lucide="trophy"></i>
+                        <span>+50 Points</span>
+                    </div>
+                    <div class="floating-card card-3">
+                        <i data-lucide="flame"></i>
+                        <span>7 Day Streak!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <a href="/" class="logo">
+                        <div class="logo-icon">
+                            <i data-lucide="calendar-check"></i>
+                        </div>
+                        <span class="logo-text">SmartSched</span>
+                    </a>
+                    <p>Intelligent study scheduling for academic success.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Product</h4>
+                        <a href="#features">Features</a>
+                        <a href="#how-it-works">How It Works</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Support</h4>
+                        <a href="#">Help Center</a>
+                        <a href="#">Contact Us</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 SmartSched. Built for BCA Capstone Project.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

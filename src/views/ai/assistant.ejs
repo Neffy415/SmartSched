@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <p><%= error_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>
+                            <i data-lucide="sparkles" style="color: var(--primary);"></i>
+                            AI Study Assistant
+                        </h1>
+                        <p>Your intelligent study companion powered by AI</p>
+                    </div>
+                    <div class="page-header-actions">
+                        <a href="/ai/history" class="btn btn-ghost">
+                            <i data-lucide="history"></i>
+                            History
+                        </a>
+                        <a href="/materials" class="btn btn-ghost">
+                            <i data-lucide="folder"></i>
+                            Materials
+                        </a>
+                    </div>
+                </div>
+
+                <% if (!aiAvailable) { %>
+                    <div class="alert alert-warning">
+                        <i data-lucide="alert-triangle"></i>
+                        <div>
+                            <strong>AI Service Unavailable</strong>
+                            <p>Please configure your Gemini API key in the environment settings.</p>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- AI Stats Cards -->
+                <div class="stats-grid stats-grid-4">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                            <i data-lucide="message-square"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.total_interactions || 0 %></span>
+                            <span class="stat-label">Total Interactions</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                            <i data-lucide="lightbulb"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.explanations || 0 %></span>
+                            <span class="stat-label">Explanations</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                            <i data-lucide="file-text"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.notes || 0 %></span>
+                            <span class="stat-label">Notes Generated</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">
+                            <i data-lucide="help-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.questions || 0 %></span>
+                            <span class="stat-label">Practice Questions</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ai-container">
+                    <!-- Left Panel: Controls -->
+                    <div class="ai-controls-panel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>
+                                    <i data-lucide="settings-2"></i>
+                                    AI Controls
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <!-- Subject Selection -->
+                                <div class="form-group">
+                                    <label for="subjectSelect">Subject</label>
+                                    <select id="subjectSelect" class="form-control">
+                                        <option value="">Select a subject...</option>
+                                        <% subjects.forEach(subject => { %>
+                                            <option value="<%= subject.id %>" data-topics='<%= JSON.stringify(subject.topics || []) %>'>
+                                                <%= subject.name %>
+                                            </option>
+                                        <% }); %>
+                                    </select>
+                                </div>
+
+                                <!-- Topic Selection -->
+                                <div class="form-group">
+                                    <label for="topicSelect">Topic</label>
+                                    <select id="topicSelect" class="form-control" disabled>
+                                        <option value="">Select a topic...</option>
+                                    </select>
+                                </div>
+
+                                <!-- Custom Topic Input -->
+                                <div class="form-group">
+                                    <label for="customTopic">Or enter custom topic</label>
+                                    <input type="text" id="customTopic" class="form-control" placeholder="e.g., Quantum Physics">
+                                </div>
+
+                                <hr class="my-lg">
+
+                                <!-- AI Actions -->
+                                <div class="ai-actions">
+                                    <h4>What would you like?</h4>
+                                    
+                                    <button class="ai-action-btn" data-action="explain" <%= !aiAvailable ? 'disabled' : '' %>>
+                                        <div class="action-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                                            <i data-lucide="lightbulb"></i>
+                                        </div>
+                                        <div class="action-info">
+                                            <span class="action-title">Explain Topic</span>
+                                            <span class="action-desc">Get a detailed explanation</span>
+                                        </div>
+                                    </button>
+
+                                    <button class="ai-action-btn" data-action="notes" <%= !aiAvailable ? 'disabled' : '' %>>
+                                        <div class="action-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                                            <i data-lucide="file-text"></i>
+                                        </div>
+                                        <div class="action-info">
+                                            <span class="action-title">Generate Notes</span>
+                                            <span class="action-desc">Create study notes</span>
+                                        </div>
+                                    </button>
+
+                                    <button class="ai-action-btn" data-action="questions" <%= !aiAvailable ? 'disabled' : '' %>>
+                                        <div class="action-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                                            <i data-lucide="help-circle"></i>
+                                        </div>
+                                        <div class="action-info">
+                                            <span class="action-title">Practice Questions</span>
+                                            <span class="action-desc">Generate MCQs & exercises</span>
+                                        </div>
+                                    </button>
+
+                                    <button class="ai-action-btn" data-action="ask" <%= !aiAvailable ? 'disabled' : '' %>>
+                                        <div class="action-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">
+                                            <i data-lucide="message-circle"></i>
+                                        </div>
+                                        <div class="action-info">
+                                            <span class="action-title">Ask a Question</span>
+                                            <span class="action-desc">Get your doubts cleared</span>
+                                        </div>
+                                    </button>
+                                </div>
+
+                                <!-- Question count for practice -->
+                                <div class="form-group mt-md" id="questionCountGroup" style="display: none;">
+                                    <label for="questionCount">Number of Questions</label>
+                                    <select id="questionCount" class="form-control">
+                                        <option value="3">3 Questions</option>
+                                        <option value="5" selected>5 Questions</option>
+                                        <option value="10">10 Questions</option>
+                                    </select>
+                                </div>
+
+                                <!-- Difficulty for questions -->
+                                <div class="form-group" id="difficultyGroup" style="display: none;">
+                                    <label for="difficultySelect">Difficulty</label>
+                                    <select id="difficultySelect" class="form-control">
+                                        <option value="easy">Easy</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="hard">Hard</option>
+                                    </select>
+                                </div>
+
+                                <!-- Ask Question Input -->
+                                <div class="form-group mt-md" id="askQuestionGroup" style="display: none;">
+                                    <label for="userQuestion">Your Question</label>
+                                    <textarea id="userQuestion" class="form-control" rows="3" placeholder="Type your question here..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent History -->
+                        <div class="card mt-lg">
+                            <div class="card-header">
+                                <h3>
+                                    <i data-lucide="clock"></i>
+                                    Recent
+                                </h3>
+                                <a href="/ai/history" class="btn btn-ghost btn-sm">View All</a>
+                            </div>
+                            <div class="card-body">
+                                <% if (recentInteractions.length === 0) { %>
+                                    <div class="empty-state-small">
+                                        <p>No recent interactions</p>
+                                    </div>
+                                <% } else { %>
+                                    <div class="recent-list">
+                                        <% recentInteractions.forEach(item => { %>
+                                            <div class="recent-item" data-id="<%= item.id %>">
+                                                <div class="recent-icon">
+                                                    <% if (item.interaction_type === 'explanation') { %>
+                                                        <i data-lucide="lightbulb"></i>
+                                                    <% } else if (item.interaction_type === 'notes') { %>
+                                                        <i data-lucide="file-text"></i>
+                                                    <% } else if (item.interaction_type === 'questions') { %>
+                                                        <i data-lucide="help-circle"></i>
+                                                    <% } else { %>
+                                                        <i data-lucide="message-circle"></i>
+                                                    <% } %>
+                                                </div>
+                                                <div class="recent-info">
+                                                    <span class="recent-title"><%= item.prompt?.substring(0, 30) %>...</span>
+                                                    <span class="recent-time"><%= new Date(item.created_at).toLocaleDateString() %></span>
+                                                </div>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Results -->
+                    <div class="ai-results-panel">
+                        <div class="card" id="resultsCard">
+                            <div class="card-header">
+                                <h3 id="resultsTitle">
+                                    <i data-lucide="sparkles"></i>
+                                    AI Response
+                                </h3>
+                                <div class="results-actions" style="display: none;">
+                                    <button class="btn btn-ghost btn-sm" id="bookmarkBtn" title="Bookmark">
+                                        <i data-lucide="bookmark"></i>
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm" id="copyBtn" title="Copy">
+                                        <i data-lucide="copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <!-- Loading State -->
+                                <div id="loadingState" style="display: none;">
+                                    <div class="ai-loading">
+                                        <div class="loading-animation">
+                                            <div class="loading-dot"></div>
+                                            <div class="loading-dot"></div>
+                                            <div class="loading-dot"></div>
+                                        </div>
+                                        <p>AI is thinking...</p>
+                                    </div>
+                                </div>
+
+                                <!-- Empty State -->
+                                <div id="emptyState">
+                                    <div class="ai-empty-state">
+                                        <div class="empty-icon">
+                                            <i data-lucide="bot"></i>
+                                        </div>
+                                        <h3>Ready to Help!</h3>
+                                        <p>Select a topic and choose an action to get started</p>
+                                        <div class="empty-suggestions">
+                                            <span class="suggestion-tag">Explain a concept</span>
+                                            <span class="suggestion-tag">Generate notes</span>
+                                            <span class="suggestion-tag">Practice questions</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Results Container -->
+                                <div id="resultsContainer" style="display: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // State
+        let currentAction = null;
+        let currentInteractionId = null;
+
+        // DOM Elements
+        const subjectSelect = document.getElementById('subjectSelect');
+        const topicSelect = document.getElementById('topicSelect');
+        const customTopic = document.getElementById('customTopic');
+        const actionButtons = document.querySelectorAll('.ai-action-btn');
+        const loadingState = document.getElementById('loadingState');
+        const emptyState = document.getElementById('emptyState');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const resultsActions = document.querySelector('.results-actions');
+        const questionCountGroup = document.getElementById('questionCountGroup');
+        const difficultyGroup = document.getElementById('difficultyGroup');
+        const askQuestionGroup = document.getElementById('askQuestionGroup');
+
+        // Subject change handler
+        subjectSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const topics = JSON.parse(selectedOption.dataset.topics || '[]');
+            
+            topicSelect.innerHTML = '<option value="">Select a topic...</option>';
+            
+            if (topics && topics.length > 0) {
+                topics.forEach(topic => {
+                    const option = document.createElement('option');
+                    option.value = topic.id;
+                    option.textContent = topic.name;
+                    option.dataset.difficulty = topic.difficulty;
+                    topicSelect.appendChild(option);
+                });
+                topicSelect.disabled = false;
+            } else {
+                topicSelect.disabled = true;
+            }
+        });
+
+        // Action button handlers
+        actionButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const action = this.dataset.action;
+                
+                // Update active state
+                actionButtons.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                currentAction = action;
+                
+                // Show/hide relevant inputs
+                questionCountGroup.style.display = action === 'questions' ? 'block' : 'none';
+                difficultyGroup.style.display = action === 'questions' ? 'block' : 'none';
+                askQuestionGroup.style.display = action === 'ask' ? 'block' : 'none';
+                
+                // Trigger action
+                if (action !== 'ask') {
+                    executeAction(action);
+                }
+            });
+        });
+
+        // Ask question handler
+        document.getElementById('userQuestion').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                executeAction('ask');
+            }
+        });
+
+        // Execute AI action
+        async function executeAction(action) {
+            const topicId = topicSelect.value;
+            const topicName = customTopic.value || (topicSelect.value ? topicSelect.options[topicSelect.selectedIndex].text : '');
+            const subjectName = subjectSelect.value ? subjectSelect.options[subjectSelect.selectedIndex].text : '';
+            
+            if (!topicName && action !== 'ask') {
+                alert('Please select or enter a topic');
+                return;
+            }
+
+            if (action === 'ask') {
+                const question = document.getElementById('userQuestion').value.trim();
+                if (!question) {
+                    alert('Please enter a question');
+                    return;
+                }
+            }
+
+            // Show loading
+            showLoading();
+
+            try {
+                let endpoint, body;
+                
+                switch(action) {
+                    case 'explain':
+                        endpoint = '/ai/explain';
+                        body = { topic_id: topicId, topic_name: topicName, subject_name: subjectName };
+                        break;
+                    case 'notes':
+                        endpoint = '/ai/notes';
+                        body = { topic_id: topicId, topic_name: topicName, subject_name: subjectName };
+                        break;
+                    case 'questions':
+                        endpoint = '/ai/questions';
+                        body = { 
+                            topic_id: topicId, 
+                            topic_name: topicName, 
+                            subject_name: subjectName,
+                            difficulty: document.getElementById('difficultySelect').value,
+                            count: document.getElementById('questionCount').value
+                        };
+                        break;
+                    case 'ask':
+                        endpoint = '/ai/ask';
+                        body = { 
+                            question: document.getElementById('userQuestion').value,
+                            topic_id: topicId, 
+                            topic_name: topicName, 
+                            subject_name: subjectName 
+                        };
+                        break;
+                }
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    displayResults(action, result.data);
+                } else {
+                    showError(result.error || 'Failed to get AI response');
+                }
+            } catch (error) {
+                console.error('AI request error:', error);
+                showError('Network error. Please try again.');
+            }
+        }
+
+        // Show loading state
+        function showLoading() {
+            emptyState.style.display = 'none';
+            resultsContainer.style.display = 'none';
+            loadingState.style.display = 'block';
+            resultsActions.style.display = 'none';
+        }
+
+        // Show error
+        function showError(message) {
+            loadingState.style.display = 'none';
+            resultsContainer.innerHTML = `
+                <div class="ai-error">
+                    <i data-lucide="alert-circle"></i>
+                    <p>${message}</p>
+                    <button class="btn btn-primary btn-sm" onclick="location.reload()">Try Again</button>
+                </div>
+            `;
+            resultsContainer.style.display = 'block';
+            lucide.createIcons();
+        }
+
+        // Display results based on action type
+        function displayResults(action, data) {
+            loadingState.style.display = 'none';
+            resultsActions.style.display = 'flex';
+            
+            let html = '';
+            
+            switch(action) {
+                case 'explain':
+                    html = renderExplanation(data);
+                    break;
+                case 'notes':
+                    html = renderNotes(data);
+                    break;
+                case 'questions':
+                    html = renderQuestions(data);
+                    break;
+                case 'ask':
+                    html = renderAnswer(data);
+                    break;
+            }
+            
+            resultsContainer.innerHTML = html;
+            resultsContainer.style.display = 'block';
+            lucide.createIcons();
+        }
+
+        // Render explanation
+        function renderExplanation(data) {
+            return `
+                <div class="ai-result explanation-result">
+                    <h2>${data.title || 'Explanation'}</h2>
+                    
+                    <div class="result-section">
+                        <h4><i data-lucide="book-open"></i> Core Explanation</h4>
+                        <p>${data.core_explanation || ''}</p>
+                    </div>
+                    
+                    ${data.key_points?.length ? `
+                        <div class="result-section">
+                            <h4><i data-lucide="list"></i> Key Points</h4>
+                            <ul class="key-points-list">
+                                ${data.key_points.map(p => `<li>${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.example ? `
+                        <div class="result-section highlight-box">
+                            <h4><i data-lucide="lightbulb"></i> Example</h4>
+                            <p>${data.example}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.analogy ? `
+                        <div class="result-section">
+                            <h4><i data-lucide="git-compare"></i> Analogy</h4>
+                            <p>${data.analogy}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.common_mistakes?.length ? `
+                        <div class="result-section warning-box">
+                            <h4><i data-lucide="alert-triangle"></i> Common Mistakes</h4>
+                            <ul>
+                                ${data.common_mistakes.map(m => `<li>${m}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.summary ? `
+                        <div class="result-section summary-box">
+                            <h4><i data-lucide="file-text"></i> Summary</h4>
+                            <p>${data.summary}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Render notes
+        function renderNotes(data) {
+            return `
+                <div class="ai-result notes-result">
+                    <h2><i data-lucide="file-text"></i> Study Notes: ${data.topic || ''}</h2>
+                    
+                    ${data.overview ? `
+                        <div class="result-section">
+                            <h4>Overview</h4>
+                            <p>${data.overview}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.bullet_points?.length ? `
+                        <div class="result-section">
+                            <h4><i data-lucide="check-square"></i> Key Points</h4>
+                            <ul class="bullet-list">
+                                ${data.bullet_points.map(p => `<li>${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.definitions?.length ? `
+                        <div class="result-section">
+                            <h4><i data-lucide="book"></i> Definitions</h4>
+                            <div class="definitions-grid">
+                                ${data.definitions.map(d => `
+                                    <div class="definition-card">
+                                        <strong>${d.term}</strong>
+                                        <p>${d.definition}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.important_formulas?.length && data.important_formulas[0] ? `
+                        <div class="result-section formula-box">
+                            <h4><i data-lucide="function-square"></i> Important Formulas</h4>
+                            <ul>
+                                ${data.important_formulas.filter(f => f).map(f => `<li><code>${f}</code></li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.exam_tips?.length ? `
+                        <div class="result-section tips-box">
+                            <h4><i data-lucide="target"></i> Exam Tips</h4>
+                            <ul>
+                                ${data.exam_tips.map(t => `<li>${t}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.quick_revision ? `
+                        <div class="result-section revision-box">
+                            <h4><i data-lucide="zap"></i> Quick Revision</h4>
+                            <p>${data.quick_revision}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Render questions
+        function renderQuestions(data) {
+            return `
+                <div class="ai-result questions-result">
+                    <h2><i data-lucide="help-circle"></i> Practice Questions: ${data.topic || ''}</h2>
+                    <p class="result-subtitle">Difficulty: ${data.difficulty || 'Medium'}</p>
+                    
+                    <div class="questions-list">
+                        ${data.questions?.map((q, i) => `
+                            <div class="question-card" data-question-id="${q.id || i+1}">
+                                <div class="question-header">
+                                    <span class="question-number">Q${i + 1}</span>
+                                    <span class="question-type">${q.type || 'Question'}</span>
+                                </div>
+                                <div class="question-text">${q.question}</div>
+                                
+                                ${q.options?.length ? `
+                                    <div class="question-options">
+                                        ${q.options.map((opt, j) => `
+                                            <label class="option-label">
+                                                <input type="radio" name="q${q.id || i+1}" value="${opt}">
+                                                <span class="option-text">${opt}</span>
+                                            </label>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                                
+                                ${q.type === 'true_false' ? `
+                                    <div class="question-options">
+                                        <label class="option-label">
+                                            <input type="radio" name="q${q.id || i+1}" value="true">
+                                            <span class="option-text">True</span>
+                                        </label>
+                                        <label class="option-label">
+                                            <input type="radio" name="q${q.id || i+1}" value="false">
+                                            <span class="option-text">False</span>
+                                        </label>
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="question-answer" style="display: none;">
+                                    <div class="answer-reveal">
+                                        <strong>Answer:</strong> ${q.correct_answer || q.expected_answer || ''}
+                                    </div>
+                                    ${q.explanation ? `
+                                        <div class="answer-explanation">
+                                            <strong>Explanation:</strong> ${q.explanation}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                
+                                <button class="btn btn-sm btn-ghost show-answer-btn" onclick="toggleAnswer(this)">
+                                    <i data-lucide="eye"></i> Show Answer
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    ${data.study_tips ? `
+                        <div class="result-section tips-box mt-lg">
+                            <h4><i data-lucide="lightbulb"></i> Study Tips</h4>
+                            <p>${data.study_tips}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Render answer
+        function renderAnswer(data) {
+            return `
+                <div class="ai-result answer-result">
+                    <div class="question-asked">
+                        <i data-lucide="message-circle"></i>
+                        <p>${data.question || ''}</p>
+                    </div>
+                    
+                    <div class="result-section">
+                        <h4><i data-lucide="message-square"></i> Answer</h4>
+                        <p>${data.answer || ''}</p>
+                    </div>
+                    
+                    ${data.key_takeaways?.length ? `
+                        <div class="result-section">
+                            <h4><i data-lucide="key"></i> Key Takeaways</h4>
+                            <ul>
+                                ${data.key_takeaways.map(t => `<li>${t}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.related_concepts?.length ? `
+                        <div class="result-section">
+                            <h4><i data-lucide="link"></i> Related Concepts</h4>
+                            <div class="tags-list">
+                                ${data.related_concepts.map(c => `<span class="tag">${c}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${data.further_reading ? `
+                        <div class="result-section">
+                            <h4><i data-lucide="book-open"></i> Further Reading</h4>
+                            <p>${data.further_reading}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        // Toggle answer visibility
+        function toggleAnswer(btn) {
+            const card = btn.closest('.question-card');
+            const answerDiv = card.querySelector('.question-answer');
+            const isHidden = answerDiv.style.display === 'none';
+            
+            answerDiv.style.display = isHidden ? 'block' : 'none';
+            btn.innerHTML = isHidden ? 
+                '<i data-lucide="eye-off"></i> Hide Answer' : 
+                '<i data-lucide="eye"></i> Show Answer';
+            lucide.createIcons();
+        }
+
+        // Copy results
+        document.getElementById('copyBtn')?.addEventListener('click', function() {
+            const text = resultsContainer.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied to clipboard!');
+            });
+        });
+
+        // Recent item click
+        document.querySelectorAll('.recent-item').forEach(item => {
+            item.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                try {
+                    const response = await fetch(`/ai/interaction/${id}`);
+                    const result = await response.json();
+                    if (result.success) {
+                        displayResults(result.data.interaction_type, JSON.parse(result.data.response));
+                    }
+                } catch (error) {
+                    console.error('Error loading interaction:', error);
+                }
+            });
+        });
+
+        // Sidebar toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+
+    <style>
+        .ai-container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: var(--spacing-xl);
+        }
+
+        .ai-controls-panel .card {
+            position: sticky;
+            top: var(--spacing-lg);
+        }
+
+        .ai-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .ai-actions h4 {
+            margin-bottom: var(--spacing-sm);
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .ai-action-btn {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
+            background: var(--gray-50);
+            border: 2px solid transparent;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-align: left;
+        }
+
+        .ai-action-btn:hover {
+            background: white;
+            border-color: var(--primary-200);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .ai-action-btn.active {
+            background: var(--primary-50);
+            border-color: var(--primary);
+        }
+
+        .ai-action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .action-icon svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .action-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .action-title {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .action-desc {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+
+        .recent-item {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: background var(--transition-fast);
+        }
+
+        .recent-item:hover {
+            background: var(--gray-50);
+        }
+
+        .recent-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-50);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .recent-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .recent-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .recent-title {
+            display: block;
+            font-size: 0.875rem;
+            color: var(--gray-800);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .recent-time {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        /* AI Results Styles */
+        .ai-loading {
+            text-align: center;
+            padding: var(--spacing-3xl);
+        }
+
+        .loading-animation {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .loading-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .ai-empty-state {
+            text-align: center;
+            padding: var(--spacing-3xl);
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--spacing-lg);
+        }
+
+        .empty-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--primary);
+        }
+
+        .empty-suggestions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: var(--spacing-lg);
+        }
+
+        .suggestion-tag {
+            padding: var(--spacing-xs) var(--spacing-md);
+            background: var(--gray-100);
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .ai-result {
+            padding: var(--spacing-lg);
+        }
+
+        .ai-result h2 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+            color: var(--gray-800);
+        }
+
+        .result-section {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-lg);
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+        }
+
+        .result-section h4 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            color: var(--gray-700);
+        }
+
+        .result-section h4 svg {
+            width: 18px;
+            height: 18px;
+            color: var(--primary);
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+            border-left: 4px solid var(--primary);
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .warning-box h4 svg {
+            color: #f59e0b;
+        }
+
+        .summary-box {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border-left: 4px solid #10b981;
+        }
+
+        .tips-box {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .formula-box {
+            background: #fce7f3;
+            border-left: 4px solid #ec4899;
+        }
+
+        .formula-box code {
+            background: white;
+            padding: 2px 8px;
+            border-radius: var(--radius-sm);
+            font-family: 'Courier New', monospace;
+        }
+
+        .revision-box {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-left: 4px solid #f59e0b;
+        }
+
+        .key-points-list, .bullet-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .key-points-list li, .bullet-list li {
+            padding: var(--spacing-sm) 0;
+            padding-left: var(--spacing-lg);
+            position: relative;
+        }
+
+        .key-points-list li::before, .bullet-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .definitions-grid {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+
+        .definition-card {
+            background: white;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200);
+        }
+
+        .definition-card strong {
+            color: var(--primary);
+        }
+
+        /* Questions */
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .question-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .question-number {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .question-type {
+            background: var(--gray-100);
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .question-text {
+            font-size: 1.125rem;
+            margin-bottom: var(--spacing-md);
+            line-height: 1.6;
+        }
+
+        .question-options {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .option-label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .option-label:hover {
+            background: var(--primary-50);
+        }
+
+        .option-label input {
+            margin: 0;
+        }
+
+        .question-answer {
+            background: #d1fae5;
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            margin-top: var(--spacing-md);
+        }
+
+        .answer-explanation {
+            margin-top: var(--spacing-sm);
+            padding-top: var(--spacing-sm);
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .question-asked {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+            background: var(--primary-50);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .question-asked svg {
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .tags-list {
+            display: flex;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: var(--primary-100);
+            color: var(--primary-700);
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+        }
+
+        .ai-error {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--error);
+        }
+
+        .ai-error svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .result-subtitle {
+            color: var(--gray-500);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        @media (max-width: 1024px) {
+            .ai-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .ai-controls-panel .card {
+                position: static;
+            }
+        }
+    </style>
+</body>
+</html>

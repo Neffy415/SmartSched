@@ -1,0 +1,251 @@
+<header class="top-bar">
+    <button class="menu-toggle" id="menuToggle">
+        <i data-lucide="menu"></i>
+    </button>
+
+    <div class="search-bar">
+        <i data-lucide="search"></i>
+        <input type="text" placeholder="Search tasks, subjects..." id="globalSearch">
+    </div>
+
+    <div class="top-bar-actions">
+        <!-- Notifications Dropdown -->
+        <div class="notifications-dropdown" id="notificationsDropdown">
+            <button class="icon-btn notifications-trigger" id="notificationsBtn">
+                <i data-lucide="bell"></i>
+                <span class="notification-dot" id="notificationDot" style="display: none;"></span>
+                <span class="notification-count" id="notificationCount" style="display: none;">0</span>
+            </button>
+            
+            <div class="notifications-panel" id="notificationsPanel">
+                <div class="notifications-header">
+                    <h4>Notifications</h4>
+                    <button class="btn-text" id="markAllRead">Mark all read</button>
+                </div>
+                <div class="notifications-body" id="notificationsBody">
+                    <div class="notifications-loading">
+                        <i data-lucide="loader" class="spinning"></i>
+                        <span>Loading...</span>
+                    </div>
+                </div>
+                <div class="notifications-footer">
+                    <a href="/reminders" class="btn btn-secondary btn-sm btn-block">
+                        <i data-lucide="bell-ring"></i>
+                        View All Reminders
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="user-menu">
+            <div class="user-avatar">
+                <%= user && user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' %>
+            </div>
+            <div class="user-info">
+                <span class="user-name"><%= user ? user.fullName : 'User' %></span>
+                <span class="user-email"><%= user ? user.email : '' %></span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const notificationsBtn = document.getElementById('notificationsBtn');
+    const notificationsPanel = document.getElementById('notificationsPanel');
+    const notificationsDropdown = document.getElementById('notificationsDropdown');
+    const notificationsBody = document.getElementById('notificationsBody');
+    const notificationDot = document.getElementById('notificationDot');
+    const notificationCount = document.getElementById('notificationCount');
+    const markAllReadBtn = document.getElementById('markAllRead');
+    
+    let isOpen = false;
+    
+    // Toggle dropdown
+    notificationsBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        isOpen = !isOpen;
+        notificationsDropdown.classList.toggle('active', isOpen);
+        if (isOpen) {
+            loadNotifications();
+        }
+    });
+    
+    // Close when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!notificationsDropdown.contains(e.target)) {
+            isOpen = false;
+            notificationsDropdown.classList.remove('active');
+        }
+    });
+    
+    // Load notifications
+    async function loadNotifications() {
+        try {
+            const response = await fetch('/reminders/api/pending');
+            const data = await response.json();
+            
+            if (data.success) {
+                renderNotifications(data);
+            }
+        } catch (error) {
+            console.error('Failed to load notifications:', error);
+            notificationsBody.innerHTML = `
+                <div class="notifications-empty">
+                    <i data-lucide="alert-circle"></i>
+                    <p>Failed to load notifications</p>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+    }
+    
+    // Render notifications
+    function renderNotifications(data) {
+        const { reminders, notifications, deadlineAlerts, count } = data;
+        
+        // Update count badge
+        if (count > 0) {
+            notificationDot.style.display = 'block';
+            notificationCount.style.display = 'flex';
+            notificationCount.textContent = count > 9 ? '9+' : count;
+        } else {
+            notificationDot.style.display = 'none';
+            notificationCount.style.display = 'none';
+        }
+        
+        if (count === 0) {
+            notificationsBody.innerHTML = `
+                <div class="notifications-empty">
+                    <i data-lucide="bell-off"></i>
+                    <p>No new notifications</p>
+                    <a href="/reminders/new" class="btn btn-primary btn-sm">Create Reminder</a>
+                </div>
+            `;
+            lucide.createIcons();
+            return;
+        }
+        
+        let html = '';
+        
+        // Render deadline alerts
+        deadlineAlerts.forEach(task => {
+            const deadline = new Date(task.deadline);
+            const isOverdue = deadline < new Date();
+            html += `
+                <a href="/tasks/${task.id}" class="notification-item ${isOverdue ? 'urgent' : 'warning'}">
+                    <div class="notification-icon" style="background: ${task.subject_color};">
+                        <i data-lucide="alert-triangle"></i>
+                    </div>
+                    <div class="notification-content">
+                        <p class="notification-title">${isOverdue ? 'Overdue:' : 'Due Today:'} ${task.title}</p>
+                        <span class="notification-meta">${task.subject_name}</span>
+                    </div>
+                </a>
+            `;
+        });
+        
+        // Render reminders
+        reminders.forEach(reminder => {
+            const remindAt = new Date(reminder.remind_at);
+            const timeStr = remindAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            html += `
+                <div class="notification-item reminder" data-id="${reminder.id}">
+                    <div class="notification-icon reminder-icon">
+                        <i data-lucide="bell-ring"></i>
+                    </div>
+                    <div class="notification-content">
+                        <p class="notification-title">${reminder.title}</p>
+                        <span class="notification-meta">${timeStr}</span>
+                    </div>
+                    <div class="notification-actions">
+                        <button class="icon-btn-sm snooze-btn" data-id="${reminder.id}" title="Snooze 15 min">
+                            <i data-lucide="alarm-clock"></i>
+                        </button>
+                        <button class="icon-btn-sm dismiss-btn" data-id="${reminder.id}" title="Dismiss">
+                            <i data-lucide="check"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        // Render notifications
+        notifications.forEach(notification => {
+            html += `
+                <a href="${notification.link || '#'}" class="notification-item" data-id="${notification.id}">
+                    <div class="notification-icon">
+                        <i data-lucide="info"></i>
+                    </div>
+                    <div class="notification-content">
+                        <p class="notification-title">${notification.title}</p>
+                        <span class="notification-meta">${notification.message || ''}</span>
+                    </div>
+                </a>
+            `;
+        });
+        
+        notificationsBody.innerHTML = html;
+        lucide.createIcons();
+        
+        // Attach event handlers
+        attachNotificationHandlers();
+    }
+    
+    // Attach handlers for snooze/dismiss
+    function attachNotificationHandlers() {
+        document.querySelectorAll('.snooze-btn').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const id = this.dataset.id;
+                try {
+                    await fetch(`/reminders/${id}/snooze`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ minutes: 15 })
+                    });
+                    loadNotifications();
+                } catch (error) {
+                    console.error('Failed to snooze:', error);
+                }
+            });
+        });
+        
+        document.querySelectorAll('.dismiss-btn').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const id = this.dataset.id;
+                try {
+                    await fetch(`/reminders/${id}/dismiss`, {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    loadNotifications();
+                } catch (error) {
+                    console.error('Failed to dismiss:', error);
+                }
+            });
+        });
+    }
+    
+    // Mark all as read
+    markAllReadBtn.addEventListener('click', async function() {
+        try {
+            await fetch('/reminders/api/read-all', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' }
+            });
+            loadNotifications();
+        } catch (error) {
+            console.error('Failed to mark all read:', error);
+        }
+    });
+    
+    // Initial load and periodic refresh
+    loadNotifications();
+    setInterval(loadNotifications, 60000); // Refresh every minute
+});
+</script>
+

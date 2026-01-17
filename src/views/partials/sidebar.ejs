@@ -1,0 +1,164 @@
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <a href="/dashboard" class="logo">
+            <div class="logo-icon">
+                <i data-lucide="calendar-check"></i>
+            </div>
+            <span class="logo-text">SmartSched</span>
+        </a>
+    </div>
+    
+    <nav class="sidebar-nav">
+        <div class="nav-section">
+            <span class="nav-section-title">Main</span>
+            <a href="/dashboard" class="nav-item <%= typeof page !== 'undefined' && page === 'dashboard' ? 'active' : '' %>">
+                <i data-lucide="layout-dashboard"></i>
+                <span>Dashboard</span>
+            </a>
+            
+            <!-- Smart Schedule Section -->
+            <div class="nav-group <%= typeof page !== 'undefined' && page === 'schedule' ? 'expanded' : '' %>">
+                <a href="/schedule/today" class="nav-item <%= typeof page !== 'undefined' && page === 'schedule' ? 'active' : '' %>">
+                    <i data-lucide="sparkles"></i>
+                    <span>Smart Schedule</span>
+                    <i data-lucide="chevron-down" class="nav-arrow"></i>
+                </a>
+                <div class="nav-submenu">
+                    <a href="/schedule/today" class="nav-subitem">
+                        <i data-lucide="calendar-check"></i>
+                        <span>Today's Plan</span>
+                    </a>
+                    <a href="/schedule/week" class="nav-subitem">
+                        <i data-lucide="calendar-days"></i>
+                        <span>Weekly View</span>
+                    </a>
+                    <a href="/schedule/deadlines" class="nav-subitem">
+                        <i data-lucide="alert-triangle"></i>
+                        <span>Deadlines</span>
+                    </a>
+                </div>
+            </div>
+            
+            <a href="/subjects" class="nav-item <%= typeof page !== 'undefined' && page === 'subjects' ? 'active' : '' %>">
+                <i data-lucide="book-open"></i>
+                <span>Subjects</span>
+            </a>
+            <a href="/tasks" class="nav-item <%= typeof page !== 'undefined' && page === 'tasks' ? 'active' : '' %>">
+                <i data-lucide="check-square"></i>
+                <span>Tasks</span>
+            </a>
+        </div>
+        
+        <div class="nav-section">
+            <span class="nav-section-title">AI Tools</span>
+            <a href="/ai/assistant" class="nav-item <%= typeof page !== 'undefined' && page === 'ai' ? 'active' : '' %>">
+                <i data-lucide="sparkles"></i>
+                <span>AI Assistant</span>
+                <span class="nav-badge">New</span>
+            </a>
+            <a href="/materials" class="nav-item <%= typeof page !== 'undefined' && page === 'materials' ? 'active' : '' %>">
+                <i data-lucide="folder"></i>
+                <span>Materials</span>
+            </a>
+        </div>
+
+        <div class="nav-section">
+            <span class="nav-section-title">Tools</span>
+            <a href="/study" class="nav-item <%= typeof page !== 'undefined' && page === 'study' ? 'active' : '' %>">
+                <i data-lucide="play-circle"></i>
+                <span>Study Session</span>
+            </a>
+            <a href="/reminders" class="nav-item <%= typeof page !== 'undefined' && page === 'reminders' ? 'active' : '' %>">
+                <i data-lucide="bell-ring"></i>
+                <span>Reminders</span>
+            </a>
+            <a href="/analytics" class="nav-item <%= typeof page !== 'undefined' && page === 'analytics' ? 'active' : '' %>">
+                <i data-lucide="bar-chart-3"></i>
+                <span>Analytics</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <a href="/settings" class="nav-item <%= typeof page !== 'undefined' && page === 'settings' ? 'active' : '' %>">
+            <i data-lucide="settings"></i>
+            <span>Settings</span>
+        </a>
+        <a href="/auth/logout" class="nav-item">
+            <i data-lucide="log-out"></i>
+            <span>Log Out</span>
+        </a>
+    </div>
+</aside>
+
+<style>
+    .nav-group {
+        position: relative;
+    }
+    
+    .nav-group .nav-arrow {
+        margin-left: auto;
+        width: 16px;
+        height: 16px;
+        transition: transform 0.2s ease;
+    }
+    
+    .nav-group.expanded .nav-arrow {
+        transform: rotate(180deg);
+    }
+    
+    .nav-submenu {
+        display: none;
+        padding-left: var(--spacing-lg);
+        margin-top: var(--spacing-xs);
+    }
+    
+    .nav-group.expanded .nav-submenu {
+        display: block;
+    }
+    
+    .nav-subitem {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: 0.5rem var(--spacing-md);
+        color: var(--gray-500);
+        text-decoration: none;
+        font-size: 0.8125rem;
+        border-radius: var(--radius-md);
+        transition: all 0.15s ease;
+    }
+    
+    .nav-subitem:hover {
+        color: var(--primary);
+        background: var(--primary-50);
+    }
+    
+    .nav-subitem svg {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .nav-badge {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+        font-size: 0.625rem;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: var(--radius-full);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+</style>
+
+<script>
+    // Toggle nav group on click
+    document.querySelectorAll('.nav-group > .nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            if (e.target.closest('.nav-group')) {
+                const group = e.target.closest('.nav-group');
+                group.classList.toggle('expanded');
+            }
+        });
+    });
+</script>

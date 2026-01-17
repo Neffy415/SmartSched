@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>
+                            <i data-lucide="history" style="color: var(--primary);"></i>
+                            AI History
+                        </h1>
+                        <p>Review your past AI interactions and saved responses</p>
+                    </div>
+                    <div class="page-header-actions">
+                        <a href="/ai/assistant" class="btn btn-primary">
+                            <i data-lucide="sparkles"></i>
+                            AI Assistant
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card mb-lg">
+                    <div class="card-body">
+                        <form method="GET" action="/ai/history" class="filters-form">
+                            <div class="filters-grid">
+                                <div class="form-group">
+                                    <label>Type</label>
+                                    <select name="type" class="form-control">
+                                        <option value="">All Types</option>
+                                        <option value="explanation" <%= filters.type === 'explanation' ? 'selected' : '' %>>Explanations</option>
+                                        <option value="notes" <%= filters.type === 'notes' ? 'selected' : '' %>>Notes</option>
+                                        <option value="questions" <%= filters.type === 'questions' ? 'selected' : '' %>>Questions</option>
+                                        <option value="ask" <%= filters.type === 'ask' ? 'selected' : '' %>>Q&A</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Subject</label>
+                                    <select name="subject" class="form-control">
+                                        <option value="">All Subjects</option>
+                                        <% subjects.forEach(s => { %>
+                                            <option value="<%= s.id %>" <%= filters.subject == s.id ? 'selected' : '' %>><%= s.name %></option>
+                                        <% }); %>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Bookmarked</label>
+                                    <select name="bookmarked" class="form-control">
+                                        <option value="">All</option>
+                                        <option value="true" <%= filters.bookmarked === 'true' ? 'selected' : '' %>>Bookmarked Only</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>&nbsp;</label>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i data-lucide="filter"></i>
+                                        Apply Filters
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- History List -->
+                <% if (interactions.length === 0) { %>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i data-lucide="inbox"></i>
+                        </div>
+                        <h3>No AI Interactions Yet</h3>
+                        <p>Start using the AI Assistant to see your history here</p>
+                        <a href="/ai/assistant" class="btn btn-primary">
+                            <i data-lucide="sparkles"></i>
+                            Go to AI Assistant
+                        </a>
+                    </div>
+                <% } else { %>
+                    <div class="history-list">
+                        <% interactions.forEach(item => { %>
+                            <div class="history-card" data-id="<%= item.id %>">
+                                <div class="history-header">
+                                    <div class="history-type">
+                                        <% if (item.interaction_type === 'explanation') { %>
+                                            <span class="type-badge type-explain">
+                                                <i data-lucide="lightbulb"></i>
+                                                Explanation
+                                            </span>
+                                        <% } else if (item.interaction_type === 'notes') { %>
+                                            <span class="type-badge type-notes">
+                                                <i data-lucide="file-text"></i>
+                                                Notes
+                                            </span>
+                                        <% } else if (item.interaction_type === 'questions') { %>
+                                            <span class="type-badge type-questions">
+                                                <i data-lucide="help-circle"></i>
+                                                Questions
+                                            </span>
+                                        <% } else { %>
+                                            <span class="type-badge type-ask">
+                                                <i data-lucide="message-circle"></i>
+                                                Q&A
+                                            </span>
+                                        <% } %>
+                                        
+                                        <% if (item.topic_name) { %>
+                                            <span class="topic-tag"><%= item.topic_name %></span>
+                                        <% } %>
+                                        
+                                        <% if (item.subject_name) { %>
+                                            <span class="subject-tag"><%= item.subject_name %></span>
+                                        <% } %>
+                                    </div>
+                                    <div class="history-meta">
+                                        <span class="history-date">
+                                            <i data-lucide="calendar"></i>
+                                            <%= new Date(item.created_at).toLocaleDateString('en-US', { 
+                                                month: 'short', 
+                                                day: 'numeric',
+                                                year: 'numeric',
+                                                hour: '2-digit',
+                                                minute: '2-digit'
+                                            }) %>
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="history-prompt">
+                                    <strong>Prompt:</strong> <%= item.prompt %>
+                                </div>
+                                
+                                <div class="history-preview">
+                                    <% 
+                                        let response = {};
+                                        try {
+                                            response = typeof item.response === 'string' ? JSON.parse(item.response) : item.response;
+                                        } catch(e) {}
+                                    %>
+                                    <% if (item.interaction_type === 'explanation' && response.core_explanation) { %>
+                                        <%= response.core_explanation.substring(0, 200) %>...
+                                    <% } else if (item.interaction_type === 'notes' && response.overview) { %>
+                                        <%= response.overview.substring(0, 200) %>...
+                                    <% } else if (item.interaction_type === 'questions' && response.questions) { %>
+                                        <%= response.questions.length %> questions generated
+                                    <% } else if (response.answer) { %>
+                                        <%= response.answer.substring(0, 200) %>...
+                                    <% } %>
+                                </div>
+                                
+                                <div class="history-actions">
+                                    <button class="btn btn-ghost btn-sm view-btn" onclick="viewInteraction(<%= item.id %>)">
+                                        <i data-lucide="eye"></i>
+                                        View
+                                    </button>
+                                    <button class="btn btn-ghost btn-sm bookmark-btn <%= item.bookmarked ? 'bookmarked' : '' %>" 
+                                            onclick="toggleBookmark(<%= item.id %>)">
+                                        <i data-lucide="<%= item.bookmarked ? 'bookmark-check' : 'bookmark' %>"></i>
+                                        <%= item.bookmarked ? 'Bookmarked' : 'Bookmark' %>
+                                    </button>
+                                    <% if (item.rating) { %>
+                                        <span class="rating-display">
+                                            <% for(let i = 1; i <= 5; i++) { %>
+                                                <i data-lucide="star" class="<%= i <= item.rating ? 'filled' : '' %>"></i>
+                                            <% } %>
+                                        </span>
+                                    <% } else { %>
+                                        <button class="btn btn-ghost btn-sm" onclick="showRating(<%= item.id %>)">
+                                            <i data-lucide="star"></i>
+                                            Rate
+                                        </button>
+                                    <% } %>
+                                    <button class="btn btn-ghost btn-sm text-error" onclick="deleteInteraction(<%= item.id %>)">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+
+                    <!-- Pagination -->
+                    <% if (pagination.totalPages > 1) { %>
+                        <div class="pagination">
+                            <% if (pagination.currentPage > 1) { %>
+                                <a href="?page=<%= pagination.currentPage - 1 %>&type=<%= filters.type || '' %>&subject=<%= filters.subject || '' %>&bookmarked=<%= filters.bookmarked || '' %>" 
+                                   class="btn btn-ghost">
+                                    <i data-lucide="chevron-left"></i>
+                                    Previous
+                                </a>
+                            <% } %>
+                            
+                            <span class="pagination-info">
+                                Page <%= pagination.currentPage %> of <%= pagination.totalPages %>
+                            </span>
+                            
+                            <% if (pagination.currentPage < pagination.totalPages) { %>
+                                <a href="?page=<%= pagination.currentPage + 1 %>&type=<%= filters.type || '' %>&subject=<%= filters.subject || '' %>&bookmarked=<%= filters.bookmarked || '' %>" 
+                                   class="btn btn-ghost">
+                                    Next
+                                    <i data-lucide="chevron-right"></i>
+                                </a>
+                            <% } %>
+                        </div>
+                    <% } %>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <!-- View Modal -->
+    <div class="modal" id="viewModal">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3 id="modalTitle">AI Response</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Modal -->
+    <div class="modal" id="ratingModal">
+        <div class="modal-overlay" onclick="closeRatingModal()"></div>
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>Rate this response</h3>
+                <button class="btn btn-ghost btn-sm" onclick="closeRatingModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="rating-stars" id="ratingStars">
+                    <button onclick="submitRating(1)"><i data-lucide="star"></i></button>
+                    <button onclick="submitRating(2)"><i data-lucide="star"></i></button>
+                    <button onclick="submitRating(3)"><i data-lucide="star"></i></button>
+                    <button onclick="submitRating(4)"><i data-lucide="star"></i></button>
+                    <button onclick="submitRating(5)"><i data-lucide="star"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        let currentRatingId = null;
+
+        // View interaction in modal
+        async function viewInteraction(id) {
+            try {
+                const response = await fetch(`/ai/interaction/${id}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    const responseData = typeof data.response === 'string' ? JSON.parse(data.response) : data.response;
+                    
+                    document.getElementById('modalTitle').textContent = getTypeTitle(data.interaction_type);
+                    document.getElementById('modalBody').innerHTML = renderResponse(data.interaction_type, responseData);
+                    document.getElementById('viewModal').classList.add('active');
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load interaction');
+            }
+        }
+
+        function getTypeTitle(type) {
+            const titles = {
+                'explanation': 'Topic Explanation',
+                'notes': 'Study Notes',
+                'questions': 'Practice Questions',
+                'ask': 'Q&A Response'
+            };
+            return titles[type] || 'AI Response';
+        }
+
+        function renderResponse(type, data) {
+            // Similar rendering logic from assistant.ejs
+            if (type === 'explanation') {
+                return `
+                    <div class="modal-result">
+                        <h2>${data.title || ''}</h2>
+                        ${data.core_explanation ? `<div class="section"><h4>Explanation</h4><p>${data.core_explanation}</p></div>` : ''}
+                        ${data.key_points?.length ? `<div class="section"><h4>Key Points</h4><ul>${data.key_points.map(p => `<li>${p}</li>`).join('')}</ul></div>` : ''}
+                        ${data.example ? `<div class="section highlight"><h4>Example</h4><p>${data.example}</p></div>` : ''}
+                        ${data.summary ? `<div class="section"><h4>Summary</h4><p>${data.summary}</p></div>` : ''}
+                    </div>
+                `;
+            } else if (type === 'notes') {
+                return `
+                    <div class="modal-result">
+                        ${data.overview ? `<div class="section"><h4>Overview</h4><p>${data.overview}</p></div>` : ''}
+                        ${data.bullet_points?.length ? `<div class="section"><h4>Key Points</h4><ul>${data.bullet_points.map(p => `<li>${p}</li>`).join('')}</ul></div>` : ''}
+                        ${data.exam_tips?.length ? `<div class="section tips"><h4>Exam Tips</h4><ul>${data.exam_tips.map(t => `<li>${t}</li>`).join('')}</ul></div>` : ''}
+                    </div>
+                `;
+            } else if (type === 'questions') {
+                return `
+                    <div class="modal-result">
+                        ${data.questions?.map((q, i) => `
+                            <div class="question-item">
+                                <strong>Q${i+1}:</strong> ${q.question}
+                                ${q.options?.length ? `<ul class="options">${q.options.map(o => `<li>${o}</li>`).join('')}</ul>` : ''}
+                                <div class="answer"><strong>Answer:</strong> ${q.correct_answer || q.expected_answer || ''}</div>
+                                ${q.explanation ? `<div class="explanation"><em>${q.explanation}</em></div>` : ''}
+                            </div>
+                        `).join('') || ''}
+                    </div>
+                `;
+            } else {
+                return `
+                    <div class="modal-result">
+                        ${data.question ? `<div class="section question-box"><strong>Question:</strong> ${data.question}</div>` : ''}
+                        ${data.answer ? `<div class="section"><h4>Answer</h4><p>${data.answer}</p></div>` : ''}
+                        ${data.key_takeaways?.length ? `<div class="section"><h4>Key Takeaways</h4><ul>${data.key_takeaways.map(t => `<li>${t}</li>`).join('')}</ul></div>` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('viewModal').classList.remove('active');
+        }
+
+        // Toggle bookmark
+        async function toggleBookmark(id) {
+            try {
+                const response = await fetch(`/ai/bookmark/${id}`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Show rating modal
+        function showRating(id) {
+            currentRatingId = id;
+            document.getElementById('ratingModal').classList.add('active');
+        }
+
+        function closeRatingModal() {
+            document.getElementById('ratingModal').classList.remove('active');
+            currentRatingId = null;
+        }
+
+        // Submit rating
+        async function submitRating(rating) {
+            if (!currentRatingId) return;
+            
+            try {
+                const response = await fetch(`/ai/rate/${currentRatingId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    closeRatingModal();
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Delete interaction
+        async function deleteInteraction(id) {
+            if (!confirm('Are you sure you want to delete this interaction?')) return;
+            
+            try {
+                const response = await fetch(`/ai/interaction/${id}`, { method: 'DELETE' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.querySelector(`.history-card[data-id="${id}"]`).remove();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Sidebar toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+
+    <style>
+        .filters-form {
+            width: 100%;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            align-items: end;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .history-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--gray-200);
+            transition: all var(--transition-fast);
+        }
+
+        .history-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-200);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-md);
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+        }
+
+        .history-type {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            flex-wrap: wrap;
+        }
+
+        .type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .type-badge svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .type-explain {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .type-notes {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .type-questions {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .type-ask {
+            background: #fce7f3;
+            color: #db2777;
+        }
+
+        .topic-tag, .subject-tag {
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+        }
+
+        .topic-tag {
+            background: var(--primary-100);
+            color: var(--primary-700);
+        }
+
+        .subject-tag {
+            background: var(--gray-100);
+            color: var(--gray-600);
+        }
+
+        .history-meta {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+
+        .history-meta svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        .history-prompt {
+            margin-bottom: var(--spacing-md);
+            color: var(--gray-700);
+        }
+
+        .history-preview {
+            padding: var(--spacing-md);
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .history-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .bookmark-btn.bookmarked {
+            color: var(--warning);
+        }
+
+        .rating-display {
+            display: flex;
+            gap: 2px;
+        }
+
+        .rating-display svg {
+            width: 16px;
+            height: 16px;
+            color: var(--gray-300);
+        }
+
+        .rating-display svg.filled {
+            color: #fbbf24;
+            fill: #fbbf24;
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            position: relative;
+            background: white;
+            border-radius: var(--radius-xl);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-lg {
+            max-width: 900px;
+        }
+
+        .modal-sm {
+            max-width: 400px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-body {
+            padding: var(--spacing-lg);
+            overflow-y: auto;
+        }
+
+        .modal-result .section {
+            margin-bottom: var(--spacing-lg);
+            padding: var(--spacing-md);
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+        }
+
+        .modal-result .section.highlight {
+            background: var(--primary-50);
+            border-left: 4px solid var(--primary);
+        }
+
+        .modal-result .section.tips {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .modal-result .question-box {
+            background: var(--primary-50);
+        }
+
+        .modal-result .question-item {
+            padding: var(--spacing-md);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .modal-result .answer {
+            margin-top: var(--spacing-sm);
+            padding: var(--spacing-sm);
+            background: #d1fae5;
+            border-radius: var(--radius-sm);
+        }
+
+        .modal-result .explanation {
+            margin-top: var(--spacing-xs);
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .rating-stars {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-sm);
+        }
+
+        .rating-stars button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--spacing-sm);
+            transition: transform var(--transition-fast);
+        }
+
+        .rating-stars button:hover {
+            transform: scale(1.2);
+        }
+
+        .rating-stars svg {
+            width: 32px;
+            height: 32px;
+            color: var(--gray-300);
+        }
+
+        .rating-stars button:hover svg,
+        .rating-stars button:hover ~ button svg {
+            color: #fbbf24;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-xl);
+        }
+
+        .pagination-info {
+            color: var(--gray-500);
+        }
+
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .history-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

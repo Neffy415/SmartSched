@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <p><%= error_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>
+                            <i data-lucide="bell-ring" style="color: var(--primary);"></i>
+                            Reminders
+                        </h1>
+                        <p>Set reminders for tasks, study sessions, and important deadlines</p>
+                    </div>
+                    <a href="/reminders/new" class="btn btn-primary">
+                        <i data-lucide="plus"></i>
+                        New Reminder
+                    </a>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid stats-grid-4">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.due_now || 0 %></span>
+                            <span class="stat-label">Due Now</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+                            <i data-lucide="calendar-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.upcoming || 0 %></span>
+                            <span class="stat-label">Upcoming</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                            <i data-lucide="check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.dismissed || 0 %></span>
+                            <span class="stat-label">Dismissed</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #a855f7);">
+                            <i data-lucide="bell"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.total || 0 %></span>
+                            <span class="stat-label">Total</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reminders List -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>
+                            <i data-lucide="list"></i>
+                            All Reminders
+                        </h3>
+                    </div>
+                    <div class="card-body no-padding">
+                        <% if (reminders.length === 0) { %>
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i data-lucide="bell-off"></i>
+                                </div>
+                                <h4>No reminders yet</h4>
+                                <p>Create your first reminder to stay on track with your studies</p>
+                                <a href="/reminders/new" class="btn btn-primary">
+                                    <i data-lucide="plus"></i>
+                                    Create Reminder
+                                </a>
+                            </div>
+                        <% } else { %>
+                            <div class="reminders-list">
+                                <% reminders.forEach(reminder => { 
+                                    const remindAt = new Date(reminder.remind_at);
+                                    const now = new Date();
+                                    const isPast = remindAt < now;
+                                    const isToday = remindAt.toDateString() === now.toDateString();
+                                    const isTomorrow = remindAt.toDateString() === new Date(now.getTime() + 86400000).toDateString();
+                                    
+                                    let timeLabel = remindAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                    if (isToday) timeLabel = 'Today';
+                                    else if (isTomorrow) timeLabel = 'Tomorrow';
+                                    
+                                    const timeString = remindAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+                                %>
+                                    <div class="reminder-item <%= reminder.is_dismissed ? 'dismissed' : '' %> <%= isPast && !reminder.is_dismissed ? 'overdue' : '' %>">
+                                        <div class="reminder-icon <%= reminder.reminder_type %>">
+                                            <% if (reminder.reminder_type === 'task_deadline') { %>
+                                                <i data-lucide="target"></i>
+                                            <% } else if (reminder.reminder_type === 'study_session') { %>
+                                                <i data-lucide="book-open"></i>
+                                            <% } else if (reminder.reminder_type === 'exam') { %>
+                                                <i data-lucide="graduation-cap"></i>
+                                            <% } else { %>
+                                                <i data-lucide="bell"></i>
+                                            <% } %>
+                                        </div>
+                                        <div class="reminder-content">
+                                            <h4 class="reminder-title"><%= reminder.title %></h4>
+                                            <% if (reminder.description) { %>
+                                                <p class="reminder-desc"><%= reminder.description %></p>
+                                            <% } %>
+                                            <div class="reminder-meta">
+                                                <span class="reminder-time <%= isPast ? 'past' : '' %>">
+                                                    <i data-lucide="clock"></i>
+                                                    <%= timeLabel %> at <%= timeString %>
+                                                </span>
+                                                <% if (reminder.task_title) { %>
+                                                    <span class="reminder-task">
+                                                        <i data-lucide="link"></i>
+                                                        <%= reminder.task_title %>
+                                                    </span>
+                                                <% } %>
+                                                <% if (reminder.repeat_type !== 'none') { %>
+                                                    <span class="reminder-repeat">
+                                                        <i data-lucide="repeat"></i>
+                                                        <%= reminder.repeat_type %>
+                                                    </span>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                        <div class="reminder-actions">
+                                            <% if (!reminder.is_dismissed) { %>
+                                                <form action="/reminders/<%= reminder.id %>/snooze" method="POST" class="snooze-form">
+                                                    <input type="hidden" name="minutes" value="15">
+                                                    <button type="submit" class="btn btn-secondary btn-sm" title="Snooze 15 min">
+                                                        <i data-lucide="alarm-clock"></i>
+                                                    </button>
+                                                </form>
+                                                <form action="/reminders/<%= reminder.id %>/dismiss" method="POST">
+                                                    <button type="submit" class="btn btn-success btn-sm" title="Dismiss">
+                                                        <i data-lucide="check"></i>
+                                                    </button>
+                                                </form>
+                                            <% } %>
+                                            <a href="/reminders/<%= reminder.id %>/edit" class="btn btn-secondary btn-sm" title="Edit">
+                                                <i data-lucide="edit-2"></i>
+                                            </a>
+                                            <form action="/reminders/<%= reminder.id %>/delete" method="POST" onsubmit="return confirm('Delete this reminder?')">
+                                                <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                                    <i data-lucide="trash-2"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+</body>
+</html>

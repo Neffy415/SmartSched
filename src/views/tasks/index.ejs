@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>Tasks</h1>
+                        <p>Manage your study tasks and track progress</p>
+                    </div>
+                    <a href="/tasks/new" class="btn btn-primary">
+                        <i data-lucide="plus"></i>
+                        Add Task
+                    </a>
+                </div>
+
+                <!-- Stats Overview -->
+                <div class="stats-grid stats-grid-4">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.pending || 0 %></span>
+                            <span class="stat-label">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+                            <i data-lucide="loader"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.in_progress || 0 %></span>
+                            <span class="stat-label">In Progress</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                            <i data-lucide="check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.completed || 0 %></span>
+                            <span class="stat-label">Completed</span>
+                        </div>
+                    </div>
+                    <div class="stat-card <%= parseInt(stats.overdue) > 0 ? 'stat-warning' : '' %>">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #ef4444, #f97316);">
+                            <i data-lucide="alert-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.overdue || 0 %></span>
+                            <span class="stat-label">Overdue</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters-bar">
+                    <form action="/tasks" method="GET" class="filters-form">
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select name="status" onchange="this.form.submit()">
+                                <option value="">All Status</option>
+                                <option value="pending" <%= filters.status === 'pending' ? 'selected' : '' %>>Pending</option>
+                                <option value="in_progress" <%= filters.status === 'in_progress' ? 'selected' : '' %>>In Progress</option>
+                                <option value="completed" <%= filters.status === 'completed' ? 'selected' : '' %>>Completed</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Topic</label>
+                            <select name="topic" onchange="this.form.submit()">
+                                <option value="">All Topics</option>
+                                <% subjects.forEach(subject => { %>
+                                    <optgroup label="<%= subject.name %>">
+                                        <% if (subject.topics && subject.topics[0]) { %>
+                                            <% subject.topics.forEach(topic => { %>
+                                                <% if (topic.id) { %>
+                                                    <option value="<%= topic.id %>" <%= filters.topic === topic.id ? 'selected' : '' %>>
+                                                        <%= topic.name %>
+                                                    </option>
+                                                <% } %>
+                                            <% }); %>
+                                        <% } %>
+                                    </optgroup>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Priority</label>
+                            <select name="priority" onchange="this.form.submit()">
+                                <option value="">All Priorities</option>
+                                <option value="1" <%= filters.priority === '1' ? 'selected' : '' %>>P1 - Highest</option>
+                                <option value="2" <%= filters.priority === '2' ? 'selected' : '' %>>P2 - High</option>
+                                <option value="3" <%= filters.priority === '3' ? 'selected' : '' %>>P3 - Medium</option>
+                                <option value="4" <%= filters.priority === '4' ? 'selected' : '' %>>P4 - Low</option>
+                                <option value="5" <%= filters.priority === '5' ? 'selected' : '' %>>P5 - Lowest</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Sort By</label>
+                            <select name="sort" onchange="this.form.submit()">
+                                <option value="">Recent First</option>
+                                <option value="deadline" <%= filters.sort === 'deadline' ? 'selected' : '' %>>Deadline</option>
+                                <option value="priority" <%= filters.sort === 'priority' ? 'selected' : '' %>>Priority</option>
+                                <option value="status" <%= filters.sort === 'status' ? 'selected' : '' %>>Status</option>
+                            </select>
+                        </div>
+                        <% if (filters.status || filters.topic || filters.priority || filters.sort) { %>
+                            <a href="/tasks" class="btn btn-secondary btn-sm">
+                                <i data-lucide="x"></i>
+                                Clear
+                            </a>
+                        <% } %>
+                    </form>
+                </div>
+
+                <!-- Tasks List -->
+                <div class="card">
+                    <div class="card-body no-padding">
+                        <% if (tasks.length === 0) { %>
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i data-lucide="clipboard-list"></i>
+                                </div>
+                                <h4>No tasks found</h4>
+                                <p>
+                                    <% if (filters.status || filters.topic || filters.priority) { %>
+                                        Try adjusting your filters or
+                                    <% } else { %>
+                                        Create your first task to start tracking your study progress
+                                    <% } %>
+                                </p>
+                                <a href="/tasks/new" class="btn btn-primary">
+                                    <i data-lucide="plus"></i>
+                                    Add Task
+                                </a>
+                            </div>
+                        <% } else { %>
+                            <div class="tasks-table">
+                                <% tasks.forEach(task => { %>
+                                    <div class="task-row <%= task.status %> <%= task.deadline && new Date(task.deadline) < new Date() && task.status !== 'completed' ? 'overdue' : '' %>">
+                                        <div class="task-checkbox">
+                                            <form action="/tasks/<%= task.id %>/status" method="POST" class="status-form">
+                                                <input type="hidden" name="status" value="<%= task.status === 'completed' ? 'pending' : 'completed' %>">
+                                                <button type="submit" class="checkbox-btn <%= task.status === 'completed' ? 'checked' : '' %>">
+                                                    <i data-lucide="<%= task.status === 'completed' ? 'check-circle' : 'circle' %>"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div class="task-main">
+                                            <a href="/tasks/<%= task.id %>" class="task-title"><%= task.title %></a>
+                                            <div class="task-meta">
+                                                <span class="task-subject" style="--subject-color: <%= task.subject_color %>">
+                                                    <%= task.subject_name %> / <%= task.topic_name %>
+                                                </span>
+                                                <span class="task-type <%= task.task_type %>"><%= task.task_type %></span>
+                                                <span class="task-time">
+                                                    <i data-lucide="clock"></i>
+                                                    <%= task.estimated_minutes %> min
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="task-deadline-col">
+                                            <% if (task.deadline) { %>
+                                                <span class="task-deadline <%= new Date(task.deadline) < new Date() && task.status !== 'completed' ? 'overdue' : '' %>">
+                                                    <i data-lucide="calendar"></i>
+                                                    <%= new Date(task.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                                                </span>
+                                            <% } %>
+                                        </div>
+                                        <div class="task-priority-col">
+                                            <span class="priority-badge priority-<%= task.priority %>">P<%= task.priority %></span>
+                                        </div>
+                                        <div class="task-status-col">
+                                            <span class="status-badge status-<%= task.status %>">
+                                                <%= task.status.replace('_', ' ') %>
+                                            </span>
+                                        </div>
+                                        <div class="task-actions-col">
+                                            <div class="dropdown">
+                                                <button class="icon-btn dropdown-toggle">
+                                                    <i data-lucide="more-vertical"></i>
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    <a href="/tasks/<%= task.id %>" class="dropdown-item">
+                                                        <i data-lucide="eye"></i> View
+                                                    </a>
+                                                    <a href="/tasks/<%= task.id %>/edit" class="dropdown-item">
+                                                        <i data-lucide="edit"></i> Edit
+                                                    </a>
+                                                    <a href="/study/start?task=<%= task.id %>" class="dropdown-item">
+                                                        <i data-lucide="play"></i> Start Session
+                                                    </a>
+                                                    <hr class="dropdown-divider">
+                                                    <form action="/tasks/<%= task.id %>/status" method="POST">
+                                                        <input type="hidden" name="status" value="in_progress">
+                                                        <button type="submit" class="dropdown-item">
+                                                            <i data-lucide="loader"></i> Mark In Progress
+                                                        </button>
+                                                    </form>
+                                                    <hr class="dropdown-divider">
+                                                    <form action="/tasks/<%= task.id %>/delete" method="POST"
+                                                          onsubmit="return confirm('Delete this task?')">
+                                                        <button type="submit" class="dropdown-item text-error">
+                                                            <i data-lucide="trash-2"></i> Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Sidebar toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+
+        // Dropdown menus
+        document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const dropdown = toggle.closest('.dropdown');
+                document.querySelectorAll('.dropdown.active').forEach(d => {
+                    if (d !== dropdown) d.classList.remove('active');
+                });
+                dropdown.classList.toggle('active');
+            });
+        });
+
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.dropdown.active').forEach(d => d.classList.remove('active'));
+        });
+    </script>
+</body>
+</html>

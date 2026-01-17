@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <p><%= error_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>
+                            <% if (material.mime_type?.includes('pdf')) { %>
+                                <i data-lucide="file-text" style="color: #dc2626;"></i>
+                            <% } else if (material.mime_type?.includes('image')) { %>
+                                <i data-lucide="image" style="color: #2563eb;"></i>
+                            <% } else { %>
+                                <i data-lucide="file" style="color: var(--primary);"></i>
+                            <% } %>
+                            <%= material.original_filename %>
+                        </h1>
+                        <p>Uploaded <%= new Date(material.created_at).toLocaleDateString() %></p>
+                    </div>
+                    <div class="page-header-actions">
+                        <a href="/materials" class="btn btn-ghost">
+                            <i data-lucide="arrow-left"></i>
+                            Back
+                        </a>
+                        <button class="btn btn-error" onclick="deleteMaterial()">
+                            <i data-lucide="trash-2"></i>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+
+                <div class="material-detail-grid">
+                    <!-- Material Info -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="info"></i>
+                                File Information
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-list">
+                                <div class="info-item">
+                                    <span class="info-label">File Name</span>
+                                    <span class="info-value"><%= material.original_filename %></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">File Size</span>
+                                    <span class="info-value"><%= (material.file_size / 1024).toFixed(1) %> KB</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">File Type</span>
+                                    <span class="info-value"><%= material.mime_type || 'Unknown' %></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Subject</span>
+                                    <span class="info-value"><%= material.subject_name || 'Not linked' %></span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Status</span>
+                                    <span class="info-value">
+                                        <% if (material.status === 'pending') { %>
+                                            <span class="status-badge status-pending">Pending</span>
+                                        <% } else if (material.status === 'processing') { %>
+                                            <span class="status-badge status-processing">Processing</span>
+                                        <% } else if (material.status === 'analyzed') { %>
+                                            <span class="status-badge status-success">Analyzed</span>
+                                        <% } else { %>
+                                            <span class="status-badge status-error">Error</span>
+                                        <% } %>
+                                    </span>
+                                </div>
+                                <% if (material.description) { %>
+                                    <div class="info-item">
+                                        <span class="info-label">Description</span>
+                                        <span class="info-value"><%= material.description %></span>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Actions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="sparkles"></i>
+                                AI Actions
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="ai-action-buttons">
+                                <% if (material.status !== 'analyzed') { %>
+                                    <button class="ai-btn" onclick="analyzeMaterial()">
+                                        <i data-lucide="scan"></i>
+                                        <span>Analyze Material</span>
+                                        <small>Extract topics and key information</small>
+                                    </button>
+                                <% } %>
+                                
+                                <button class="ai-btn" onclick="summarizeMaterial()" <%= !material.extracted_text ? 'disabled' : '' %>>
+                                    <i data-lucide="file-text"></i>
+                                    <span>Generate Summary</span>
+                                    <small>Create a concise summary</small>
+                                </button>
+                                
+                                <% if (material.ai_analysis) { %>
+                                    <button class="ai-btn" onclick="createTopics()">
+                                        <i data-lucide="list-plus"></i>
+                                        <span>Create Topics</span>
+                                        <small>Add extracted topics to your schedule</small>
+                                    </button>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <% if (material.ai_analysis) { %>
+                    <!-- AI Analysis Results -->
+                    <div class="card mt-lg">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="brain"></i>
+                                AI Analysis
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <% 
+                                let analysis = {};
+                                try {
+                                    analysis = typeof material.ai_analysis === 'string' 
+                                        ? JSON.parse(material.ai_analysis) 
+                                        : material.ai_analysis;
+                                } catch(e) {}
+                            %>
+                            
+                            <% if (analysis.document_type) { %>
+                                <div class="analysis-section">
+                                    <h4>Document Type</h4>
+                                    <p><%= analysis.document_type %></p>
+                                </div>
+                            <% } %>
+
+                            <% if (analysis.main_subject) { %>
+                                <div class="analysis-section">
+                                    <h4>Main Subject</h4>
+                                    <p><%= analysis.main_subject %></p>
+                                </div>
+                            <% } %>
+
+                            <% if (analysis.topics?.length) { %>
+                                <div class="analysis-section">
+                                    <h4>Extracted Topics</h4>
+                                    <div class="topics-grid">
+                                        <% analysis.topics.forEach(topic => { %>
+                                            <div class="topic-card">
+                                                <h5><%= topic.name %></h5>
+                                                <% if (topic.description) { %>
+                                                    <p><%= topic.description %></p>
+                                                <% } %>
+                                                <div class="topic-meta">
+                                                    <% if (topic.difficulty) { %>
+                                                        <span class="difficulty-badge difficulty-<%= topic.difficulty.toLowerCase() %>">
+                                                            <%= topic.difficulty %>
+                                                        </span>
+                                                    <% } %>
+                                                    <% if (topic.estimated_hours) { %>
+                                                        <span><%= topic.estimated_hours %>h estimated</span>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                            <% } %>
+
+                            <% if (analysis.key_concepts?.length) { %>
+                                <div class="analysis-section">
+                                    <h4>Key Concepts</h4>
+                                    <div class="tags-list">
+                                        <% analysis.key_concepts.forEach(concept => { %>
+                                            <span class="tag"><%= concept %></span>
+                                        <% }); %>
+                                    </div>
+                                </div>
+                            <% } %>
+
+                            <% if (analysis.summary) { %>
+                                <div class="analysis-section">
+                                    <h4>Summary</h4>
+                                    <p><%= analysis.summary %></p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <% if (material.ai_summary) { %>
+                    <!-- AI Summary -->
+                    <div class="card mt-lg">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="file-text"></i>
+                                AI Summary
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <% 
+                                let summary = {};
+                                try {
+                                    summary = typeof material.ai_summary === 'string' 
+                                        ? JSON.parse(material.ai_summary) 
+                                        : material.ai_summary;
+                                } catch(e) {}
+                            %>
+                            
+                            <% if (summary.title) { %>
+                                <h4><%= summary.title %></h4>
+                            <% } %>
+
+                            <% if (summary.overview) { %>
+                                <div class="summary-section">
+                                    <h5>Overview</h5>
+                                    <p><%= summary.overview %></p>
+                                </div>
+                            <% } %>
+
+                            <% if (summary.main_points?.length) { %>
+                                <div class="summary-section">
+                                    <h5>Main Points</h5>
+                                    <ul>
+                                        <% summary.main_points.forEach(point => { %>
+                                            <li><%= point %></li>
+                                        <% }); %>
+                                    </ul>
+                                </div>
+                            <% } %>
+
+                            <% if (summary.conclusion) { %>
+                                <div class="summary-section">
+                                    <h5>Conclusion</h5>
+                                    <p><%= summary.conclusion %></p>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <% if (material.extracted_text) { %>
+                    <!-- Extracted Text -->
+                    <div class="card mt-lg">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="file-type"></i>
+                                Extracted Text
+                            </h3>
+                            <button class="btn btn-ghost btn-sm" onclick="toggleText()">
+                                <i data-lucide="chevron-down" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                        <div class="card-body" id="textBody" style="display: none;">
+                            <pre class="extracted-text"><%= material.extracted_text %></pre>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Linked Topics -->
+                <% if (linkedTopics && linkedTopics.length > 0) { %>
+                    <div class="card mt-lg">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="link"></i>
+                                Linked Topics
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="linked-topics">
+                                <% linkedTopics.forEach(topic => { %>
+                                    <a href="/topics/<%= topic.id %>" class="linked-topic">
+                                        <i data-lucide="bookmark"></i>
+                                        <span><%= topic.name %></span>
+                                        <% if (topic.subject_name) { %>
+                                            <small><%= topic.subject_name %></small>
+                                        <% } %>
+                                    </a>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loadingModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-sm">
+            <div class="modal-body" style="text-align: center; padding: 40px;">
+                <div class="loading-spinner"></div>
+                <p id="loadingText">Processing...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const materialId = '<%= material.id %>';
+
+        // Analyze material
+        async function analyzeMaterial() {
+            showLoading('Analyzing material with AI...');
+            
+            try {
+                const response = await fetch(`/materials/analyze/${materialId}`, { method: 'POST' });
+                const result = await response.json();
+                
+                hideLoading();
+                
+                if (result.success) {
+                    alert('Analysis complete!');
+                    location.reload();
+                } else {
+                    alert(result.error || 'Analysis failed');
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('Error:', error);
+                alert('Network error');
+            }
+        }
+
+        // Summarize material
+        async function summarizeMaterial() {
+            showLoading('Generating summary...');
+            
+            try {
+                const response = await fetch(`/materials/summarize/${materialId}`, { method: 'POST' });
+                const result = await response.json();
+                
+                hideLoading();
+                
+                if (result.success) {
+                    alert('Summary generated!');
+                    location.reload();
+                } else {
+                    alert(result.error || 'Summary failed');
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('Error:', error);
+                alert('Network error');
+            }
+        }
+
+        // Create topics from analysis
+        async function createTopics() {
+            if (!confirm('Create topics from the AI analysis? This will add new topics to your schedule.')) return;
+            
+            showLoading('Creating topics...');
+            
+            try {
+                const response = await fetch(`/materials/create-topics/${materialId}`, { method: 'POST' });
+                const result = await response.json();
+                
+                hideLoading();
+                
+                if (result.success) {
+                    alert(`Created ${result.created} topic(s)!`);
+                    location.reload();
+                } else {
+                    alert(result.error || 'Failed to create topics');
+                }
+            } catch (error) {
+                hideLoading();
+                console.error('Error:', error);
+                alert('Network error');
+            }
+        }
+
+        // Delete material
+        async function deleteMaterial() {
+            if (!confirm('Are you sure you want to delete this material? This cannot be undone.')) return;
+            
+            try {
+                const response = await fetch(`/materials/${materialId}`, { method: 'DELETE' });
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = '/materials';
+                } else {
+                    alert(result.error || 'Delete failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Network error');
+            }
+        }
+
+        // Toggle extracted text
+        function toggleText() {
+            const textBody = document.getElementById('textBody');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (textBody.style.display === 'none') {
+                textBody.style.display = 'block';
+                toggleIcon.setAttribute('data-lucide', 'chevron-up');
+            } else {
+                textBody.style.display = 'none';
+                toggleIcon.setAttribute('data-lucide', 'chevron-down');
+            }
+            lucide.createIcons();
+        }
+
+        // Loading modal
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingModal').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingModal').classList.remove('active');
+        }
+
+        // Sidebar toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+
+    <style>
+        .material-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-lg);
+        }
+
+        .info-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .info-label {
+            color: var(--gray-500);
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #fef3c7; color: #d97706; }
+        .status-processing { background: #dbeafe; color: #2563eb; }
+        .status-success { background: #d1fae5; color: #059669; }
+        .status-error { background: #fee2e2; color: #dc2626; }
+
+        .ai-action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .ai-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            padding: var(--spacing-lg);
+            background: var(--gray-50);
+            border: 2px solid transparent;
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            text-align: left;
+        }
+
+        .ai-btn:hover:not(:disabled) {
+            background: var(--primary-50);
+            border-color: var(--primary);
+        }
+
+        .ai-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ai-btn svg {
+            width: 24px;
+            height: 24px;
+            color: var(--primary);
+        }
+
+        .ai-btn span {
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+
+        .ai-btn small {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .analysis-section, .summary-section {
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .analysis-section:last-child, .summary-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .topic-card {
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--gray-200);
+        }
+
+        .topic-card h5 {
+            margin: 0 0 var(--spacing-sm);
+            color: var(--gray-800);
+        }
+
+        .topic-card p {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .topic-meta {
+            display: flex;
+            gap: var(--spacing-sm);
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+
+        .difficulty-badge {
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+        }
+
+        .difficulty-easy { background: #d1fae5; color: #059669; }
+        .difficulty-medium { background: #fef3c7; color: #d97706; }
+        .difficulty-hard { background: #fee2e2; color: #dc2626; }
+
+        .tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+        }
+
+        .tag {
+            background: var(--primary-100);
+            color: var(--primary-700);
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+        }
+
+        .extracted-text {
+            background: var(--gray-50);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            white-space: pre-wrap;
+            font-size: 0.875rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .linked-topics {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+        }
+
+        .linked-topic {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-md);
+            background: var(--gray-50);
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--gray-700);
+            transition: all var(--transition-fast);
+        }
+
+        .linked-topic:hover {
+            background: var(--primary-50);
+            color: var(--primary);
+        }
+
+        .linked-topic svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .linked-topic small {
+            color: var(--gray-500);
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            position: relative;
+            background: white;
+            border-radius: var(--radius-xl);
+            width: 90%;
+            max-width: 400px;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto var(--spacing-md);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .material-detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb">
+                    <a href="/subjects">Subjects</a>
+                    <i data-lucide="chevron-right"></i>
+                    <span><%= subject.name %></span>
+                </nav>
+
+                <!-- Subject Header -->
+                <div class="subject-header" style="--subject-color: <%= subject.color %>">
+                    <div class="subject-header-info">
+                        <div class="subject-color-indicator"></div>
+                        <div>
+                            <h1><%= subject.name %></h1>
+                            <% if (subject.description) { %>
+                                <p><%= subject.description %></p>
+                            <% } %>
+                        </div>
+                    </div>
+                    <div class="subject-header-actions">
+                        <a href="/subjects/<%= subject.id %>/edit" class="btn btn-secondary">
+                            <i data-lucide="edit"></i>
+                            Edit
+                        </a>
+                        <a href="/topics/new?subject=<%= subject.id %>" class="btn btn-primary">
+                            <i data-lucide="plus"></i>
+                            Add Topic
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid stats-grid-4">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, <%= subject.color %>, <%= subject.color %>dd);">
+                            <i data-lucide="layers"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.total_topics %></span>
+                            <span class="stat-label">Total Topics</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                            <i data-lucide="check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= stats.completed_topics %>/<%= stats.total_topics %></span>
+                            <span class="stat-label">Topics Completed</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= parseFloat(stats.total_estimated_hours).toFixed(1) %>h</span>
+                            <span class="stat-label">Estimated Time</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
+                            <i data-lucide="timer"></i>
+                        </div>
+                        <div class="stat-content">
+                            <span class="stat-value"><%= Math.round(stats.total_minutes_spent / 60 * 10) / 10 %>h</span>
+                            <span class="stat-label">Time Spent</span>
+                        </div>
+                    </div>
+                </div>
+
+                <% if (subject.exam_date) { 
+                    const examDate = new Date(subject.exam_date);
+                    const today = new Date();
+                    const daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+                %>
+                    <div class="exam-banner <%= daysLeft <= 7 ? 'urgent' : '' %>">
+                        <div class="exam-banner-icon">
+                            <i data-lucide="<%= daysLeft <= 7 ? 'alert-triangle' : 'calendar' %>"></i>
+                        </div>
+                        <div class="exam-banner-content">
+                            <span class="exam-date"><%= examDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                            <span class="exam-countdown">
+                                <% if (daysLeft < 0) { %>
+                                    Exam has passed
+                                <% } else if (daysLeft === 0) { %>
+                                    Exam is today!
+                                <% } else if (daysLeft === 1) { %>
+                                    Exam is tomorrow!
+                                <% } else { %>
+                                    <%= daysLeft %> days remaining
+                                <% } %>
+                            </span>
+                        </div>
+                    </div>
+                <% } %>
+
+                <div class="content-grid">
+                    <!-- Topics List -->
+                    <div class="card topics-card">
+                        <div class="card-header">
+                            <h3>
+                                <i data-lucide="list"></i>
+                                Topics
+                            </h3>
+                            <a href="/topics/new?subject=<%= subject.id %>" class="btn btn-ghost btn-sm">
+                                <i data-lucide="plus"></i>
+                                Add
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <% if (topics.length === 0) { %>
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i data-lucide="list-plus"></i>
+                                    </div>
+                                    <h4>No topics yet</h4>
+                                    <p>Break down this subject into topics to start planning</p>
+                                    <a href="/topics/new?subject=<%= subject.id %>" class="btn btn-primary btn-sm">
+                                        <i data-lucide="plus"></i>
+                                        Add First Topic
+                                    </a>
+                                </div>
+                            <% } else { %>
+                                <div class="topics-list">
+                                    <% topics.forEach((topic, index) => { %>
+                                        <div class="topic-item <%= topic.is_completed ? 'completed' : '' %>">
+                                            <div class="topic-checkbox">
+                                                <form action="/topics/<%= topic.id %>/toggle" method="POST" class="toggle-form">
+                                                    <button type="submit" class="checkbox-btn <%= topic.is_completed ? 'checked' : '' %>">
+                                                        <i data-lucide="<%= topic.is_completed ? 'check-circle' : 'circle' %>"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                            <div class="topic-info">
+                                                <a href="/topics/<%= topic.id %>" class="topic-name"><%= topic.name %></a>
+                                                <div class="topic-meta">
+                                                    <span class="difficulty-badge <%= topic.difficulty %>"><%= topic.difficulty %></span>
+                                                    <span><%= parseFloat(topic.estimated_hours).toFixed(1) %>h</span>
+                                                    <span><%= topic.task_count %> tasks</span>
+                                                </div>
+                                            </div>
+                                            <div class="topic-progress">
+                                                <% const topicProgress = topic.task_count > 0 ? Math.round((topic.completed_tasks / topic.task_count) * 100) : 0; %>
+                                                <div class="mini-progress">
+                                                    <div class="mini-progress-fill" style="width: <%= topicProgress %>%"></div>
+                                                </div>
+                                                <span><%= topicProgress %>%</span>
+                                            </div>
+                                            <div class="topic-actions">
+                                                <a href="/topics/<%= topic.id %>" class="icon-btn" title="View topic">
+                                                    <i data-lucide="eye"></i>
+                                                </a>
+                                                <a href="/topics/<%= topic.id %>/edit" class="icon-btn" title="Edit topic">
+                                                    <i data-lucide="edit"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <!-- Sidebar: Recent Activity & Quick Actions -->
+                    <div class="sidebar-content">
+                        <!-- Quick Actions -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>
+                                    <i data-lucide="zap"></i>
+                                    Quick Actions
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="quick-actions-list">
+                                    <a href="/topics/new?subject=<%= subject.id %>" class="quick-action-item">
+                                        <i data-lucide="plus-circle"></i>
+                                        <span>Add Topic</span>
+                                    </a>
+                                    <a href="/tasks/new?subject=<%= subject.id %>" class="quick-action-item">
+                                        <i data-lucide="check-square"></i>
+                                        <span>Add Task</span>
+                                    </a>
+                                    <a href="/study/start?subject=<%= subject.id %>" class="quick-action-item">
+                                        <i data-lucide="play-circle"></i>
+                                        <span>Start Study Session</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Sessions -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>
+                                    <i data-lucide="history"></i>
+                                    Recent Sessions
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <% if (recentSessions.length === 0) { %>
+                                    <div class="empty-state small">
+                                        <i data-lucide="clock"></i>
+                                        <p>No study sessions yet</p>
+                                    </div>
+                                <% } else { %>
+                                    <div class="sessions-list">
+                                        <% recentSessions.forEach(session => { %>
+                                            <div class="session-item">
+                                                <div class="session-icon">
+                                                    <i data-lucide="book-open"></i>
+                                                </div>
+                                                <div class="session-info">
+                                                    <span class="session-topic"><%= session.topic_name || 'General Study' %></span>
+                                                    <span class="session-time">
+                                                        <%= session.actual_minutes || 0 %> mins • 
+                                                        <%= new Date(session.start_time).toLocaleDateString() %>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Mobile menu toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+</body>
+</html>

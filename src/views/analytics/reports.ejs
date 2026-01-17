@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .report-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .report-header {
+            padding: var(--spacing-lg);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .report-week {
+            font-size: 0.8125rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
+        }
+
+        .report-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .report-body {
+            padding: var(--spacing-lg);
+        }
+
+        .report-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+        }
+
+        .report-stat {
+            text-align: center;
+            padding: var(--spacing-md);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+        }
+
+        .report-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .report-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .report-footer {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .consistency-bar {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .consistency-track {
+            width: 100px;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+
+        .consistency-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--warning), var(--success));
+            border-radius: var(--radius-full);
+        }
+
+        .consistency-label {
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+
+        .focus-score {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .focus-score svg {
+            width: 14px;
+            height: 14px;
+            color: #f59e0b;
+            fill: #f59e0b;
+        }
+
+        .generate-card {
+            border: 2px dashed var(--border);
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 280px;
+            text-align: center;
+        }
+
+        .generate-icon {
+            width: 64px;
+            height: 64px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--spacing-md);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .generate-icon svg {
+            width: 28px;
+            height: 28px;
+            color: var(--primary);
+        }
+
+        .generate-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .generate-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-md);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="page-content">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+
+                <!-- Breadcrumb -->
+                <nav class="breadcrumb">
+                    <a href="/analytics">Analytics</a>
+                    <i data-lucide="chevron-right"></i>
+                    <span>Weekly Reports</span>
+                </nav>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <div class="page-header-content">
+                        <h1>Weekly Reports</h1>
+                        <p>Review your weekly study performance summaries</p>
+                    </div>
+                </div>
+
+                <div class="reports-grid">
+                    <!-- Generate New Report -->
+                    <div class="report-card generate-card">
+                        <div class="generate-icon">
+                            <i data-lucide="plus"></i>
+                        </div>
+                        <h3 class="generate-title">Generate Last Week's Report</h3>
+                        <p class="generate-desc">Create a summary of your previous week's study activity</p>
+                        <form action="/analytics/generate-report" method="POST">
+                            <button type="submit" class="btn btn-primary">
+                                <i data-lucide="file-plus"></i>
+                                Generate Report
+                            </button>
+                        </form>
+                    </div>
+
+                    <% if (reports.length === 0) { %>
+                        <div class="card" style="grid-column: span 2;">
+                            <div class="card-body">
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i data-lucide="file-text"></i>
+                                    </div>
+                                    <h4>No reports yet</h4>
+                                    <p>Generate your first weekly report to track your progress over time</p>
+                                </div>
+                            </div>
+                        </div>
+                    <% } else { %>
+                        <% reports.forEach(report => { 
+                            const weekStart = new Date(report.week_start);
+                            const weekEnd = new Date(weekStart);
+                            weekEnd.setDate(weekEnd.getDate() + 6);
+                        %>
+                            <div class="report-card">
+                                <div class="report-header">
+                                    <div class="report-week">
+                                        <%= weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %> - 
+                                        <%= weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                    </div>
+                                    <div class="report-title">Week <%= Math.ceil((weekStart.getDate()) / 7) %> Report</div>
+                                </div>
+                                <div class="report-body">
+                                    <div class="report-stats">
+                                        <div class="report-stat">
+                                            <div class="report-stat-value"><%= Math.round(report.total_study_minutes / 60 * 10) / 10 %>h</div>
+                                            <div class="report-stat-label">Study Time</div>
+                                        </div>
+                                        <div class="report-stat">
+                                            <div class="report-stat-value"><%= report.sessions_completed %></div>
+                                            <div class="report-stat-label">Sessions</div>
+                                        </div>
+                                        <div class="report-stat">
+                                            <div class="report-stat-value"><%= report.tasks_completed %></div>
+                                            <div class="report-stat-label">Tasks Done</div>
+                                        </div>
+                                        <div class="report-stat">
+                                            <div class="report-stat-value"><%= report.consistency_score %>%</div>
+                                            <div class="report-stat-label">Consistency</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="report-footer">
+                                    <div class="consistency-bar">
+                                        <div class="consistency-track">
+                                            <div class="consistency-fill" style="width: <%= report.consistency_score %>%"></div>
+                                        </div>
+                                        <span class="consistency-label"><%= report.consistency_score %>% consistent</span>
+                                    </div>
+                                    <div class="focus-score">
+                                        <% for (let i = 1; i <= 5; i++) { %>
+                                            <% if (i <= Math.round(report.avg_focus_score || 0)) { %>
+                                                <i data-lucide="star"></i>
+                                            <% } %>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) {
+            menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+    </script>
+</body>
+</html>
