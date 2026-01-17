@@ -1,31 +1,27 @@
 const { Pool } = require('pg');
 
-// Check if full DATABASE_URL is provided (common in cloud deployments)
-const databaseUrl = process.env.DATABASE_URL;
+// FAILSAFE: Disable certificate validation globally
+// This is required for some cloud databases (like Aiven) that use self-signed certs
+if (process.env.NODE_ENV === 'production' || process.env.DB_HOST) {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
 
-// Determine if we need SSL (any non-localhost connection)
-const dbHost = process.env.DB_HOST || 'localhost';
-const needsSSL = dbHost !== 'localhost';
+// Check if full DATABASE_URL is provided
+const databaseUrl = process.env.DATABASE_URL;
 
 // Database connection config
 const pool = databaseUrl 
     ? new Pool({
         connectionString: databaseUrl,
-        ssl: {
-            rejectUnauthorized: false,
-            checkServerIdentity: () => undefined
-        }
+        ssl: true // Let global setting handle verification
     })
     : new Pool({
-        host: dbHost,
+        host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT) || 5432,
         database: process.env.DB_NAME || 'smartsched',
         user: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || 'password',
-        ssl: needsSSL ? {
-            rejectUnauthorized: false,
-            checkServerIdentity: () => undefined
-        } : false
+        ssl: (process.env.DB_HOST && process.env.DB_HOST !== 'localhost')
     });
 
 // Test database connection
