@@ -45,3 +45,6 @@ venv/
 *.bak
 *.tmp
 *.temp
+
+# Markdown documentation files
+*.md
