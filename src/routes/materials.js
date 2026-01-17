@@ -85,7 +85,11 @@ router.get('/', async (req, res) => {
         }
 
         const filesResult = await pool.query(`
-            SELECT uf.*, s.name as subject_name, s.color as subject_color,
+            SELECT uf.*, 
+                   uf.original_name as original_filename,
+                   uf.filename as stored_filename,
+                   s.name as subject_name, 
+                   s.color as subject_color,
                    (SELECT COUNT(*) FROM file_topics ft WHERE ft.file_id = uf.id) as linked_topics
             FROM user_files uf
             LEFT JOIN subjects s ON uf.subject_id = s.id
@@ -169,21 +173,25 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
         const { subject_id, description } = req.body;
 
-        // Insert file record
+        // Determine file type from extension
+        const ext = path.extname(req.file.originalname).toLowerCase().replace('.', '');
+        const fileType = ext || 'unknown';
+
+        // Insert file record (matching actual database schema)
         const fileResult = await pool.query(`
             INSERT INTO user_files 
-            (user_id, subject_id, original_filename, stored_filename, file_path, file_size, mime_type, description, status)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
+            (user_id, subject_id, filename, original_name, file_path, file_type, file_size, mime_type, is_processed)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)
             RETURNING *
         `, [
             req.session.user.id,
             subject_id || null,
-            req.file.originalname,
             req.file.filename,
+            req.file.originalname,
             req.file.path,
+            fileType,
             req.file.size,
-            req.file.mimetype,
-            description || null
+            req.file.mimetype
         ]);
 
         const fileId = fileResult.rows[0].id;

@@ -1,4 +1,7 @@
-const pool = require('../config/database');
+// FORCE SSL VALIDATION BYPASS FOR THIS SCRIPT
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
+const { pool } = require('../config/database');
 
 async function addNotesTable() {
     try {
