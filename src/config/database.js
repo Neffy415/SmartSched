@@ -3,22 +3,28 @@ const { Pool } = require('pg');
 // Check if full DATABASE_URL is provided (common in cloud deployments)
 const databaseUrl = process.env.DATABASE_URL;
 
+// Determine if we need SSL (any non-localhost connection)
+const dbHost = process.env.DB_HOST || 'localhost';
+const needsSSL = dbHost !== 'localhost';
+
 // Database connection config
 const pool = databaseUrl 
     ? new Pool({
         connectionString: databaseUrl,
         ssl: {
-            rejectUnauthorized: false
+            rejectUnauthorized: false,
+            checkServerIdentity: () => undefined
         }
     })
     : new Pool({
-        host: process.env.DB_HOST || 'localhost',
-        port: process.env.DB_PORT || 5432,
+        host: dbHost,
+        port: parseInt(process.env.DB_PORT) || 5432,
         database: process.env.DB_NAME || 'smartsched',
         user: process.env.DB_USER || 'postgres',
         password: process.env.DB_PASSWORD || 'password',
-        ssl: (process.env.DB_HOST && process.env.DB_HOST !== 'localhost') ? {
-            rejectUnauthorized: false
+        ssl: needsSSL ? {
+            rejectUnauthorized: false,
+            checkServerIdentity: () => undefined
         } : false
     });
 
