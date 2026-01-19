@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .set-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-xl);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        .set-info h1 {
+            font-size: 1.75rem;
+            margin-bottom: var(--spacing-sm);
+        }
+        .set-meta {
+            display: flex;
+            gap: var(--spacing-md);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .set-subject-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: white;
+        }
+        .set-topic {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+        .set-topic svg { width: 16px; height: 16px; }
+        .set-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .set-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+        .stat-box {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--gray-100);
+            text-align: center;
+        }
+        .stat-box-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        .stat-box-label {
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+        }
+        .stat-box.warning .stat-box-value { color: var(--warning); }
+        .stat-box.success .stat-box-value { color: var(--success); }
+
+        .cards-section {
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-100);
+            overflow: hidden;
+        }
+        .cards-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .cards-section-header h2 {
+            font-size: 1.125rem;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .cards-section-header h2 svg {
+            color: var(--primary);
+            width: 20px;
+            height: 20px;
+        }
+
+        .cards-table {
+            width: 100%;
+        }
+        .cards-table th {
+            background: var(--gray-50);
+            padding: var(--spacing-md) var(--spacing-lg);
+            text-align: left;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .cards-table td {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+            vertical-align: top;
+        }
+        .cards-table tr:last-child td {
+            border-bottom: none;
+        }
+        .cards-table tr:hover {
+            background: var(--gray-50);
+        }
+        .card-text {
+            max-width: 400px;
+        }
+        .card-text-content {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .card-progress {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .progress-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        .progress-indicator.new { background: var(--gray-300); }
+        .progress-indicator.learning { background: var(--warning); }
+        .progress-indicator.review { background: var(--info); }
+        .progress-indicator.mastered { background: var(--success); }
+        .progress-text {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+        .card-actions {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+        .card-actions button {
+            padding: 0.25rem;
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            border-radius: var(--radius-sm);
+        }
+        .card-actions button:hover {
+            color: var(--primary);
+            background: var(--primary-50);
+        }
+        .card-actions button.delete:hover {
+            color: var(--error);
+            background: var(--error-50);
+        }
+
+        .add-card-form {
+            padding: var(--spacing-lg);
+            background: var(--gray-50);
+            display: none;
+        }
+        .add-card-form.show { display: block; }
+        .add-card-form h3 {
+            font-size: 1rem;
+            margin-bottom: var(--spacing-md);
+        }
+        .add-card-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+        @media (max-width: 768px) {
+            .add-card-fields { grid-template-columns: 1fr; }
+        }
+        .add-card-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+            margin-top: var(--spacing-md);
+        }
+
+        .empty-cards {
+            padding: var(--spacing-2xl);
+            text-align: center;
+            color: var(--gray-500);
+        }
+        .empty-cards svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.5;
+        }
+
+        /* Edit Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: white;
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 500px;
+            margin: var(--spacing-md);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .modal-header h3 { font-size: 1.125rem; }
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-400);
+        }
+        .modal-body { padding: var(--spacing-lg); }
+        .modal-footer {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: flex-end;
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--gray-100);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="content-area">
+                <div class="set-header">
+                    <div class="set-info">
+                        <h1><%= set.title %></h1>
+                        <div class="set-meta">
+                            <% if (set.subject_name) { %>
+                            <span class="set-subject-badge" style="background-color: <%= set.subject_color || '#6366f1' %>">
+                                <%= set.subject_name %>
+                            </span>
+                            <% } %>
+                            <% if (set.topic_name) { %>
+                            <span class="set-topic">
+                                <i data-lucide="bookmark"></i> <%= set.topic_name %>
+                            </span>
+                            <% } %>
+                        </div>
+                    </div>
+                    <div class="set-actions">
+                        <a href="/flashcards/<%= set.id %>?mode=study" class="btn btn-primary">
+                            <i data-lucide="play"></i> Study Now
+                        </a>
+                        <button class="btn btn-secondary" onclick="toggleAddForm()">
+                            <i data-lucide="plus"></i> Add Card
+                        </button>
+                        <button class="btn btn-ghost" onclick="confirmDeleteSet()">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="set-stats">
+                    <div class="stat-box">
+                        <div class="stat-box-value"><%= cards.length %></div>
+                        <div class="stat-box-label">Total Cards</div>
+                    </div>
+                    <div class="stat-box warning">
+                        <div class="stat-box-value"><%= dueCount %></div>
+                        <div class="stat-box-label">Due for Review</div>
+                    </div>
+                    <div class="stat-box success">
+                        <div class="stat-box-value">
+                            <%= cards.filter(c => c.interval_days >= 21).length %>
+                        </div>
+                        <div class="stat-box-label">Mastered</div>
+                    </div>
+                </div>
+
+                <div class="cards-section">
+                    <div class="cards-section-header">
+                        <h2><i data-lucide="credit-card"></i> All Cards</h2>
+                    </div>
+
+                    <div class="add-card-form" id="addCardForm">
+                        <h3>Add New Card</h3>
+                        <div class="add-card-fields">
+                            <div class="form-group">
+                                <label for="newFront">Front (Question)</label>
+                                <textarea id="newFront" rows="3" placeholder="Enter the question or prompt..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="newBack">Back (Answer)</label>
+                                <textarea id="newBack" rows="3" placeholder="Enter the answer..."></textarea>
+                            </div>
+                        </div>
+                        <div class="add-card-actions">
+                            <button class="btn btn-secondary btn-sm" onclick="toggleAddForm()">Cancel</button>
+                            <button class="btn btn-primary btn-sm" onclick="addCard()">
+                                <i data-lucide="plus"></i> Add Card
+                            </button>
+                        </div>
+                    </div>
+
+                    <% if (cards.length === 0) { %>
+                    <div class="empty-cards">
+                        <i data-lucide="credit-card"></i>
+                        <p>No cards in this set yet. Add your first card above!</p>
+                    </div>
+                    <% } else { %>
+                    <table class="cards-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40%">Front</th>
+                                <th style="width: 40%">Back</th>
+                                <th>Progress</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="cardsTableBody">
+                            <% cards.forEach((card, index) => { %>
+                            <tr data-card-id="<%= card.id %>">
+                                <td class="card-text">
+                                    <div class="card-text-content"><%= card.front_text %></div>
+                                </td>
+                                <td class="card-text">
+                                    <div class="card-text-content"><%= card.back_text %></div>
+                                </td>
+                                <td>
+                                    <div class="card-progress">
+                                        <% 
+                                            let status = 'new';
+                                            let statusText = 'New';
+                                            if (card.interval_days >= 21) {
+                                                status = 'mastered';
+                                                statusText = 'Mastered';
+                                            } else if (card.interval_days >= 7) {
+                                                status = 'review';
+                                                statusText = 'Reviewing';
+                                            } else if (card.correct_count > 0) {
+                                                status = 'learning';
+                                                statusText = 'Learning';
+                                            }
+                                        %>
+                                        <span class="progress-indicator <%= status %>"></span>
+                                        <span class="progress-text"><%= statusText %></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="card-actions">
+                                        <button onclick="editCard('<%= card.id %>', `<%= card.front_text.replace(/`/g, '\\`') %>`, `<%= card.back_text.replace(/`/g, '\\`') %>`)" title="Edit">
+                                            <i data-lucide="edit-2"></i>
+                                        </button>
+                                        <button class="delete" onclick="deleteCard('<%= card.id %>')" title="Delete">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                    <% } %>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Edit Card</h3>
+                <button class="modal-close" onclick="closeEditModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editCardId">
+                <div class="form-group">
+                    <label for="editFront">Front (Question)</label>
+                    <textarea id="editFront" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editBack">Back (Answer)</label>
+                    <textarea id="editBack" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEditedCard()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        const setId = '<%= set.id %>';
+
+        function toggleAddForm() {
+            document.getElementById('addCardForm').classList.toggle('show');
+        }
+
+        async function addCard() {
+            const front = document.getElementById('newFront').value.trim();
+            const back = document.getElementById('newBack').value.trim();
+
+            if (!front || !back) {
+                alert('Please fill in both front and back');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/flashcards/${setId}/add-card`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ front, back })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to add card: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to add card');
+            }
+        }
+
+        function editCard(id, front, back) {
+            document.getElementById('editCardId').value = id;
+            document.getElementById('editFront').value = front;
+            document.getElementById('editBack').value = back;
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        async function saveEditedCard() {
+            // For now, we'll need to implement an update endpoint
+            // This is a placeholder
+            alert('Card editing will be implemented. For now, delete and re-add the card.');
+            closeEditModal();
+        }
+
+        async function deleteCard(cardId) {
+            if (!confirm('Delete this card? This cannot be undone.')) return;
+
+            try {
+                const response = await fetch(`/flashcards/card/${cardId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    document.querySelector(`[data-card-id="${cardId}"]`).remove();
+                } else {
+                    alert('Failed to delete card: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to delete card');
+            }
+        }
+
+        async function confirmDeleteSet() {
+            if (!confirm('Delete this entire flashcard set? All cards will be permanently removed.')) return;
+
+            try {
+                const response = await fetch(`/flashcards/${setId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = '/flashcards';
+                } else {
+                    alert('Failed to delete set: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to delete set');
+            }
+        }
+    </script>
+</body>
+</html>

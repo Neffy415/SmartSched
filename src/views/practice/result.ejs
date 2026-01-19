@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .result-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-md);
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        .score-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--spacing-lg);
+        }
+        .score-circle.excellent { background: var(--success-100); color: var(--success-700); }
+        .score-circle.good { background: var(--info-100); color: var(--info-700); }
+        .score-circle.average { background: var(--warning-100); color: var(--warning-700); }
+        .score-circle.poor { background: var(--error-100); color: var(--error-700); }
+        .score-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+        .score-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .result-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-sm);
+        }
+        .result-meta {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-xl);
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+        .result-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .result-meta svg { width: 16px; height: 16px; }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+        @media (max-width: 640px) {
+            .summary-cards { grid-template-columns: 1fr; }
+        }
+        .summary-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            text-align: center;
+            border: 1px solid var(--gray-100);
+        }
+        .summary-card-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .summary-card-value.correct { color: var(--success); }
+        .summary-card-value.incorrect { color: var(--error); }
+        .summary-card-label {
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+        }
+
+        .result-actions {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .questions-review {
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-100);
+            overflow: hidden;
+        }
+        .questions-review-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+            font-weight: 600;
+        }
+
+        .question-result {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .question-result:last-child { border-bottom: none; }
+        .question-result-header {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+        }
+        .question-status {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .question-status svg { width: 16px; height: 16px; }
+        .question-status.correct { background: var(--success-100); color: var(--success); }
+        .question-status.incorrect { background: var(--error-100); color: var(--error); }
+        .question-status.skipped { background: var(--gray-100); color: var(--gray-500); }
+        .question-result-text {
+            flex: 1;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+
+        .answer-comparison {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-md);
+            margin-left: 44px;
+        }
+        @media (max-width: 640px) {
+            .answer-comparison { grid-template-columns: 1fr; }
+        }
+        .answer-box {
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+        .answer-box-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+        .answer-box.your-answer {
+            background: var(--gray-100);
+        }
+        .answer-box.your-answer.correct {
+            background: var(--success-100);
+        }
+        .answer-box.your-answer.incorrect {
+            background: var(--error-100);
+        }
+        .answer-box.correct-answer {
+            background: var(--success-50);
+            border: 1px solid var(--success-200);
+        }
+
+        .explanation-box {
+            margin-top: var(--spacing-md);
+            margin-left: 44px;
+            padding: var(--spacing-md);
+            background: var(--info-50);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            color: var(--info-700);
+        }
+        .explanation-box-label {
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+            color: var(--info-600);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="result-container">
+                <% 
+                    // Handle both string and object formats for answers
+                    let results = [];
+                    if (typeof attempt.answers === 'string') {
+                        try { results = JSON.parse(attempt.answers); } catch(e) { results = []; }
+                    } else if (Array.isArray(attempt.answers)) {
+                        results = attempt.answers;
+                    }
+                    const resultMap = {};
+                    results.forEach(r => resultMap[r.questionId] = r);
+                    
+                    let scoreClass = 'poor';
+                    if (attempt.percentage >= 90) scoreClass = 'excellent';
+                    else if (attempt.percentage >= 70) scoreClass = 'good';
+                    else if (attempt.percentage >= 50) scoreClass = 'average';
+                %>
+
+                <div class="result-header">
+                    <div class="score-circle <%= scoreClass %>">
+                        <span class="score-value"><%= attempt.percentage %>%</span>
+                        <span class="score-label">Score</span>
+                    </div>
+                    <h1><%= attempt.quiz_title %></h1>
+                    <div class="result-meta">
+                        <span><i data-lucide="check-circle"></i> <%= attempt.score %>/<%= attempt.total_questions %> correct</span>
+                        <% if (attempt.time_taken_seconds) { 
+                            const mins = Math.floor(attempt.time_taken_seconds / 60);
+                            const secs = attempt.time_taken_seconds % 60;
+                        %>
+                        <span><i data-lucide="clock"></i> <%= mins %>:<%= String(secs).padStart(2, '0') %> time</span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="summary-card-value correct"><%= attempt.score %></div>
+                        <div class="summary-card-label">Correct</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-value incorrect"><%= attempt.total_questions - attempt.score %></div>
+                        <div class="summary-card-label">Incorrect</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-card-value"><%= attempt.total_questions %></div>
+                        <div class="summary-card-label">Total Questions</div>
+                    </div>
+                </div>
+
+                <div class="result-actions">
+                    <a href="/practice" class="btn btn-secondary">
+                        <i data-lucide="arrow-left"></i> Back to Practice
+                    </a>
+                    <a href="/practice/<%= attempt.quiz_id %>" class="btn btn-primary">
+                        <i data-lucide="refresh-cw"></i> Retake Quiz
+                    </a>
+                </div>
+
+                <div class="questions-review">
+                    <div class="questions-review-header">
+                        <i data-lucide="list-checks"></i> Question Review
+                    </div>
+
+                    <% questions.forEach((q, index) => { 
+                        const result = resultMap[q.id] || {};
+                        const isCorrect = result.isCorrect;
+                        const userAnswer = result.userAnswer;
+                        const statusClass = userAnswer === null ? 'skipped' : (isCorrect ? 'correct' : 'incorrect');
+                    %>
+                    <div class="question-result">
+                        <div class="question-result-header">
+                            <div class="question-status <%= statusClass %>">
+                                <% if (userAnswer === null) { %>
+                                <i data-lucide="minus"></i>
+                                <% } else if (isCorrect) { %>
+                                <i data-lucide="check"></i>
+                                <% } else { %>
+                                <i data-lucide="x"></i>
+                                <% } %>
+                            </div>
+                            <div class="question-result-text">
+                                <strong>Q<%= index + 1 %>:</strong> <%= q.question_text %>
+                            </div>
+                        </div>
+
+                        <div class="answer-comparison">
+                            <div class="answer-box your-answer <%= statusClass %>">
+                                <div class="answer-box-label">Your Answer</div>
+                                <% if (userAnswer) { %>
+                                    <strong><%= userAnswer %>:</strong> <%= q['option_' + userAnswer.toLowerCase()] %>
+                                <% } else { %>
+                                    <em>Not answered</em>
+                                <% } %>
+                            </div>
+                            <div class="answer-box correct-answer">
+                                <div class="answer-box-label">Correct Answer</div>
+                                <strong><%= q.correct_option %>:</strong> <%= q['option_' + q.correct_option.toLowerCase()] %>
+                            </div>
+                        </div>
+
+                        <% if (q.explanation) { %>
+                        <div class="explanation-box">
+                            <div class="explanation-box-label">Explanation</div>
+                            <%= q.explanation %>
+                        </div>
+                        <% } %>
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

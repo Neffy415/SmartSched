@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: var(--spacing-xl) var(--spacing-md);
+        }
+
+        .quiz-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        .quiz-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-sm);
+        }
+        .quiz-meta {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-lg);
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+        .quiz-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .quiz-meta svg { width: 16px; height: 16px; }
+
+        .quiz-progress {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+        .progress-bar-container {
+            flex: 1;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: var(--radius-full);
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+        .progress-text {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+            min-width: 80px;
+            text-align: right;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-100);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        .question-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: var(--spacing-md);
+        }
+        .question-text {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--gray-900);
+            margin-bottom: var(--spacing-lg);
+            line-height: 1.6;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        .option-item {
+            position: relative;
+        }
+        .option-input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .option-label {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        .option-label:hover {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+        .option-input:checked + .option-label {
+            border-color: var(--primary);
+            background: var(--primary-50);
+        }
+        .option-letter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background: var(--gray-100);
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            flex-shrink: 0;
+        }
+        .option-input:checked + .option-label .option-letter {
+            background: var(--primary);
+            color: white;
+        }
+        .option-text {
+            flex: 1;
+            font-size: 0.9375rem;
+            line-height: 1.5;
+        }
+
+        .quiz-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: var(--spacing-xl);
+        }
+
+        .timer {
+            position: fixed;
+            top: var(--spacing-lg);
+            right: var(--spacing-lg);
+            background: white;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-weight: 600;
+            color: var(--gray-700);
+            z-index: 100;
+        }
+        .timer svg { width: 18px; height: 18px; color: var(--primary); }
+
+        .submit-section {
+            text-align: center;
+            padding: var(--spacing-xl);
+            background: var(--gray-50);
+            border-radius: var(--radius-xl);
+        }
+        .submit-section h3 {
+            margin-bottom: var(--spacing-md);
+        }
+        .submit-section p {
+            color: var(--gray-500);
+            margin-bottom: var(--spacing-lg);
+        }
+        .unanswered-warning {
+            background: var(--warning-100);
+            color: var(--warning-700);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--spacing-lg);
+            display: none;
+        }
+        .unanswered-warning.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <div class="quiz-container">
+                <div class="timer" id="timer">
+                    <i data-lucide="clock"></i>
+                    <span id="timerDisplay">00:00</span>
+                </div>
+
+                <div class="quiz-header">
+                    <h1><%= quiz.title %></h1>
+                    <div class="quiz-meta">
+                        <span><i data-lucide="help-circle"></i> <%= questions.length %> questions</span>
+                        <% if (quiz.subject_name) { %>
+                        <span><i data-lucide="book"></i> <%= quiz.subject_name %></span>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="quiz-progress">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progressBar" style="width: 0%"></div>
+                    </div>
+                    <span class="progress-text"><span id="answeredCount">0</span>/<%= questions.length %> answered</span>
+                </div>
+
+                <form id="quizForm">
+                    <% questions.forEach((q, index) => { %>
+                    <div class="question-card" id="question-<%= q.id %>">
+                        <span class="question-number"><%= index + 1 %></span>
+                        <div class="question-text"><%= q.question_text %></div>
+                        <div class="options-list">
+                            <div class="option-item">
+                                <input type="radio" name="q_<%= q.id %>" value="A" id="q_<%= q.id %>_a" class="option-input" onchange="updateProgress()">
+                                <label for="q_<%= q.id %>_a" class="option-label">
+                                    <span class="option-letter">A</span>
+                                    <span class="option-text"><%= q.option_a %></span>
+                                </label>
+                            </div>
+                            <div class="option-item">
+                                <input type="radio" name="q_<%= q.id %>" value="B" id="q_<%= q.id %>_b" class="option-input" onchange="updateProgress()">
+                                <label for="q_<%= q.id %>_b" class="option-label">
+                                    <span class="option-letter">B</span>
+                                    <span class="option-text"><%= q.option_b %></span>
+                                </label>
+                            </div>
+                            <div class="option-item">
+                                <input type="radio" name="q_<%= q.id %>" value="C" id="q_<%= q.id %>_c" class="option-input" onchange="updateProgress()">
+                                <label for="q_<%= q.id %>_c" class="option-label">
+                                    <span class="option-letter">C</span>
+                                    <span class="option-text"><%= q.option_c %></span>
+                                </label>
+                            </div>
+                            <div class="option-item">
+                                <input type="radio" name="q_<%= q.id %>" value="D" id="q_<%= q.id %>_d" class="option-input" onchange="updateProgress()">
+                                <label for="q_<%= q.id %>_d" class="option-label">
+                                    <span class="option-letter">D</span>
+                                    <span class="option-text"><%= q.option_d %></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+
+                    <div class="submit-section">
+                        <h3>Ready to submit?</h3>
+                        <p>Review your answers before submitting. You cannot change them after submission.</p>
+                        <div class="unanswered-warning" id="unansweredWarning">
+                            <i data-lucide="alert-triangle"></i>
+                            You have <span id="unansweredCount">0</span> unanswered questions.
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i data-lucide="send"></i> Submit Quiz
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const quizId = '<%= quiz.id %>';
+        const totalQuestions = <%= questions.length %>;
+        const questionIds = <%- JSON.stringify(questions.map(q => q.id)) %>;
+        let startTime = Date.now();
+        let elapsedSeconds = 0;
+
+        // Timer
+        function updateTimer() {
+            elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsedSeconds / 60);
+            const seconds = elapsedSeconds % 60;
+            document.getElementById('timerDisplay').textContent = 
+                String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        }
+        setInterval(updateTimer, 1000);
+
+        // Progress tracking
+        function updateProgress() {
+            let answered = 0;
+            questionIds.forEach(id => {
+                const selected = document.querySelector(`input[name="q_${id}"]:checked`);
+                if (selected) answered++;
+            });
+            
+            document.getElementById('answeredCount').textContent = answered;
+            document.getElementById('progressBar').style.width = (answered / totalQuestions * 100) + '%';
+
+            const unanswered = totalQuestions - answered;
+            document.getElementById('unansweredCount').textContent = unanswered;
+            if (unanswered > 0) {
+                document.getElementById('unansweredWarning').classList.add('show');
+            } else {
+                document.getElementById('unansweredWarning').classList.remove('show');
+            }
+        }
+
+        // Form submission
+        document.getElementById('quizForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const answers = {};
+            questionIds.forEach(id => {
+                const selected = document.querySelector(`input[name="q_${id}"]:checked`);
+                answers[id] = selected ? selected.value : null;
+            });
+
+            try {
+                const response = await fetch(`/practice/${quizId}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        answers: answers,
+                        timeTaken: elapsedSeconds
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/practice/result/' + data.attemptId;
+                } else {
+                    alert('Failed to submit quiz: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to submit quiz');
+            }
+        });
+    </script>
+</body>
+</html>

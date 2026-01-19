@@ -61,7 +61,7 @@
                     <div class="progress-header">
                         <div class="progress-info">
                             <h3>Daily Progress</h3>
-                            <p><%= stats.completed %> of <%= stats.pending + stats.completed %> tasks completed</p>
+                            <p class="progress-text"><%= stats.completed %> of <%= stats.pending + stats.completed %> tasks completed</p>
                         </div>
                         <div class="progress-percentage">
                             <span class="percentage-value"><%= stats.completionPercent %>%</span>
@@ -73,20 +73,20 @@
                     <div class="progress-stats">
                         <div class="progress-stat">
                             <i data-lucide="clock"></i>
-                            <span><%= Math.round(stats.minutesRemaining / 60 * 10) / 10 %>h remaining</span>
+                            <span class="stat-text"><%= Math.round(stats.minutesRemaining / 60 * 10) / 10 %>h remaining</span>
                         </div>
                         <div class="progress-stat">
                             <i data-lucide="check-circle"></i>
-                            <span><%= stats.completed %> completed</span>
+                            <span class="stat-text"><%= stats.completed %> completed</span>
                         </div>
                         <div class="progress-stat">
                             <i data-lucide="circle-dashed"></i>
-                            <span><%= stats.pending %> pending</span>
+                            <span class="stat-text"><%= stats.pending %> pending</span>
                         </div>
                         <% if (stats.skipped > 0) { %>
                         <div class="progress-stat warning">
                             <i data-lucide="skip-forward"></i>
-                            <span><%= stats.skipped %> skipped</span>
+                            <span class="stat-text"><%= stats.skipped %> skipped</span>
                         </div>
                         <% } %>
                     </div>
@@ -217,11 +217,12 @@
     <style>
         /* Today's Schedule Specific Styles */
         .today-progress-card {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-600) 100%);
+            background: linear-gradient(135deg, #f0f9ff 0%, #ede9fe 100%);
             border-radius: var(--radius-xl);
             padding: var(--spacing-xl);
             margin-bottom: var(--spacing-xl);
-            color: white;
+            border: 2px solid var(--primary);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
         }
 
         .progress-header {
@@ -235,20 +236,22 @@
             font-size: 1.25rem;
             font-weight: 600;
             margin: 0 0 0.25rem 0;
+            color: var(--gray-900);
         }
 
         .progress-info p {
-            opacity: 0.9;
+            color: var(--gray-600);
             margin: 0;
         }
 
         .percentage-value {
             font-size: 2.5rem;
             font-weight: 800;
+            color: var(--primary);
         }
 
         .progress-bar-container {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(79, 70, 229, 0.1);
             border-radius: 100px;
             height: 12px;
             overflow: hidden;
@@ -256,10 +259,11 @@
         }
 
         .progress-bar {
-            background: white;
+            background: var(--primary-600);
             height: 100%;
             border-radius: 100px;
             transition: width 0.5s ease;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
         }
 
         .progress-stats {
@@ -273,16 +277,17 @@
             align-items: center;
             gap: var(--spacing-xs);
             font-size: 0.875rem;
-            opacity: 0.9;
+            color: var(--gray-700);
         }
 
         .progress-stat svg {
             width: 16px;
             height: 16px;
+            color: var(--primary);
         }
 
         .progress-stat.warning {
-            color: #fcd34d;
+            color: #d97706;
         }
 
         .today-tasks-section h2 {
@@ -537,6 +542,34 @@
             .quick-actions-bar {
                 flex-direction: column;
             }
+        }
+
+        /* Fix visibility issues */
+        .progress-text,
+        .stat-text {
+            color: var(--gray-700) !important;
+            font-weight: 500;
+        }
+        
+        .today-progress-card {
+            background: linear-gradient(135deg, #f0f9ff 0%, #f3e8ff 100%);
+            border: 2px solid var(--primary);
+        }
+        
+        .progress-header h3 {
+            color: var(--gray-900);
+            font-size: 1.25rem;
+        }
+        
+        .progress-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-700);
+        }
+        
+        .progress-stat svg {
+            color: var(--primary);
         }
     </style>
 </body>

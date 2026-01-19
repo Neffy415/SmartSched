@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .create-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .page-header {
+            margin-bottom: var(--spacing-xl);
+        }
+        .page-header h1 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .page-header h1 svg { color: var(--primary); }
+
+        .create-tabs {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-xl);
+            background: var(--gray-100);
+            padding: 0.25rem;
+            border-radius: var(--radius-lg);
+        }
+        .create-tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray-600);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all var(--transition-fast);
+        }
+        .create-tab:hover { color: var(--gray-900); }
+        .create-tab.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+        .create-tab svg { width: 18px; height: 18px; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card {
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-100);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .card-title svg { color: var(--primary); width: 20px; height: 20px; }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-lg);
+        }
+        @media (max-width: 640px) {
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        .cards-builder {
+            margin-top: var(--spacing-xl);
+        }
+        .cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        .card-item {
+            background: var(--gray-50);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            position: relative;
+        }
+        .card-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        .card-number {
+            font-weight: 600;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+        }
+        .remove-card-btn {
+            background: none;
+            border: none;
+            color: var(--gray-400);
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        .remove-card-btn:hover { color: var(--error); }
+        .card-fields {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+        .card-field label {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            margin-bottom: 0.25rem;
+        }
+        .card-field textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: var(--spacing-sm);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            resize: vertical;
+        }
+        .card-field textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-100);
+        }
+
+        .add-card-btn {
+            width: 100%;
+            padding: var(--spacing-md);
+            border: 2px dashed var(--gray-300);
+            border-radius: var(--radius-lg);
+            background: transparent;
+            color: var(--gray-500);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-md);
+            transition: all var(--transition-fast);
+        }
+        .add-card-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-50);
+        }
+
+        .ai-generate-section {
+            background: linear-gradient(135deg, var(--primary-50), var(--info-50));
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-lg);
+        }
+        .ai-generate-section h3 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        .ai-generate-section h3 svg { color: var(--primary); }
+
+        .ai-options {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-md);
+        }
+
+        .generated-preview {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-lg);
+            background: white;
+            border-radius: var(--radius-lg);
+            display: none;
+        }
+        .generated-preview.show { display: block; }
+        .generated-preview h4 {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: flex-end;
+            margin-top: var(--spacing-xl);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        .loading-overlay.show { display: flex; }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="content-area">
+                <div class="create-container">
+                    <div class="page-header">
+                        <h1><i data-lucide="plus-circle"></i> Create Flashcard Set</h1>
+                    </div>
+
+                    <div class="create-tabs">
+                        <button class="create-tab active" data-tab="manual">
+                            <i data-lucide="edit-3"></i> Manual
+                        </button>
+                        <button class="create-tab" data-tab="ai">
+                            <i data-lucide="sparkles"></i> AI Generate
+                        </button>
+                    </div>
+
+                    <!-- Manual Creation Tab -->
+                    <div class="tab-content active" id="manual-tab">
+                        <form id="createSetForm">
+                            <div class="card">
+                                <h3 class="card-title"><i data-lucide="folder"></i> Set Details</h3>
+                                <div class="form-group">
+                                    <label for="title">Set Title *</label>
+                                    <input type="text" id="title" name="title" required 
+                                           placeholder="e.g., Calculus Fundamentals">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="subject_id">Subject</label>
+                                        <select id="subject_id" name="subject_id" onchange="loadTopics(this.value)">
+                                            <option value="">Select Subject (Optional)</option>
+                                            <% subjects.forEach(subject => { %>
+                                            <option value="<%= subject.id %>" 
+                                                    <%= selectedTopic && selectedTopic.subject_id === subject.id ? 'selected' : '' %>>
+                                                <%= subject.name %>
+                                            </option>
+                                            <% }); %>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="topic_id">Topic</label>
+                                        <select id="topic_id" name="topic_id">
+                                            <option value="">Select Topic (Optional)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <textarea id="description" name="description" rows="2" 
+                                              placeholder="Brief description of this flashcard set"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="card cards-builder">
+                                <h3 class="card-title"><i data-lucide="credit-card"></i> Flashcards</h3>
+                                <div class="cards-list" id="cardsList">
+                                    <!-- Cards will be added here -->
+                                </div>
+                                <button type="button" class="add-card-btn" onclick="addCard()">
+                                    <i data-lucide="plus"></i> Add Card
+                                </button>
+                            </div>
+
+                            <div class="form-actions">
+                                <a href="/flashcards" class="btn btn-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-lucide="save"></i> Create Set
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- AI Generation Tab -->
+                    <div class="tab-content" id="ai-tab">
+                        <div class="ai-generate-section">
+                            <h3><i data-lucide="sparkles"></i> AI Flashcard Generator</h3>
+                            <p>Let AI create flashcards from a topic or your notes. You can edit them before saving.</p>
+                            
+                            <div class="form-group">
+                                <label for="ai_topic">Topic Name *</label>
+                                <input type="text" id="ai_topic" placeholder="e.g., Photosynthesis, World War II, Calculus Derivatives">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="ai_notes">Notes/Context (Optional)</label>
+                                <textarea id="ai_notes" rows="4" 
+                                          placeholder="Paste your notes or study material here for more targeted flashcards..."><%= noteContent || '' %></textarea>
+                            </div>
+
+                            <div class="ai-options">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label for="ai_count">Number of Cards</label>
+                                    <select id="ai_count">
+                                        <option value="5">5 cards</option>
+                                        <option value="10" selected>10 cards</option>
+                                        <option value="15">15 cards</option>
+                                        <option value="20">20 cards</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-primary" onclick="generateFlashcards()">
+                                    <i data-lucide="sparkles"></i> Generate
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="generated-preview" id="generatedPreview">
+                            <h4>Generated Flashcards (Edit as needed)</h4>
+                            <form id="aiSetForm">
+                                <div class="form-group">
+                                    <label for="ai_title">Set Title *</label>
+                                    <input type="text" id="ai_title" name="title" required>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="ai_subject_id">Subject</label>
+                                        <select id="ai_subject_id" name="subject_id" onchange="loadAiTopics(this.value)">
+                                            <option value="">Select Subject (Optional)</option>
+                                            <% subjects.forEach(subject => { %>
+                                            <option value="<%= subject.id %>"><%= subject.name %></option>
+                                            <% }); %>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="ai_topic_id">Topic</label>
+                                        <select id="ai_topic_id" name="topic_id">
+                                            <option value="">Select Topic (Optional)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="cards-list" id="aiCardsList"></div>
+                                <button type="button" class="add-card-btn" onclick="addAiCard()">
+                                    <i data-lucide="plus"></i> Add Card
+                                </button>
+                                <div class="form-actions">
+                                    <button type="button" class="btn btn-secondary" onclick="regenerate()">
+                                        <i data-lucide="refresh-cw"></i> Regenerate
+                                    </button>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i data-lucide="save"></i> Save Set
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>Generating flashcards with AI...</p>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const subjects = <%- JSON.stringify(subjects) %>;
+        let cardCount = 0;
+        let aiCardCount = 0;
+
+        // Tab switching
+        document.querySelectorAll('.create-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.create-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab + '-tab').classList.add('active');
+            });
+        });
+
+        // Load topics for subject
+        function loadTopics(subjectId) {
+            const topicSelect = document.getElementById('topic_id');
+            topicSelect.innerHTML = '<option value="">Select Topic (Optional)</option>';
+            
+            if (subjectId) {
+                const subject = subjects.find(s => s.id === subjectId);
+                if (subject && subject.topics) {
+                    subject.topics.forEach(topic => {
+                        if (topic.id) {
+                            topicSelect.innerHTML += `<option value="${topic.id}">${topic.name}</option>`;
+                        }
+                    });
+                }
+            }
+        }
+
+        function loadAiTopics(subjectId) {
+            const topicSelect = document.getElementById('ai_topic_id');
+            topicSelect.innerHTML = '<option value="">Select Topic (Optional)</option>';
+            
+            if (subjectId) {
+                const subject = subjects.find(s => s.id === subjectId);
+                if (subject && subject.topics) {
+                    subject.topics.forEach(topic => {
+                        if (topic.id) {
+                            topicSelect.innerHTML += `<option value="${topic.id}">${topic.name}</option>`;
+                        }
+                    });
+                }
+            }
+        }
+
+        // Add manual card
+        function addCard() {
+            cardCount++;
+            const cardHtml = `
+                <div class="card-item" data-card="${cardCount}">
+                    <div class="card-item-header">
+                        <span class="card-number">Card ${cardCount}</span>
+                        <button type="button" class="remove-card-btn" onclick="removeCard(${cardCount})">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                    <div class="card-fields">
+                        <div class="card-field">
+                            <label>Front (Question)</label>
+                            <textarea name="cards[${cardCount}][front]" placeholder="Question or prompt..." required></textarea>
+                        </div>
+                        <div class="card-field">
+                            <label>Back (Answer)</label>
+                            <textarea name="cards[${cardCount}][back]" placeholder="Answer or explanation..." required></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('cardsList').insertAdjacentHTML('beforeend', cardHtml);
+            lucide.createIcons();
+        }
+
+        function removeCard(num) {
+            const card = document.querySelector(`[data-card="${num}"]`);
+            if (card) card.remove();
+        }
+
+        // Add AI card
+        function addAiCard() {
+            aiCardCount++;
+            const cardHtml = `
+                <div class="card-item" data-ai-card="${aiCardCount}">
+                    <div class="card-item-header">
+                        <span class="card-number">Card ${aiCardCount}</span>
+                        <button type="button" class="remove-card-btn" onclick="removeAiCard(${aiCardCount})">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                    <div class="card-fields">
+                        <div class="card-field">
+                            <label>Front (Question)</label>
+                            <textarea name="cards[${aiCardCount}][front]" placeholder="Question or prompt..." required></textarea>
+                        </div>
+                        <div class="card-field">
+                            <label>Back (Answer)</label>
+                            <textarea name="cards[${aiCardCount}][back]" placeholder="Answer or explanation..." required></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('aiCardsList').insertAdjacentHTML('beforeend', cardHtml);
+            lucide.createIcons();
+        }
+
+        function removeAiCard(num) {
+            const card = document.querySelector(`[data-ai-card="${num}"]`);
+            if (card) card.remove();
+        }
+
+        // Generate flashcards with AI
+        async function generateFlashcards() {
+            const topic = document.getElementById('ai_topic').value.trim();
+            const notes = document.getElementById('ai_notes').value.trim();
+            const count = document.getElementById('ai_count').value;
+
+            if (!topic) {
+                alert('Please enter a topic name');
+                return;
+            }
+
+            document.getElementById('loadingOverlay').classList.add('show');
+
+            try {
+                const response = await fetch('/flashcards/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic_name: topic,
+                        notes_content: notes,
+                        card_count: count
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.flashcards) {
+                    displayGeneratedCards(data.flashcards, topic);
+                } else {
+                    alert('Failed to generate flashcards: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to generate flashcards. Please try again.');
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('show');
+            }
+        }
+
+        function displayGeneratedCards(flashcards, topic) {
+            document.getElementById('ai_title').value = topic + ' Flashcards';
+            document.getElementById('aiCardsList').innerHTML = '';
+            aiCardCount = 0;
+
+            flashcards.forEach(card => {
+                aiCardCount++;
+                const cardHtml = `
+                    <div class="card-item" data-ai-card="${aiCardCount}">
+                        <div class="card-item-header">
+                            <span class="card-number">Card ${aiCardCount}</span>
+                            <button type="button" class="remove-card-btn" onclick="removeAiCard(${aiCardCount})">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
+                        <div class="card-fields">
+                            <div class="card-field">
+                                <label>Front (Question)</label>
+                                <textarea name="cards[${aiCardCount}][front]" required>${card.front}</textarea>
+                            </div>
+                            <div class="card-field">
+                                <label>Back (Answer)</label>
+                                <textarea name="cards[${aiCardCount}][back]" required>${card.back}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('aiCardsList').insertAdjacentHTML('beforeend', cardHtml);
+            });
+
+            document.getElementById('generatedPreview').classList.add('show');
+            lucide.createIcons();
+        }
+
+        function regenerate() {
+            generateFlashcards();
+        }
+
+        // Form submissions
+        document.getElementById('createSetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveSet('createSetForm');
+        });
+
+        document.getElementById('aiSetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveSet('aiSetForm');
+        });
+
+        async function saveSet(formId) {
+            const form = document.getElementById(formId);
+            const formData = new FormData(form);
+            
+            // Collect cards
+            const cards = [];
+            form.querySelectorAll('.card-item').forEach(item => {
+                const front = item.querySelector('textarea[name*="[front]"]').value.trim();
+                const back = item.querySelector('textarea[name*="[back]"]').value.trim();
+                if (front && back) {
+                    cards.push({ front, back });
+                }
+            });
+
+            if (cards.length === 0) {
+                alert('Please add at least one flashcard');
+                return;
+            }
+
+            const data = {
+                title: formData.get('title') || form.querySelector('input[name="title"]')?.value,
+                subject_id: formData.get('subject_id') || form.querySelector('select[name="subject_id"]')?.value,
+                topic_id: formData.get('topic_id') || form.querySelector('select[name="topic_id"]')?.value,
+                description: formData.get('description') || '',
+                cards: cards
+            };
+
+            try {
+                const response = await fetch('/flashcards/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    window.location.href = '/flashcards/' + result.setId;
+                } else {
+                    alert('Failed to create set: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to create flashcard set');
+            }
+        }
+
+        // Initialize with one card
+        addCard();
+    </script>
+</body>
+</html>

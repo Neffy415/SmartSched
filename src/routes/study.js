@@ -222,7 +222,8 @@ router.get('/active/:id', async (req, res) => {
         const result = await pool.query(`
             SELECT ss.*, 
                    t.title as task_title, t.estimated_minutes as task_estimated,
-                   tp.name as topic_name, tp.id as topic_id,
+                   tp.name as topic_name, tp.id as topic_id, tp.description as topic_description,
+                   tp.estimated_hours as topic_estimated_hours, tp.difficulty as topic_difficulty,
                    s.name as subject_name, s.color as subject_color, s.id as subject_id
             FROM study_sessions ss
             LEFT JOIN tasks t ON ss.task_id = t.id
@@ -242,9 +243,39 @@ router.get('/active/:id', async (req, res) => {
             return res.redirect(`/study/complete/${session.id}`);
         }
 
+        // Get topic progress (total study time for this topic)
+        const progressResult = await pool.query(`
+            SELECT 
+                COALESCE(SUM(actual_minutes), 0) as total_minutes,
+                COUNT(*) as session_count
+            FROM study_sessions 
+            WHERE topic_id = $1 AND user_id = $2 AND status = 'completed'
+        `, [session.topic_id, req.session.user.id]);
+
+        // Get any saved AI notes for this topic
+        const notesResult = await pool.query(`
+            SELECT id, title, content, created_at
+            FROM saved_notes 
+            WHERE user_id = $1 AND topic_id = $2
+            ORDER BY created_at DESC
+            LIMIT 3
+        `, [req.session.user.id, session.topic_id]);
+
+        // Calculate progress percentage
+        const topicProgress = {
+            totalMinutes: parseInt(progressResult.rows[0].total_minutes) || 0,
+            sessionCount: parseInt(progressResult.rows[0].session_count) || 0,
+            estimatedHours: session.topic_estimated_hours || 1,
+            percentage: Math.min(100, Math.round(
+                ((progressResult.rows[0].total_minutes || 0) / 60) / (session.topic_estimated_hours || 1) * 100
+            ))
+        };
+
         res.render('study/active', {
             title: 'Active Session - SmartSched',
             session,
+            topicProgress,
+            savedNotes: notesResult.rows,
             user: req.session.user
         });
     } catch (error) {
@@ -458,6 +489,49 @@ router.get('/history', async (req, res) => {
         console.error('Error loading history:', error);
         req.flash('error_msg', 'Failed to load history');
         res.redirect('/study');
+    }
+});
+
+// POST /study/quick-note/:sessionId - Save quick note during session
+router.post('/quick-note/:sessionId', async (req, res) => {
+    try {
+        const { note } = req.body;
+        const sessionId = req.params.sessionId;
+
+        // Verify session belongs to user and is active
+        const sessionResult = await pool.query(`
+            SELECT ss.id, ss.topic_id, tp.name as topic_name
+            FROM study_sessions ss
+            JOIN topics tp ON ss.topic_id = tp.id
+            WHERE ss.id = $1 AND ss.user_id = $2 AND ss.status = 'active'
+        `, [sessionId, req.session.user.id]);
+
+        if (sessionResult.rows.length === 0) {
+            return res.status(404).json({ success: false, error: 'Session not found' });
+        }
+
+        const session = sessionResult.rows[0];
+
+        // Save as a quick note linked to the topic
+        const noteResult = await pool.query(`
+            INSERT INTO saved_notes (user_id, topic_id, title, content, source)
+            VALUES ($1, $2, $3, $4, 'quick_note')
+            RETURNING id, created_at
+        `, [
+            req.session.user.id,
+            session.topic_id,
+            `Quick Note - ${session.topic_name}`,
+            note
+        ]);
+
+        res.json({ 
+            success: true, 
+            noteId: noteResult.rows[0].id,
+            message: 'Note saved!'
+        });
+    } catch (error) {
+        console.error('Error saving quick note:', error);
+        res.status(500).json({ success: false, error: 'Failed to save note' });
     }
 });
 

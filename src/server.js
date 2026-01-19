@@ -42,6 +42,8 @@ app.use((req, res, next) => {
 // Routes
 app.use('/', require('./routes/index'));
 app.use('/auth', require('./routes/auth'));
+app.use('/guide', require('./routes/guide'));
+app.use('/', require('./routes/search'));
 app.use('/subjects', require('./routes/subjects'));
 app.use('/topics', require('./routes/topics'));
 app.use('/tasks', require('./routes/tasks'));
@@ -53,6 +55,8 @@ app.use('/reminders', require('./routes/reminders'));
 app.use('/ai', require('./routes/ai'));
 app.use('/materials', require('./routes/materials'));
 app.use('/notes', require('./routes/notes'));
+app.use('/flashcards', require('./routes/flashcards'));
+app.use('/practice', require('./routes/practice'));
 
 // 404 handler
 app.use((req, res) => {

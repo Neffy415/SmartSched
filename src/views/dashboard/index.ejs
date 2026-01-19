@@ -173,6 +173,57 @@
                     <% } %>
                 </div>
 
+                <!-- Flashcards & Practice Quick Stats -->
+                <div class="flashcard-practice-row">
+                    <!-- Flashcards Due Today -->
+                    <div class="fc-card">
+                        <div class="fc-card-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa);">
+                            <i data-lucide="layers"></i>
+                        </div>
+                        <div class="fc-card-content">
+                            <div class="fc-stat-row">
+                                <span class="fc-stat-value"><%= typeof flashcardStats !== 'undefined' ? flashcardStats.dueToday : 0 %></span>
+                                <span class="fc-stat-label">Cards Due Today</span>
+                            </div>
+                            <div class="fc-stat-secondary">
+                                <span><%= typeof flashcardStats !== 'undefined' ? flashcardStats.totalCards : 0 %> total cards</span>
+                                <span class="fc-mastery">
+                                    <i data-lucide="trophy"></i>
+                                    <%= typeof flashcardStats !== 'undefined' ? flashcardStats.masteryPercentage : 0 %>% mastery
+                                </span>
+                            </div>
+                        </div>
+                        <a href="/flashcards/daily" class="btn btn-primary btn-sm">
+                            <i data-lucide="play"></i>
+                            Review
+                        </a>
+                    </div>
+
+                    <!-- Practice Quiz Stats -->
+                    <div class="fc-card">
+                        <div class="fc-card-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+                            <i data-lucide="brain"></i>
+                        </div>
+                        <div class="fc-card-content">
+                            <div class="fc-stat-row">
+                                <span class="fc-stat-value"><%= typeof quizStats !== 'undefined' && quizStats.recentScore !== null ? quizStats.recentScore + '%' : '--' %></span>
+                                <span class="fc-stat-label">Last Quiz Score</span>
+                            </div>
+                            <div class="fc-stat-secondary">
+                                <span><%= typeof quizStats !== 'undefined' ? quizStats.totalAttempts : 0 %> quizzes taken</span>
+                                <span class="fc-avg-score">
+                                    <i data-lucide="trending-up"></i>
+                                    <%= typeof quizStats !== 'undefined' ? quizStats.avgScore : 0 %>% avg
+                                </span>
+                            </div>
+                        </div>
+                        <a href="/practice" class="btn btn-primary btn-sm">
+                            <i data-lucide="plus"></i>
+                            New Quiz
+                        </a>
+                    </div>
+                </div>
+
                 <div class="dashboard-grid">
                     <!-- Upcoming Tasks -->
                     <div class="card">

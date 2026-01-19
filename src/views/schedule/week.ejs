@@ -269,11 +269,14 @@
             padding: var(--spacing-md);
             background: var(--gray-50);
             border-bottom: 1px solid var(--border-color);
+            position: relative; 
+            z-index: 1;
         }
 
         .week-day-column.today .day-header {
-            background: var(--primary);
-            color: white;
+            background: #4f46e5 !important;
+            color: white !important;
+            border-bottom-color: #4f46e5;
         }
 
         .day-name {
@@ -282,10 +285,11 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: var(--gray-500);
+            margin-bottom: 0.25rem;
         }
 
         .week-day-column.today .day-name {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.95) !important;
         }
 
         .day-number {
@@ -294,25 +298,29 @@
             color: var(--gray-800);
         }
 
+        /* Cleaned up duplicate/conflicting rules */
         .week-day-column.today .day-number {
-            color: white;
-        }
-
-        .today-badge {
-            background: white;
-            color: var(--primary) !important;
-            width: 36px;
-            height: 36px;
+            background: white !important;
+            color: #4f46e5 !important;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 3px solid #4f46e5 !important;
+            margin-top: 0.25rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            z-index: 2;
         }
 
-        /* Ensure today's day number is visible */
-        .week-day-column.today .day-number.today-badge {
-            color: var(--primary) !important;
+        .today-badge {
+            /* Legacy class, styles handled by specific selector above now */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .day-tasks-container {
@@ -348,20 +356,30 @@
             font-size: 0.75rem;
             position: relative;
             transition: all var(--transition-fast);
+            border: 1px solid var(--border-color);
         }
 
         .week-task-card:hover {
             background: var(--gray-100);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
         }
 
         .week-task-card.completed {
-            opacity: 0.5;
+            opacity: 1;
             background: #d1fae5;
+            border-left-color: var(--success);
+            border-color: #a7f3d0;
+        }
+
+        .week-task-card.pending {
+            background: var(--gray-50);
         }
 
         .week-task-card.skipped {
-            opacity: 0.5;
+            opacity: 1;
             background: #fee2e2;
+            border-left-color: #ef4444;
+            border-color: #fca5a5;
         }
 
         .week-task-header {
@@ -404,11 +422,13 @@
             display: flex;
             gap: 0.25rem;
             margin-top: var(--spacing-xs);
+            padding-top: var(--spacing-xs);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
         }
 
         .week-action-btn {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: var(--radius-sm);
             display: flex;
             align-items: center;
@@ -416,22 +436,27 @@
             cursor: pointer;
             border: none;
             transition: all var(--transition-fast);
+            flex-shrink: 0;
         }
 
         .week-action-btn svg {
-            width: 12px;
-            height: 12px;
+            width: 14px;
+            height: 14px;
+            stroke-width: 2;
         }
 
         .week-action-btn.start {
-            background: var(--primary);
-            color: white;
-            opacity: 1;
+            background: #4f46e5 !important;
+            color: white !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.4);
         }
 
         .week-action-btn.start:hover {
-            background: var(--primary-600);
-            transform: scale(1.1);
+            background: #4338ca !important; /* darker indigo */
+            transform: scale(1.15);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.6);
         }
 
         .week-action-btn.complete {
@@ -442,18 +467,21 @@
 
         .week-action-btn.complete:hover {
             background: #059669;
-            transform: scale(1.1);
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
 
         /* Ensure action buttons are always visible for today's tasks */
         .week-day-column.today .week-task-actions {
             display: flex !important;
             opacity: 1 !important;
+            visibility: visible !important;
         }
 
         .week-day-column.today .week-action-btn {
             opacity: 1 !important;
             visibility: visible !important;
+            z-index: 10;
         }
 
         .week-task-completed {
@@ -461,11 +489,19 @@
             top: var(--spacing-sm);
             right: var(--spacing-sm);
             color: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
         }
 
         .week-task-completed svg {
-            width: 14px;
-            height: 14px;
+            width: 16px;
+            height: 16px;
+            stroke-width: 2.5;
         }
 
         .day-footer {

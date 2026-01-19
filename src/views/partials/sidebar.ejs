@@ -64,6 +64,14 @@
                 <i data-lucide="folder"></i>
                 <span>Materials</span>
             </a>
+            <a href="/flashcards" class="nav-item <%= typeof page !== 'undefined' && page === 'flashcards' ? 'active' : '' %>">
+                <i data-lucide="layers"></i>
+                <span>Flashcards</span>
+            </a>
+            <a href="/practice" class="nav-item <%= typeof page !== 'undefined' && page === 'practice' ? 'active' : '' %>">
+                <i data-lucide="brain"></i>
+                <span>Practice Quiz</span>
+            </a>
         </div>
 
         <div class="nav-section">
@@ -84,10 +92,6 @@
     </nav>
 
     <div class="sidebar-footer">
-        <a href="/settings" class="nav-item <%= typeof page !== 'undefined' && page === 'settings' ? 'active' : '' %>">
-            <i data-lucide="settings"></i>
-            <span>Settings</span>
-        </a>
         <a href="/auth/logout" class="nav-item">
             <i data-lucide="log-out"></i>
             <span>Log Out</span>

@@ -54,6 +54,48 @@ router.get('/dashboard', async (req, res) => {
         const todayTasks = await scheduler.getTodaysTasks(userId);
         const scheduleStats = await scheduler.getScheduleStats(userId);
 
+        // Get flashcard stats
+        let flashcardStats = { dueToday: 0, totalCards: 0, masteryPercentage: 0 };
+        try {
+            const fcStats = await db.query(`
+                SELECT 
+                    COUNT(DISTINCT f.id) as total_cards,
+                    COUNT(DISTINCT f.id) FILTER (
+                        WHERE fp.next_review IS NULL OR fp.next_review <= CURRENT_DATE
+                    ) as due_today,
+                    ROUND(AVG(CASE WHEN fp.correct_count + fp.wrong_count > 0 
+                        THEN (fp.correct_count::decimal / (fp.correct_count + fp.wrong_count)) * 100 
+                        ELSE 0 END)) as mastery
+                FROM flashcard_sets fs
+                JOIN flashcards f ON f.set_id = fs.id
+                LEFT JOIN flashcard_progress fp ON fp.card_id = f.id AND fp.user_id = $1
+                WHERE fs.user_id = $1
+            `, [userId]);
+            flashcardStats = {
+                dueToday: parseInt(fcStats.rows[0]?.due_today) || 0,
+                totalCards: parseInt(fcStats.rows[0]?.total_cards) || 0,
+                masteryPercentage: parseInt(fcStats.rows[0]?.mastery) || 0
+            };
+        } catch (e) { console.log('Flashcard stats error:', e.message); }
+
+        // Get quiz stats
+        let quizStats = { recentScore: null, totalAttempts: 0, avgScore: 0 };
+        try {
+            const qStats = await db.query(`
+                SELECT 
+                    COUNT(*) as total_attempts,
+                    ROUND(AVG(percentage)) as avg_score,
+                    (SELECT percentage FROM practice_attempts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1) as recent_score
+                FROM practice_attempts
+                WHERE user_id = $1
+            `, [userId]);
+            quizStats = {
+                recentScore: qStats.rows[0]?.recent_score || null,
+                totalAttempts: parseInt(qStats.rows[0]?.total_attempts) || 0,
+                avgScore: parseInt(qStats.rows[0]?.avg_score) || 0
+            };
+        } catch (e) { console.log('Quiz stats error:', e.message); }
+
         // Get upcoming deadlines
         const upcomingTasks = await db.query(`
             SELECT t.*, tp.name as topic_name, s.name as subject_name, s.color as subject_color
@@ -124,6 +166,8 @@ router.get('/dashboard', async (req, res) => {
                 todayMinutes: parseInt(scheduleStats.today_minutes_remaining) || 0,
                 weekTasks: parseInt(scheduleStats.week_tasks) || 0
             },
+            flashcardStats,
+            quizStats,
             todayTasks: todayTasks.slice(0, 3), // Show top 3 tasks
             activeSession: activeSession.rows[0] || null,
             upcomingTasks: upcomingTasks.rows,
@@ -137,6 +181,8 @@ router.get('/dashboard', async (req, res) => {
             page: 'dashboard',
             stats: { minutesToday: 0, sessionsToday: 0, pendingTasks: 0, overdueTasks: 0, streak: 0 },
             scheduleStats: { todayPending: 0, todayCompleted: 0, todayMinutes: 0, weekTasks: 0 },
+            flashcardStats: { dueToday: 0, totalCards: 0, masteryPercentage: 0 },
+            quizStats: { recentScore: null, totalAttempts: 0, avgScore: 0 },
             todayTasks: [],
             activeSession: null,
             upcomingTasks: [],

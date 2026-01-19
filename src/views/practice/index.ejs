@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .practice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        .practice-header h1 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .practice-header h1 svg { color: var(--primary); }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--gray-100);
+            text-align: center;
+        }
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        .stat-card-value.primary { color: var(--primary); }
+        .stat-card-value.success { color: var(--success); }
+        .stat-card-label {
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+        }
+
+        .generate-section {
+            background: linear-gradient(135deg, var(--primary-50), var(--info-50));
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+        }
+        .generate-section h2 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+        }
+        .generate-section h2 svg { color: var(--primary); }
+        .generate-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            align-items: end;
+        }
+        .generate-form .btn-primary {
+            height: fit-content;
+        }
+
+        .section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .section-title svg {
+            color: var(--primary);
+            width: 20px;
+            height: 20px;
+        }
+
+        .quizzes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        .quiz-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-100);
+            overflow: hidden;
+            transition: all var(--transition-fast);
+        }
+        .quiz-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        .quiz-card-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .quiz-subject-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-full);
+            font-size: 0.6875rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: var(--spacing-sm);
+        }
+        .quiz-card-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .quiz-card-meta {
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        .quiz-card-meta svg { width: 14px; height: 14px; }
+        .quiz-card-body {
+            padding: var(--spacing-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .quiz-questions-count {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .attempts-section {
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-100);
+            overflow: hidden;
+        }
+        .attempts-section-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .attempts-table {
+            width: 100%;
+        }
+        .attempts-table th {
+            background: var(--gray-50);
+            padding: var(--spacing-md) var(--spacing-lg);
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .attempts-table td {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.875rem;
+        }
+        .attempts-table tr:last-child td { border-bottom: none; }
+        .score-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            font-size: 0.8125rem;
+        }
+        .score-badge.excellent { background: var(--success-100); color: var(--success-700); }
+        .score-badge.good { background: var(--info-100); color: var(--info-700); }
+        .score-badge.average { background: var(--warning-100); color: var(--warning-700); }
+        .score-badge.poor { background: var(--error-100); color: var(--error-700); }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-2xl);
+            color: var(--gray-500);
+        }
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: var(--spacing-md);
+            opacity: 0.5;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        .loading-overlay.show { display: flex; }
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gray-200);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="content-area">
+                <div class="practice-header">
+                    <h1><i data-lucide="brain"></i> Practice Quizzes</h1>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-value primary"><%= stats.total_attempts || 0 %></div>
+                        <div class="stat-card-label">Quizzes Taken</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value success"><%= Math.round(stats.avg_score || 0) %>%</div>
+                        <div class="stat-card-label">Average Score</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-value"><%= stats.total_questions || 0 %></div>
+                        <div class="stat-card-label">Questions Answered</div>
+                    </div>
+                </div>
+
+                <div class="generate-section">
+                    <h2><i data-lucide="sparkles"></i> Generate AI Quiz</h2>
+                    <p style="margin-bottom: var(--spacing-lg); color: var(--gray-600);">
+                        Create a practice quiz on any topic using AI. Perfect for exam preparation!
+                    </p>
+                    <div class="generate-form">
+                        <div class="form-group">
+                            <label for="topicName">Topic *</label>
+                            <input type="text" id="topicName" placeholder="e.g., Photosynthesis">
+                        </div>
+                        <div class="form-group">
+                            <label for="questionCount">Questions</label>
+                            <select id="questionCount">
+                                <option value="5">5 questions</option>
+                                <option value="10" selected>10 questions</option>
+                                <option value="15">15 questions</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="difficulty">Difficulty</label>
+                            <select id="difficulty">
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" onclick="generateQuiz()">
+                            <i data-lucide="sparkles"></i> Generate
+                        </button>
+                    </div>
+                </div>
+
+                <% if (quizzes.length > 0) { %>
+                <h2 class="section-title"><i data-lucide="list"></i> Your Quizzes</h2>
+                <div class="quizzes-grid">
+                    <% quizzes.forEach(quiz => { %>
+                    <div class="quiz-card">
+                        <div class="quiz-card-header">
+                            <% if (quiz.subject_name) { %>
+                            <span class="quiz-subject-badge" style="background-color: <%= quiz.subject_color || '#6366f1' %>">
+                                <%= quiz.subject_name %>
+                            </span>
+                            <% } %>
+                            <h3><%= quiz.title %></h3>
+                            <div class="quiz-card-meta">
+                                <i data-lucide="help-circle"></i>
+                                <%= quiz.question_count || 0 %> questions
+                            </div>
+                        </div>
+                        <div class="quiz-card-body">
+                            <span class="quiz-questions-count">
+                                Created <%= new Date(quiz.created_at).toLocaleDateString() %>
+                            </span>
+                            <a href="/practice/<%= quiz.id %>" class="btn btn-primary btn-sm">
+                                <i data-lucide="play"></i> Take Quiz
+                            </a>
+                        </div>
+                    </div>
+                    <% }); %>
+                </div>
+                <% } %>
+
+                <% if (attempts.length > 0) { %>
+                <div class="attempts-section">
+                    <div class="attempts-section-header">
+                        <h2 class="section-title" style="margin-bottom: 0;">
+                            <i data-lucide="history"></i> Recent Attempts
+                        </h2>
+                    </div>
+                    <table class="attempts-table">
+                        <thead>
+                            <tr>
+                                <th>Quiz</th>
+                                <th>Score</th>
+                                <th>Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% attempts.forEach(attempt => { 
+                                let scoreClass = 'poor';
+                                if (attempt.percentage >= 90) scoreClass = 'excellent';
+                                else if (attempt.percentage >= 70) scoreClass = 'good';
+                                else if (attempt.percentage >= 50) scoreClass = 'average';
+                            %>
+                            <tr>
+                                <td>
+                                    <strong><%= attempt.quiz_title %></strong>
+                                    <% if (attempt.subject_name) { %>
+                                    <br><small style="color: var(--gray-500)"><%= attempt.subject_name %></small>
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <span class="score-badge <%= scoreClass %>">
+                                        <%= attempt.score %>/<%= attempt.total_questions %> (<%= attempt.percentage %>%)
+                                    </span>
+                                </td>
+                                <td><%= new Date(attempt.completed_at).toLocaleDateString() %></td>
+                                <td>
+                                    <a href="/practice/result/<%= attempt.id %>" class="btn btn-ghost btn-sm">
+                                        <i data-lucide="eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } else if (quizzes.length === 0) { %>
+                <div class="empty-state">
+                    <i data-lucide="brain"></i>
+                    <p>No quizzes yet. Generate your first AI quiz above!</p>
+                </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p>Generating quiz with AI...</p>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        async function generateQuiz() {
+            const topicName = document.getElementById('topicName').value.trim();
+            const questionCount = document.getElementById('questionCount').value;
+            const difficulty = document.getElementById('difficulty').value;
+
+            if (!topicName) {
+                alert('Please enter a topic name');
+                return;
+            }
+
+            document.getElementById('loadingOverlay').classList.add('show');
+
+            try {
+                const response = await fetch('/practice/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        topic_name: topicName,
+                        question_count: questionCount,
+                        difficulty: difficulty
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = '/practice/' + data.quizId;
+                } else {
+                    alert('Failed to generate quiz: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to generate quiz. Please try again.');
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('show');
+            }
+        }
+    </script>
+</body>
+</html>

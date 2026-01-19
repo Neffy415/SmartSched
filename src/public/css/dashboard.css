@@ -1632,8 +1632,9 @@
 }
 
 .preset-btn.active {
-    background: var(--primary-light);
+    background: var(--primary);
     border-color: var(--primary);
+    color: white;
 }
 
 .preset-btn svg {
@@ -1643,12 +1644,16 @@
 }
 
 .preset-btn.active svg {
-    color: var(--primary);
+    color: white;
 }
 
 .preset-label {
     font-size: 0.625rem;
     color: var(--text-secondary);
+}
+
+.preset-btn.active .preset-label {
+    color: white;
 }
 
 /* Tips Card */
@@ -2289,6 +2294,11 @@ button.btn-primary:hover,
 .preset-btn span {
     font-size: 0.875rem;
     font-weight: 600;
+}
+
+.duration-preset.active span,
+.preset-btn.active span {
+    color: white;
 }
 
 .duration-preset small,
@@ -3789,4 +3799,107 @@ tbody tr:last-child td {
         justify-content: flex-end;
         margin-top: var(--spacing-sm);
     }
+}
+
+/* ===================================
+   Flashcard & Practice Quick Stats Row
+   =================================== */
+.flashcard-practice-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+@media (max-width: 768px) {
+    .flashcard-practice-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+.fc-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-100);
+    transition: all var(--transition-fast);
+}
+
+.fc-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.fc-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-lg);
+    flex-shrink: 0;
+}
+
+.fc-card-icon svg {
+    width: 24px;
+    height: 24px;
+    color: white;
+}
+
+.fc-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.fc-stat-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--spacing-sm);
+}
+
+.fc-stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    line-height: 1;
+}
+
+.fc-stat-label {
+    font-size: 0.875rem;
+    color: var(--gray-500);
+    font-weight: 500;
+}
+
+.fc-stat-secondary {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xs);
+    font-size: 0.8125rem;
+    color: var(--gray-400);
+}
+
+.fc-stat-secondary svg {
+    width: 12px;
+    height: 12px;
+}
+
+.fc-mastery, .fc-avg-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--primary-600);
+    font-weight: 500;
+}
+
+.fc-avg-score {
+    color: #f59e0b;
+}
+
+.fc-card .btn {
+    flex-shrink: 0;
 }

@@ -6,6 +6,7 @@
     <div class="search-bar">
         <i data-lucide="search"></i>
         <input type="text" placeholder="Search tasks, subjects..." id="globalSearch">
+        <div class="search-results-dropdown" id="searchResults" style="display: none;"></div>
     </div>
 
     <div class="top-bar-actions">
@@ -37,13 +38,50 @@
             </div>
         </div>
 
-        <div class="user-menu">
-            <div class="user-avatar">
-                <%= user && user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' %>
-            </div>
-            <div class="user-info">
-                <span class="user-name"><%= user ? user.fullName : 'User' %></span>
-                <span class="user-email"><%= user ? user.email : '' %></span>
+        <div class="user-menu" id="userMenuDropdown">
+            <button class="user-menu-trigger" id="userMenuBtn">
+                <div class="user-avatar">
+                    <%= user && user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' %>
+                </div>
+                <div class="user-info">
+                    <span class="user-name"><%= user ? user.fullName : 'User' %></span>
+                    <span class="user-email"><%= user ? user.email : '' %></span>
+                </div>
+            </button>
+            
+            <!-- User Dropdown Menu -->
+            <div class="user-dropdown-menu" id="userDropdownMenu">
+                <div class="dropdown-header">
+                    <div class="user-avatar-large">
+                        <%= user && user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' %>
+                    </div>
+                    <div>
+                        <p class="dropdown-user-name"><%= user ? user.fullName : 'User' %></p>
+                        <p class="dropdown-user-email"><%= user ? user.email : '' %></p>
+                    </div>
+                </div>
+                <hr class="dropdown-divider">
+                <a href="/settings" class="dropdown-item">
+                    <i data-lucide="settings"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/analytics" class="dropdown-item">
+                    <i data-lucide="bar-chart-3"></i>
+                    <span>Analytics & Progress</span>
+                </a>
+                <a href="/reminders" class="dropdown-item">
+                    <i data-lucide="bell-ring"></i>
+                    <span>Reminders</span>
+                </a>
+                <a href="/guide" class="dropdown-item">
+                    <i data-lucide="help-circle"></i>
+                    <span>Help & Guide</span>
+                </a>
+                <hr class="dropdown-divider">
+                <a href="/auth/logout" class="dropdown-item text-danger">
+                    <i data-lucide="log-out"></i>
+                    <span>Log Out</span>
+                </a>
             </div>
         </div>
     </div>
@@ -247,5 +285,375 @@ document.addEventListener('DOMContentLoaded', function() {
     loadNotifications();
     setInterval(loadNotifications, 60000); // Refresh every minute
 });
+
+// User menu dropdown
+const userMenuBtn = document.getElementById('userMenuBtn');
+const userMenuDropdown = document.getElementById('userMenuDropdown');
+const userDropdownMenu = document.getElementById('userDropdownMenu');
+
+if (userMenuBtn) {
+    userMenuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        userMenuDropdown.classList.toggle('active');
+    });
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    if (userMenuDropdown && !userMenuDropdown.contains(e.target)) {
+        userMenuDropdown.classList.remove('active');
+    }
+});
 </script>
 
+<style>
+    #userMenuDropdown {
+        position: relative;
+    }
+    
+    .user-menu-trigger {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.5rem;
+        border: none;
+        background: none;
+        cursor: pointer;
+        border-radius: var(--radius-md);
+        transition: all 0.2s ease;
+    }
+    
+    .user-menu-trigger:hover {
+        background: var(--gray-100);
+    }
+    
+    .user-menu-trigger .user-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .user-dropdown-menu {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        right: 0;
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        min-width: 250px;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.2s ease;
+    }
+    
+    #userMenuDropdown.active .user-dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    
+    .dropdown-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .user-avatar-large {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(135deg, var(--primary), var(--primary-600));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    
+    .dropdown-user-name {
+        font-weight: 600;
+        color: var(--gray-900);
+        margin: 0;
+        font-size: 0.9375rem;
+    }
+    
+    .dropdown-user-email {
+        font-size: 0.8125rem;
+        color: var(--gray-500);
+        margin: 0.25rem 0 0 0;
+    }
+    
+    .dropdown-divider {
+        border: none;
+        border-top: 1px solid var(--gray-200);
+        margin: 0.5rem 0;
+    }
+    
+    .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        color: var(--gray-700);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: all 0.15s ease;
+    }
+    
+    .dropdown-item:hover {
+        background: var(--gray-50);
+        color: var(--primary);
+    }
+    
+    .dropdown-item svg {
+        width: 18px;
+        height: 18px;
+    }
+    
+    .dropdown-item.text-danger:hover {
+        color: #ef4444;
+        background: #fee2e2;
+    }
+
+    /* Search Results Dropdown */
+    .search-results-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid var(--border-color);
+        border-top: none;
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        max-height: 400px;
+        overflow-y: auto;
+        box-shadow: var(--shadow-lg);
+        z-index: 1000;
+    }
+
+    .search-results-dropdown.empty {
+        padding: var(--spacing-lg);
+        text-align: center;
+        color: var(--gray-500);
+        font-size: 0.875rem;
+    }
+
+    .search-result-category {
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .search-result-category:last-child {
+        border-bottom: none;
+    }
+
+    .search-result-category-title {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--gray-500);
+        padding: 0.5rem 1rem;
+        background: var(--bg-secondary);
+        letter-spacing: 0.5px;
+    }
+
+    .search-result-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md) var(--spacing-lg);
+        text-decoration: none;
+        color: var(--gray-900);
+        transition: all var(--transition-fast);
+        border-left: 3px solid transparent;
+        cursor: pointer;
+    }
+
+    .search-result-item:hover {
+        background: var(--bg-secondary);
+        border-left-color: var(--primary);
+    }
+
+    .search-result-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--primary-100);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .search-result-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .search-result-content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .search-result-title {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--gray-900);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .search-result-desc {
+        font-size: 0.75rem;
+        color: var(--gray-500);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .search-result-badge {
+        font-size: 0.625rem;
+        padding: 0.25rem 0.5rem;
+        background: var(--primary-100);
+        color: var(--primary);
+        border-radius: var(--radius-sm);
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+</style>
+
+<script>
+// Global Search Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const globalSearch = document.getElementById('globalSearch');
+    const searchResults = document.getElementById('searchResults');
+    let searchTimeout;
+
+    globalSearch.addEventListener('input', function(e) {
+        clearTimeout(searchTimeout);
+        const query = e.target.value.trim();
+
+        if (query.length < 2) {
+            searchResults.style.display = 'none';
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            performSearch(query);
+        }, 300);
+    });
+
+    globalSearch.addEventListener('focus', function() {
+        if (this.value.length >= 2) {
+            searchResults.style.display = 'block';
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.search-bar')) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    async function performSearch(query) {
+        try {
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+            renderSearchResults(data.results);
+        } catch (error) {
+            console.error('Search error:', error);
+            searchResults.innerHTML = '<div class="search-results-dropdown empty">Search failed</div>';
+        }
+    }
+
+    function renderSearchResults(results) {
+        if (results.length === 0) {
+            searchResults.innerHTML = '<div class="search-results-dropdown empty">No results found</div>';
+            searchResults.style.display = 'block';
+            return;
+        }
+
+        const grouped = groupResultsByType(results);
+        let html = '';
+
+        const typeConfig = {
+            subject: {
+                icon: 'library',
+                label: 'Subjects',
+                getUrl: (item) => `/subjects/${item.id}`
+            },
+            topic: {
+                icon: 'book-open',
+                label: 'Topics',
+                getUrl: (item) => `/topics/${item.id}`
+            },
+            task: {
+                icon: 'list-todo',
+                label: 'Tasks',
+                getUrl: (item) => `/tasks/${item.id}`
+            },
+            note: {
+                icon: 'file-text',
+                label: 'Notes',
+                getUrl: (item) => `/notes/${item.id}`
+            }
+        };
+
+        for (const [type, items] of Object.entries(grouped)) {
+            const config = typeConfig[type];
+            if (!config) continue;
+
+            html += `<div class="search-result-category">
+                <div class="search-result-category-title">${config.label}</div>`;
+
+            items.forEach(item => {
+                const url = config.getUrl(item);
+                const desc = item.description ? (item.description.length > 40 ? item.description.substring(0, 40) + '...' : item.description) : '';
+                
+                html += `
+                    <a href="${url}" class="search-result-item">
+                        <div class="search-result-icon">
+                            <i data-lucide="${config.icon}"></i>
+                        </div>
+                        <div class="search-result-content">
+                            <div class="search-result-title">${escapeHtml(item.title)}</div>
+                            ${desc ? `<div class="search-result-desc">${escapeHtml(desc)}</div>` : ''}
+                        </div>
+                        ${item.color ? `<div class="search-result-badge" style="background-color: ${item.color}20; color: ${item.color}; border: 1px solid ${item.color}30;"></div>` : ''}
+                    </a>
+                `;
+            });
+
+            html += '</div>';
+        }
+
+        searchResults.innerHTML = html;
+        searchResults.classList.remove('empty');
+        searchResults.style.display = 'block';
+        lucide.createIcons();
+    }
+
+    function groupResultsByType(results) {
+        const grouped = {};
+        results.forEach(item => {
+            if (!grouped[item.type]) {
+                grouped[item.type] = [];
+            }
+            grouped[item.type].push(item);
+        });
+        return grouped;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});
+</script>

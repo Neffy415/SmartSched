@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .flashcards-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        .flashcards-header h1 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .flashcards-header h1 svg {
+            color: var(--primary);
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-lg);
+            border: 1px solid var(--gray-100);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .stat-icon svg { width: 24px; height: 24px; }
+        .stat-icon.primary { background: var(--primary-100); color: var(--primary); }
+        .stat-icon.warning { background: var(--warning-100); color: var(--warning); }
+        .stat-icon.success { background: var(--success-100); color: var(--success); }
+        .stat-icon.info { background: var(--info-100); color: var(--info); }
+        .stat-content h3 { font-size: 1.5rem; font-weight: 700; color: var(--gray-900); }
+        .stat-content p { font-size: 0.875rem; color: var(--gray-500); }
+
+        .daily-review-banner {
+            background: linear-gradient(135deg, var(--primary), var(--primary-600));
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            color: white;
+            margin-bottom: var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        .daily-review-banner h2 {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .daily-review-banner p {
+            opacity: 0.9;
+            font-size: 0.875rem;
+        }
+        .daily-review-banner .btn {
+            background: white;
+            color: var(--primary);
+        }
+        .daily-review-banner .btn:hover {
+            background: var(--gray-100);
+        }
+
+        .sets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        .set-card {
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--gray-100);
+            overflow: hidden;
+            transition: all var(--transition-fast);
+        }
+        .set-card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+        .set-card-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .set-subject-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: var(--spacing-sm);
+        }
+        .set-card-header h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+        .set-card-header p {
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+        }
+        .set-card-body {
+            padding: var(--spacing-lg);
+        }
+        .set-stats {
+            display: flex;
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+        }
+        .set-stat {
+            text-align: center;
+        }
+        .set-stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        .set-stat-label {
+            font-size: 0.75rem;
+            color: var(--gray-500);
+        }
+        .set-due-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            background: var(--warning-100);
+            color: var(--warning-700);
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .set-card-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--gray-100);
+        }
+        .set-card-actions .btn {
+            flex: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-2xl);
+            background: white;
+            border-radius: var(--radius-xl);
+            border: 2px dashed var(--gray-200);
+        }
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            color: var(--gray-300);
+            margin-bottom: var(--spacing-md);
+        }
+        .empty-state h3 {
+            font-size: 1.25rem;
+            color: var(--gray-700);
+            margin-bottom: var(--spacing-sm);
+        }
+        .empty-state p {
+            color: var(--gray-500);
+            margin-bottom: var(--spacing-lg);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="content-area">
+                <div class="flashcards-header">
+                    <h1><i data-lucide="layers"></i> Flashcards</h1>
+                    <a href="/flashcards/create" class="btn btn-primary">
+                        <i data-lucide="plus"></i> Create Set
+                    </a>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-icon primary">
+                            <i data-lucide="layers"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= sets.length %></h3>
+                            <p>Total Sets</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon info">
+                            <i data-lucide="credit-card"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= sets.reduce((sum, s) => sum + parseInt(s.card_count || 0), 0) %></h3>
+                            <p>Total Cards</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon warning">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3><%= dueToday %></h3>
+                            <p>Due Today</p>
+                        </div>
+                    </div>
+                </div>
+
+                <% if (dueToday > 0) { %>
+                <div class="daily-review-banner">
+                    <div>
+                        <h2>🎯 Daily Review</h2>
+                        <p>You have <%= dueToday %> cards ready for review. Keep your streak going!</p>
+                    </div>
+                    <a href="/flashcards/daily" class="btn">
+                        <i data-lucide="play"></i> Start Review
+                    </a>
+                </div>
+                <% } %>
+
+                <% if (sets.length === 0) { %>
+                <div class="empty-state">
+                    <i data-lucide="layers"></i>
+                    <h3>No Flashcard Sets Yet</h3>
+                    <p>Create your first flashcard set to start learning with active recall and spaced repetition.</p>
+                    <a href="/flashcards/create" class="btn btn-primary">
+                        <i data-lucide="plus"></i> Create Your First Set
+                    </a>
+                </div>
+                <% } else { %>
+                <div class="sets-grid">
+                    <% sets.forEach(set => { %>
+                    <div class="set-card">
+                        <div class="set-card-header">
+                            <% if (set.subject_name) { %>
+                            <span class="set-subject-badge" style="background-color: <%= set.subject_color || '#6366f1' %>">
+                                <%= set.subject_name %>
+                            </span>
+                            <% } %>
+                            <h3><%= set.title %></h3>
+                            <% if (set.topic_name) { %>
+                            <p><i data-lucide="bookmark"></i> <%= set.topic_name %></p>
+                            <% } %>
+                        </div>
+                        <div class="set-card-body">
+                            <div class="set-stats">
+                                <div class="set-stat">
+                                    <div class="set-stat-value"><%= set.card_count || 0 %></div>
+                                    <div class="set-stat-label">Cards</div>
+                                </div>
+                                <% if (parseInt(set.due_count) > 0) { %>
+                                <div class="set-stat">
+                                    <span class="set-due-badge">
+                                        <i data-lucide="clock"></i> <%= set.due_count %> due
+                                    </span>
+                                </div>
+                                <% } %>
+                            </div>
+                            <div class="set-card-actions">
+                                <a href="/flashcards/<%= set.id %>" class="btn btn-secondary btn-sm">
+                                    <i data-lucide="eye"></i> View
+                                </a>
+                                <a href="/flashcards/<%= set.id %>?mode=study" class="btn btn-primary btn-sm">
+                                    <i data-lucide="play"></i> Study
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <% }); %>
+                </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

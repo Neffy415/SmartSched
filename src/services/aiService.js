@@ -464,6 +464,82 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 
         return this.callGemini(prompt);
     }
+
+    /**
+     * Generate flashcards from topic and notes
+     * Phase 5: AI Flashcards Module
+     */
+    async generateFlashcards(topicName, notesContent = '', cardCount = 10) {
+        const contextText = notesContent 
+            ? `\n\nUse the following notes as context:\n${notesContent.substring(0, 8000)}`
+            : '';
+
+        const prompt = `You are an expert educator creating study flashcards for active recall learning.
+
+Generate ${cardCount} high-quality flashcards for the topic: "${topicName}"${contextText}
+
+Create flashcards that:
+- Test key concepts, definitions, and relationships
+- Use clear, concise language
+- Include a mix of recall and understanding questions
+- Progress from basic to more complex concepts
+- Are suitable for spaced repetition study
+
+Return ONLY valid JSON in this exact format (no markdown, no code blocks):
+{
+    "flashcards": [
+        {
+            "front": "Question or prompt text",
+            "back": "Answer or explanation"
+        }
+    ]
+}`;
+
+        const result = await this.callGemini(prompt);
+        return result.flashcards || [];
+    }
+
+    /**
+     * Generate practice quiz questions
+     * Phase 5: Practice Quiz Module
+     */
+    async generateQuiz(topicName, context = '', questionCount = 5, difficulty = 'medium') {
+        const contextText = context 
+            ? `\n\nContext material:\n${context.substring(0, 6000)}`
+            : '';
+
+        const prompt = `You are an expert test creator designing multiple-choice quiz questions.
+
+Generate ${questionCount} ${difficulty}-difficulty multiple-choice questions for: "${topicName}"${contextText}
+
+Create questions that:
+- Test understanding, not just memorization
+- Have exactly 4 options (A, B, C, D)
+- Have only ONE correct answer
+- Include plausible distractors
+- Cover different aspects of the topic
+- Include brief explanations for the correct answer
+
+Return ONLY valid JSON in this exact format (no markdown, no code blocks):
+{
+    "questions": [
+        {
+            "question": "Question text here?",
+            "options": {
+                "A": "First option",
+                "B": "Second option",
+                "C": "Third option",
+                "D": "Fourth option"
+            },
+            "correct": "A",
+            "explanation": "Brief explanation of why this is correct"
+        }
+    ]
+}`;
+
+        const result = await this.callGemini(prompt);
+        return result.questions || [];
+    }
 }
 
 // Export singleton instance
