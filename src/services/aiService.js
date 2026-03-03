@@ -237,9 +237,10 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
         
         const prompt = `You are an expert examiner for ${subjectName || 'academic subjects'}.
 
-Generate ${numQuestions} practice questions for: "${topic}"
+Generate ${numQuestions} practice questions for: "${topic}
 Difficulty: ${difficulty || 'medium'}
 Question Types: ${qType === 'mixed' ? 'Mix of MCQ, short answer, and conceptual' : qType}
+Please dont include any table included questions as it's not coming in the UI.(Very important)
 
 Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 {
