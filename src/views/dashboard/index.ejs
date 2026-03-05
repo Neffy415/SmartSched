@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -106,6 +107,37 @@
                         <div class="stat-content">
                             <span class="stat-value"><%= stats.streak %></span>
                             <span class="stat-label">Day Streak</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Study Activity Heatmap -->
+                <div class="heatmap-card">
+                    <div class="heatmap-header">
+                        <div class="heatmap-title">
+                            <i data-lucide="flame"></i>
+                            <div>
+                                <h3>Study Activity</h3>
+                                <p id="heatmapSubtitle">Loading activity data...</p>
+                            </div>
+                        </div>
+                        <div class="heatmap-legend">
+                            <span class="heatmap-legend-label">Less</span>
+                            <div class="heatmap-legend-cell" style="background: var(--hm-0)"></div>
+                            <div class="heatmap-legend-cell" style="background: var(--hm-1)"></div>
+                            <div class="heatmap-legend-cell" style="background: var(--hm-2)"></div>
+                            <div class="heatmap-legend-cell" style="background: var(--hm-3)"></div>
+                            <div class="heatmap-legend-cell" style="background: var(--hm-4)"></div>
+                            <span class="heatmap-legend-label">More</span>
+                        </div>
+                    </div>
+                    <div class="heatmap-scroll">
+                        <div class="heatmap-months" id="heatmapMonths"></div>
+                        <div class="heatmap-body">
+                            <div class="heatmap-days">
+                                <span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span>
+                            </div>
+                            <div class="heatmap-grid" id="heatmapGrid"></div>
                         </div>
                     </div>
                 </div>
@@ -941,6 +973,175 @@
             font-size: 0.875rem;
         }
 
+        /* ── Heatmap ── */
+        :root {
+            --hm-0: #ebedf0;
+            --hm-1: #9be9a8;
+            --hm-2: #40c463;
+            --hm-3: #30a14e;
+            --hm-4: #216e39;
+        }
+        [data-theme="dark"] {
+            --hm-0: #161b22;
+            --hm-1: #0e4429;
+            --hm-2: #006d32;
+            --hm-3: #26a641;
+            --hm-4: #39d353;
+        }
+
+        .heatmap-card {
+            background: var(--bg-primary, #fff);
+            border-radius: var(--radius-lg, 12px);
+            border: 1px solid var(--border-color, #e5e7eb);
+            padding: var(--spacing-xl, 24px);
+            margin-bottom: var(--spacing-xl, 24px);
+        }
+
+        .heatmap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-lg, 16px);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .heatmap-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .heatmap-title i {
+            width: 24px;
+            height: 24px;
+            color: #f97316;
+        }
+
+        .heatmap-title h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .heatmap-title p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 2px 0 0;
+        }
+
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        .heatmap-legend-label {
+            margin: 0 4px;
+        }
+
+        .heatmap-legend-cell {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .heatmap-scroll {
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .heatmap-months {
+            display: flex;
+            font-size: 0.7rem;
+            color: var(--text-tertiary);
+            padding-left: 32px;
+            margin-bottom: 4px;
+            min-width: max-content;
+        }
+
+        .heatmap-months span {
+            display: inline-block;
+        }
+
+        .heatmap-body {
+            display: flex;
+            gap: 4px;
+            min-width: max-content;
+        }
+
+        .heatmap-days {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            font-size: 0.65rem;
+            color: var(--text-tertiary);
+            padding-top: 0;
+            width: 28px;
+            flex-shrink: 0;
+        }
+
+        .heatmap-days span {
+            height: 14px;
+            line-height: 14px;
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-rows: repeat(7, 14px);
+            grid-auto-flow: column;
+            grid-auto-columns: 14px;
+            gap: 3px;
+        }
+
+        .heatmap-cell {
+            width: 14px;
+            height: 14px;
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+            transition: outline 0.15s;
+        }
+
+        .heatmap-cell:hover {
+            outline: 2px solid var(--text-secondary);
+            outline-offset: -1px;
+        }
+
+        .heatmap-cell .hm-tip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-inverse, #1f2937);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            z-index: 20;
+            pointer-events: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,.25);
+        }
+
+        .heatmap-cell .hm-tip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 4px solid transparent;
+            border-top-color: var(--bg-inverse, #1f2937);
+        }
+
+        .heatmap-cell:hover .hm-tip {
+            display: block;
+        }
+
         @media (max-width: 1024px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -964,5 +1165,91 @@
             }
         }
     </style>
+
+    <script>
+    (function() {
+        var grid = document.getElementById('heatmapGrid');
+        var monthsEl = document.getElementById('heatmapMonths');
+        var subtitle = document.getElementById('heatmapSubtitle');
+        if (!grid) return;
+
+        var WEEKS = 21;
+        var CELL = WEEKS * 7;
+        var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+        function level(m) {
+            if (m <= 0)  return 0;
+            if (m < 30)  return 1;
+            if (m < 60)  return 2;
+            if (m < 120) return 3;
+            return 4;
+        }
+
+        function pad(n) { return n < 10 ? '0' + n : n; }
+        function key(d) { return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+        function fmtDate(d) { return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear(); }
+
+        fetch('/api/heatmap').then(function(r){ return r.json(); }).then(function(json) {
+            var map = {};
+            if (json.success && json.data) {
+                json.data.forEach(function(r) { map[r.study_date] = +r.total_minutes; });
+            }
+
+            /* Build date range ending today, starting on a Sunday */
+            var today = new Date();
+            today.setHours(0,0,0,0);
+            var end = new Date(today);
+            var start = new Date(end);
+            start.setDate(start.getDate() - CELL + 1);
+            /* roll start back to Sunday */
+            start.setDate(start.getDate() - start.getDay());
+
+            var activeDays = 0;
+            var totalMin = 0;
+            var cells = [];
+            var d = new Date(start);
+
+            while (d <= end) {
+                var k = key(d);
+                var m = map[k] || 0;
+                if (m > 0) { activeDays++; totalMin += m; }
+
+                var el = document.createElement('div');
+                el.className = 'heatmap-cell';
+                el.style.background = 'var(--hm-' + level(m) + ')';
+                var tip = document.createElement('span');
+                tip.className = 'hm-tip';
+                tip.textContent = m > 0 ? (m + ' min on ' + fmtDate(d)) : ('No activity on ' + fmtDate(d));
+                el.appendChild(tip);
+                grid.appendChild(el);
+                cells.push({ date: new Date(d), el: el });
+
+                d.setDate(d.getDate() + 1);
+            }
+
+            /* Month labels */
+            var weekIndex = 0;
+            var lastMonth = -1;
+            monthsEl.innerHTML = '';
+            for (var i = 0; i < cells.length; i += 7) {
+                var colDate = cells[i].date;
+                var span = document.createElement('span');
+                span.style.width = '17px'; /* 14px cell + 3px gap */
+                if (colDate.getMonth() !== lastMonth && colDate.getDate() <= 7) {
+                    span.textContent = MONTHS[colDate.getMonth()];
+                    span.style.width = '17px';
+                }
+                lastMonth = colDate.getMonth();
+                monthsEl.appendChild(span);
+                weekIndex++;
+            }
+
+            var hrs = (totalMin / 60).toFixed(1);
+            subtitle.textContent = activeDays + ' active day' + (activeDays !== 1 ? 's' : '') + ' \u00B7 ' + hrs + 'h total study time';
+        }).catch(function() {
+            subtitle.textContent = 'Unable to load activity data';
+        });
+    })();
+    </script>
 </body>
 </html>

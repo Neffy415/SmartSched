@@ -13,7 +13,7 @@ const databaseUrl = process.env.DATABASE_URL;
 const pool = databaseUrl 
     ? new Pool({
         connectionString: databaseUrl,
-        ssl: true // Let global setting handle verification
+        ssl: { rejectUnauthorized: false }
     })
     : new Pool({
         host: process.env.DB_HOST || 'localhost',

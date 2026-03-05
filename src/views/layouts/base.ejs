@@ -14,9 +14,178 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <!-- Main Stylesheet -->
+    <%- include('../partials/theme-init') %>
     <link rel="stylesheet" href="/css/styles.css">
     
     <%- typeof additionalStyles !== 'undefined' ? additionalStyles : '' %>
+
+    <!-- Custom Popup Styles -->
+    <style>
+        .ss-popup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+        .ss-popup-overlay.ss-active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .ss-popup {
+            background: white;
+            border-radius: var(--radius-xl, 1rem);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+            width: 90%;
+            max-width: 420px;
+            transform: scale(0.9) translateY(10px);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+        .ss-popup-overlay.ss-active .ss-popup {
+            transform: scale(1) translateY(0);
+        }
+        .ss-popup-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-lg, 0.75rem);
+            margin-bottom: 0.75rem;
+        }
+        .ss-popup-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+        .ss-popup-icon.ss-icon-success {
+            background: #ecfdf5;
+            color: #059669;
+        }
+        .ss-popup-icon.ss-icon-error {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        .ss-popup-icon.ss-icon-warning {
+            background: #fffbeb;
+            color: #d97706;
+        }
+        .ss-popup-icon.ss-icon-info {
+            background: #eef2ff;
+            color: #4f46e5;
+        }
+        .ss-popup-body {
+            padding: 1.5rem 1.5rem 0.5rem;
+        }
+        .ss-popup-title {
+            font-family: var(--font-family, 'Inter', sans-serif);
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--gray-900, #111827);
+            margin-bottom: 0.375rem;
+        }
+        .ss-popup-message {
+            font-family: var(--font-family, 'Inter', sans-serif);
+            font-size: 0.9375rem;
+            color: var(--gray-500, #6b7280);
+            line-height: 1.5;
+        }
+        .ss-popup-actions {
+            display: flex;
+            gap: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            justify-content: flex-end;
+        }
+        .ss-popup-btn {
+            font-family: var(--font-family, 'Inter', sans-serif);
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--radius-lg, 0.75rem);
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            line-height: 1;
+        }
+        .ss-popup-btn:hover {
+            transform: translateY(-1px);
+        }
+        .ss-popup-btn:active {
+            transform: translateY(0);
+        }
+        .ss-btn-cancel {
+            background: var(--gray-100, #f3f4f6);
+            color: var(--gray-700, #374151);
+        }
+        .ss-btn-cancel:hover {
+            background: var(--gray-200, #e5e7eb);
+        }
+        .ss-btn-confirm {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+        }
+        .ss-btn-confirm:hover {
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45);
+        }
+        .ss-btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.35);
+        }
+        .ss-btn-danger:hover {
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
+        }
+        .ss-btn-ok {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+            min-width: 80px;
+        }
+        .ss-btn-ok:hover {
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.45);
+        }
+
+        /* Toast notification */
+        .ss-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border-radius: var(--radius-lg, 0.75rem);
+            font-family: var(--font-family, 'Inter', sans-serif);
+            font-size: 0.9375rem;
+            font-weight: 500;
+            color: white;
+            z-index: 10001;
+            box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .ss-toast.ss-toast-show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .ss-toast svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .ss-toast-success { background: linear-gradient(135deg, #10b981, #059669); }
+        .ss-toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .ss-toast-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .ss-toast-info { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+    </style>
 </head>
 <body>
     <%- body %>
@@ -24,6 +193,133 @@
     <!-- Initialize Lucide Icons -->
     <script>
         lucide.createIcons();
+    </script>
+
+    <!-- Custom Popup System -->
+    <script>
+    (function() {
+        const iconSvgs = {
+            success: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+            error: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+            warning: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+            info: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+            question: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+        };
+
+        function createOverlay() {
+            const overlay = document.createElement('div');
+            overlay.className = 'ss-popup-overlay';
+            document.body.appendChild(overlay);
+            requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('ss-active')));
+            return overlay;
+        }
+
+        function closeOverlay(overlay) {
+            overlay.classList.remove('ss-active');
+            setTimeout(() => overlay.remove(), 250);
+        }
+
+        /**
+         * Show an alert popup (replaces native alert)
+         * @param {string} message - The message to display
+         * @param {object} opts - Options: { type: 'success'|'error'|'warning'|'info', title: string }
+         * @returns {Promise<void>}
+         */
+        window.ssAlert = function(message, opts = {}) {
+            return new Promise(resolve => {
+                const type = opts.type || 'info';
+                const title = opts.title || { success: 'Success', error: 'Error', warning: 'Warning', info: 'Notice' }[type];
+                const iconClass = 'ss-icon-' + type;
+
+                const overlay = createOverlay();
+                overlay.innerHTML = `
+                    <div class="ss-popup">
+                        <div class="ss-popup-body">
+                            <div class="ss-popup-icon ${iconClass}">${iconSvgs[type] || iconSvgs.info}</div>
+                            <div class="ss-popup-title">${title}</div>
+                            <div class="ss-popup-message">${message}</div>
+                        </div>
+                        <div class="ss-popup-actions">
+                            <button class="ss-popup-btn ss-btn-ok" id="ssOkBtn">OK</button>
+                        </div>
+                    </div>`;
+
+                const okBtn = overlay.querySelector('#ssOkBtn');
+                okBtn.focus();
+                okBtn.addEventListener('click', () => { closeOverlay(overlay); resolve(); });
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) { closeOverlay(overlay); resolve(); } });
+            });
+        };
+
+        /**
+         * Show a confirm popup (replaces native confirm)
+         * @param {string} message - The message to display
+         * @param {object} opts - Options: { type, title, confirmText, cancelText, danger }
+         * @returns {Promise<boolean>}
+         */
+        window.ssConfirm = function(message, opts = {}) {
+            return new Promise(resolve => {
+                const danger = opts.danger || false;
+                const type = opts.type || (danger ? 'warning' : 'info');
+                const title = opts.title || (danger ? 'Are you sure?' : 'Confirm');
+                const confirmText = opts.confirmText || (danger ? 'Delete' : 'Confirm');
+                const cancelText = opts.cancelText || 'Cancel';
+                const iconClass = 'ss-icon-' + type;
+                const btnClass = danger ? 'ss-btn-danger' : 'ss-btn-confirm';
+
+                const overlay = createOverlay();
+                overlay.innerHTML = `
+                    <div class="ss-popup">
+                        <div class="ss-popup-body">
+                            <div class="ss-popup-icon ${iconClass}">${iconSvgs[type] || iconSvgs.question}</div>
+                            <div class="ss-popup-title">${title}</div>
+                            <div class="ss-popup-message">${message}</div>
+                        </div>
+                        <div class="ss-popup-actions">
+                            <button class="ss-popup-btn ss-btn-cancel" id="ssCancelBtn">${cancelText}</button>
+                            <button class="ss-popup-btn ${btnClass}" id="ssConfirmBtn">${confirmText}</button>
+                        </div>
+                    </div>`;
+
+                overlay.querySelector('#ssCancelBtn').addEventListener('click', () => { closeOverlay(overlay); resolve(false); });
+                overlay.querySelector('#ssConfirmBtn').addEventListener('click', () => { closeOverlay(overlay); resolve(true); });
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) { closeOverlay(overlay); resolve(false); } });
+                overlay.querySelector('#ssConfirmBtn').focus();
+            });
+        };
+
+        /**
+         * Show a toast notification
+         * @param {string} message
+         * @param {string} type - 'success'|'error'|'warning'|'info'
+         * @param {number} duration - ms, default 3000
+         */
+        window.ssToast = function(message, type = 'info', duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = 'ss-toast ss-toast-' + type;
+            toast.innerHTML = (iconSvgs[type] || iconSvgs.info) + '<span>' + message + '</span>';
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('ss-toast-show')));
+            setTimeout(() => {
+                toast.classList.remove('ss-toast-show');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        };
+    })();
+
+    // Global handler for forms with class 'ss-delete-form'
+    document.addEventListener('submit', function(e) {
+        var form = e.target.closest('.ss-delete-form');
+        if (!form) return;
+        e.preventDefault();
+        var msg = form.dataset.msg || 'Are you sure you want to delete this?';
+        ssConfirm(msg, { danger: true, confirmText: 'Delete' }).then(function(ok) {
+            if (ok) {
+                form.classList.remove('ss-delete-form');
+                form.submit();
+            }
+        });
+    });
     </script>
     
     <%- typeof additionalScripts !== 'undefined' ? additionalScripts : '' %>

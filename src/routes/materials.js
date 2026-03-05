@@ -180,8 +180,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
         // Insert file record (matching actual database schema)
         const fileResult = await pool.query(`
             INSERT INTO user_files 
-            (user_id, subject_id, filename, original_name, file_path, file_type, file_size, mime_type, is_processed)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, false)
+            (user_id, subject_id, filename, original_name, file_path, file_type, file_size, mime_type, description, status, is_processed)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', false)
             RETURNING *
         `, [
             req.session.user.id,
@@ -191,7 +191,8 @@ router.post('/upload', upload.single('file'), async (req, res) => {
             req.file.path,
             fileType,
             req.file.size,
-            req.file.mimetype
+            req.file.mimetype,
+            description || null
         ]);
 
         const fileId = fileResult.rows[0].id;
@@ -255,14 +256,15 @@ router.post('/analyze/:id', async (req, res) => {
             JSON.stringify(analysis)
         ]);
 
-        // Update file - mark as processed with extracted text containing analysis
+        // Update file - save analysis to ai_analysis column, keep extracted_text intact
         await pool.query(`
-            UPDATE user_files SET is_processed = true, extracted_text = $1
+            UPDATE user_files SET is_processed = true, ai_analysis = $1, status = 'analyzed'
             WHERE id = $2
         `, [JSON.stringify(analysis), req.params.id]);
 
-        // Auto-create topics if analysis has topics and file has a subject
+        // Auto-create topics and tasks if analysis has topics and file has a subject
         let createdTopics = 0;
+        let createdTasks = 0;
         if (analysis.topics && Array.isArray(analysis.topics) && file.subject_id) {
             for (const topic of analysis.topics) {
                 try {
@@ -272,6 +274,7 @@ router.post('/analyze/:id', async (req, res) => {
                         WHERE subject_id = $1 AND LOWER(name) = LOWER($2)
                     `, [file.subject_id, topic.name]);
 
+                    let topicId;
                     if (existingTopic.rows.length === 0) {
                         // Create new topic
                         const newTopic = await pool.query(`
@@ -288,17 +291,48 @@ router.post('/analyze/:id', async (req, res) => {
                             topic.importance || 3
                         ]);
 
+                        topicId = newTopic.rows[0].id;
+
                         // Link topic to file
                         await pool.query(`
                             INSERT INTO file_topics (file_id, topic_id)
                             VALUES ($1, $2)
                             ON CONFLICT DO NOTHING
-                        `, [req.params.id, newTopic.rows[0].id]);
+                        `, [req.params.id, topicId]);
 
                         createdTopics++;
+                    } else {
+                        topicId = existingTopic.rows[0].id;
+                    }
+
+                    // Auto-create a study task for this topic under the subject
+                    const existingTask = await pool.query(`
+                        SELECT id FROM tasks 
+                        WHERE user_id = $1 AND topic_id = $2 AND LOWER(title) = LOWER($3)
+                    `, [req.session.user.id, topicId, `Study: ${topic.name}`]);
+
+                    if (existingTask.rows.length === 0) {
+                        const priorityNum = topic.importance >= 4 ? 3 : topic.importance >= 2 ? 2 : 1;
+                        const deadline = new Date();
+                        deadline.setDate(deadline.getDate() + 7); // Default deadline in 7 days
+
+                        await pool.query(`
+                            INSERT INTO tasks 
+                            (user_id, topic_id, title, description, priority, status, deadline, estimated_minutes, task_type)
+                            VALUES ($1, $2, $3, $4, $5, 'pending', $6, $7, 'study')
+                        `, [
+                            req.session.user.id,
+                            topicId,
+                            `Study: ${topic.name}`,
+                            topic.description || `Study and review ${topic.name}`,
+                            priorityNum,
+                            deadline.toISOString(),
+                            (topic.estimated_hours || 1) * 60
+                        ]);
+                        createdTasks++;
                     }
                 } catch (topicError) {
-                    console.error('Error creating topic:', topicError);
+                    console.error('Error creating topic/task:', topicError);
                 }
             }
         }
@@ -306,7 +340,8 @@ router.post('/analyze/:id', async (req, res) => {
         res.json({
             success: true,
             data: analysis,
-            topicsCreated: createdTopics
+            topicsCreated: createdTopics,
+            tasksCreated: createdTasks
         });
     } catch (error) {
         console.error('Error analyzing material:', error);
@@ -359,11 +394,11 @@ router.post('/summarize/:id', async (req, res) => {
             JSON.stringify(summary)
         ]);
 
-        // Mark file as processed
+        // Save summary to ai_summary column
         await pool.query(`
-            UPDATE user_files SET is_processed = true
-            WHERE id = $1
-        `, [req.params.id]);
+            UPDATE user_files SET is_processed = true, ai_summary = $1
+            WHERE id = $2
+        `, [JSON.stringify(summary), req.params.id]);
 
         res.json({
             success: true,
@@ -398,16 +433,16 @@ router.post('/create-topics/:id', async (req, res) => {
             return res.status(400).json({ error: 'File must be linked to a subject first' });
         }
 
-        if (!file.extracted_text) {
+        if (!file.ai_analysis) {
             return res.status(400).json({ error: 'Please analyze the file first' });
         }
 
-        // Parse the AI analysis from extracted_text
+        // Parse the AI analysis from ai_analysis column
         let analysis;
         try {
-            analysis = typeof file.extracted_text === 'string' 
-                ? JSON.parse(file.extracted_text) 
-                : file.extracted_text;
+            analysis = typeof file.ai_analysis === 'string' 
+                ? JSON.parse(file.ai_analysis) 
+                : file.ai_analysis;
         } catch (e) {
             return res.status(400).json({ error: 'Invalid analysis data' });
         }
@@ -470,7 +505,10 @@ router.post('/create-topics/:id', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const fileResult = await pool.query(`
-            SELECT uf.*, s.name as subject_name, s.color as subject_color
+            SELECT uf.*, 
+                   uf.original_name as original_filename,
+                   uf.filename as stored_filename,
+                   s.name as subject_name, s.color as subject_color
             FROM user_files uf
             LEFT JOIN subjects s ON uf.subject_id = s.id
             WHERE uf.id = $1 AND uf.user_id = $2
@@ -606,7 +644,7 @@ async function extractTextFromFile(fileId, filePath, mimeType) {
         // Update database
         await pool.query(`
             UPDATE user_files 
-            SET extracted_text = $1, is_processed = true
+            SET extracted_text = $1, is_processed = true, status = 'pending'
             WHERE id = $2
         `, [extractedText, fileId]);
 
@@ -616,7 +654,7 @@ async function extractTextFromFile(fileId, filePath, mimeType) {
         
         await pool.query(`
             UPDATE user_files 
-            SET is_processed = true, processing_error = $1
+            SET is_processed = true, processing_error = $1, status = 'error'
             WHERE id = $2
         `, [error.message, fileId]);
     }

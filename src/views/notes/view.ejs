@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %> - SmartSched</title>
+    <%- include('../partials/theme-init') %>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -394,7 +395,7 @@
             
             // Delete
             document.getElementById('deleteBtn').addEventListener('click', async function() {
-                if (!confirm('Are you sure you want to delete this note? This cannot be undone.')) {
+                if (!await ssConfirm('Are you sure you want to delete this note? This cannot be undone.', { danger: true, confirmText: 'Delete' })) {
                     return;
                 }
                 
@@ -425,5 +426,7 @@
             }
         });
     </script>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

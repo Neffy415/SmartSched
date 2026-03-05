@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
     <style>
@@ -339,13 +340,15 @@
                 if (data.success) {
                     window.location.href = '/practice/result/' + data.attemptId;
                 } else {
-                    alert('Failed to submit quiz: ' + data.error);
+                    ssAlert('Failed to submit quiz: ' + data.error, { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to submit quiz');
+                ssAlert('Failed to submit quiz', { type: 'error' });
             }
         });
     </script>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

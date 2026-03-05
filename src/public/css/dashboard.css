@@ -3903,3 +3903,254 @@ tbody tr:last-child td {
 .fc-card .btn {
     flex-shrink: 0;
 }
+
+/* ===================================
+   Dark Mode Overrides
+   =================================== */
+[data-theme="dark"] .sidebar {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .top-bar {
+    background: rgba(15, 23, 42, 0.85);
+    border-color: #334155;
+}
+
+[data-theme="dark"] .stat-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .stat-card .stat-value {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .stat-card .stat-label {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .card,
+[data-theme="dark"] .subject-card,
+[data-theme="dark"] .form-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .subject-header,
+[data-theme="dark"] .topic-header,
+[data-theme="dark"] .task-header {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .task-item,
+[data-theme="dark"] .task-row {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .task-item:hover,
+[data-theme="dark"] .task-row:hover {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.08) 0%, #1e293b 100%);
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+    background: #334155;
+}
+
+[data-theme="dark"] .dropdown-item.text-error:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .dropdown-divider {
+    border-top-color: #334155;
+}
+
+[data-theme="dark"] .empty-state h4 {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .empty-state p {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .empty-icon {
+    background: #334155;
+}
+
+[data-theme="dark"] .page-header h1 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .page-header p {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .form-actions {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .nav-item {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .nav-item:hover {
+    background: #334155;
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .nav-item.active {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+}
+
+[data-theme="dark"] .user-menu {
+    background: #334155;
+}
+
+[data-theme="dark"] .user-name {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .user-email {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .search-bar {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .search-bar input {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .icon-btn {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .icon-btn:hover {
+    background: #334155;
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .quick-action {
+    background: #334155;
+}
+
+[data-theme="dark"] .quick-action:hover {
+    background: #475569;
+}
+
+[data-theme="dark"] .quick-action span {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .card-header {
+    border-color: #334155;
+}
+
+[data-theme="dark"] .card-header h3 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .card-link {
+    color: #818cf8;
+}
+
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .subject-card-info h3 a {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .progress-bar {
+    background: #334155;
+}
+
+[data-theme="dark"] .task-row.completed {
+    background: #0f172a;
+}
+
+[data-theme="dark"] .sidebar-footer {
+    border-color: #334155;
+}
+
+[data-theme="dark"] .sidebar-header {
+    border-color: #334155;
+}
+
+/* Dark mode for filter / form controls */
+[data-theme="dark"] .filter-group select,
+[data-theme="dark"] .filter-bar select,
+[data-theme="dark"] .form-input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="email"],
+[data-theme="dark"] input[type="password"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] input[type="date"],
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="search"] {
+    background: #1e293b;
+    border-color: #475569;
+    color: #f3f4f6;
+}
+
+/* Dark mode badges */
+[data-theme="dark"] .difficulty-badge.easy { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .difficulty-badge.medium { background: #78350f; color: #fcd34d; }
+[data-theme="dark"] .difficulty-badge.hard { background: #7f1d1d; color: #fca5a5; }
+
+[data-theme="dark"] .status-badge.completed,
+[data-theme="dark"] .status-badge.status-completed { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .status-badge.status-pending { background: #78350f; color: #fcd34d; }
+[data-theme="dark"] .status-badge.status-in_progress { background: #1e3a5f; color: #93c5fd; }
+[data-theme="dark"] .status-badge.overdue { background: #7f1d1d; color: #fca5a5; }
+
+[data-theme="dark"] .priority-badge.priority-1 { background: #7f1d1d; color: #fca5a5; }
+[data-theme="dark"] .priority-badge.priority-2 { background: #7c2d12; color: #fdba74; }
+[data-theme="dark"] .priority-badge.priority-3 { background: #78350f; color: #fcd34d; }
+[data-theme="dark"] .priority-badge.priority-4 { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .priority-badge.priority-5 { background: #334155; color: #9ca3af; }
+
+[data-theme="dark"] .task-type-badge,
+[data-theme="dark"] .task-type { background: #334155; color: #9ca3af; }
+[data-theme="dark"] .task-type.reading { background: #1e3a5f; color: #93c5fd; }
+[data-theme="dark"] .task-type.notes { background: #78350f; color: #fcd34d; }
+[data-theme="dark"] .task-type.practice { background: #064e3b; color: #6ee7b7; }
+[data-theme="dark"] .task-type.revision { background: #312e81; color: #c7d2fe; }
+[data-theme="dark"] .task-type.project { background: #831843; color: #f9a8d4; }
+[data-theme="dark"] .task-type.other { background: #334155; color: #9ca3af; }
+
+/* Dark mode for notification panel, user dropdowns */
+[data-theme="dark"] .notifications-panel,
+[data-theme="dark"] .user-dropdown-menu,
+[data-theme="dark"] .search-results-dropdown {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .search-results-dropdown .search-result-item:hover {
+    background: #334155;
+}
+
+/* Flashcard cards */
+[data-theme="dark"] .fc-card {
+    background: #1e293b;
+    border-color: #334155;
+}

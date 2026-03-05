@@ -85,7 +85,7 @@ router.get('/dashboard', async (req, res) => {
                 SELECT 
                     COUNT(*) as total_attempts,
                     ROUND(AVG(percentage)) as avg_score,
-                    (SELECT percentage FROM practice_attempts WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1) as recent_score
+                    (SELECT percentage FROM practice_attempts WHERE user_id = $1 ORDER BY completed_at DESC LIMIT 1) as recent_score
                 FROM practice_attempts
                 WHERE user_id = $1
             `, [userId]);
@@ -189,6 +189,25 @@ router.get('/dashboard', async (req, res) => {
             subjects: [],
             recentSessions: []
         });
+    }
+});
+
+// API: Study activity heatmap data (last 150 days)
+router.get('/api/heatmap', async (req, res) => {
+    if (!req.session.user) return res.json({ success: false });
+    try {
+        const result = await db.query(`
+            SELECT DATE(start_time) as study_date, 
+                   COALESCE(SUM(actual_minutes), 0) as total_minutes
+            FROM study_sessions
+            WHERE user_id = $1 AND status = 'completed'
+              AND start_time >= CURRENT_DATE - INTERVAL '150 days'
+            GROUP BY DATE(start_time)
+            ORDER BY study_date
+        `, [req.session.user.id]);
+        res.json({ success: true, data: result.rows });
+    } catch (e) {
+        res.json({ success: true, data: [] });
     }
 });
 

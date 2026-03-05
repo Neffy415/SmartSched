@@ -117,6 +117,24 @@
     background: white;
 }
 
+/* Dark mode auth overrides */
+[data-theme="dark"] .auth-form-container {
+    background: #0f172a;
+}
+
+[data-theme="dark"] .auth-card,
+[data-theme="dark"] .auth-form-wrapper {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .auth-header h1 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .auth-header p {
+    color: #9ca3af;
+}
+
 .auth-form-wrapper {
     width: 100%;
     max-width: 420px;

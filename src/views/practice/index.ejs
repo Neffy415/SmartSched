@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
     <style>
@@ -380,7 +381,7 @@
             const difficulty = document.getElementById('difficulty').value;
 
             if (!topicName) {
-                alert('Please enter a topic name');
+                ssAlert('Please enter a topic name', { type: 'warning', title: 'Missing Topic' });
                 return;
             }
 
@@ -402,15 +403,17 @@
                 if (data.success) {
                     window.location.href = '/practice/' + data.quizId;
                 } else {
-                    alert('Failed to generate quiz: ' + (data.error || 'Unknown error'));
+                    ssAlert('Failed to generate quiz: ' + (data.error || 'Unknown error'), { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to generate quiz. Please try again.');
+                ssAlert('Failed to generate quiz. Please try again.', { type: 'error' });
             } finally {
                 document.getElementById('loadingOverlay').classList.remove('show');
             }
         }
     </script>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

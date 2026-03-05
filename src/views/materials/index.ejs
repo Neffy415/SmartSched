@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -169,11 +170,11 @@
                                                 <i data-lucide="eye"></i>
                                             </a>
                                             <% if (material.status === 'pending' || material.status === 'error') { %>
-                                                <button class="btn btn-ghost btn-sm" onclick="analyzeMaterial(<%= material.id %>)" title="Analyze with AI">
+                                                <button class="btn btn-ghost btn-sm" onclick="analyzeMaterial('<%= material.id %>')" title="Analyze with AI">
                                                     <i data-lucide="sparkles"></i>
                                                 </button>
                                             <% } %>
-                                            <button class="btn btn-ghost btn-sm text-error" onclick="deleteMaterial(<%= material.id %>)" title="Delete">
+                                            <button class="btn btn-ghost btn-sm text-error" onclick="deleteMaterial('<%= material.id %>')" title="Delete">
                                                 <i data-lucide="trash-2"></i>
                                             </button>
                                         </div>
@@ -192,27 +193,30 @@
 
         // Analyze material with AI
         async function analyzeMaterial(id) {
-            if (!confirm('Analyze this material with AI? This may take a moment.')) return;
+            if (!await ssConfirm('Analyze this material with AI? This may take a moment.', { title: 'AI Analysis', confirmText: 'Analyze', type: 'info' })) return;
             
             try {
                 const response = await fetch(`/materials/analyze/${id}`, { method: 'POST' });
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert('Analysis complete!');
-                    location.reload();
+                    let msg = 'Analysis complete!';
+                    if (result.topicsCreated > 0) msg += ` ${result.topicsCreated} topic(s) extracted.`;
+                    if (result.tasksCreated > 0) msg += ` ${result.tasksCreated} task(s) auto-created.`;
+                    ssToast(msg, 'success');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert(result.error || 'Analysis failed');
+                    ssAlert(result.error || 'Analysis failed', { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Network error');
+                ssAlert('Network error', { type: 'error' });
             }
         }
 
         // Delete material
         async function deleteMaterial(id) {
-            if (!confirm('Are you sure you want to delete this material?')) return;
+            if (!await ssConfirm('Are you sure you want to delete this material?', { danger: true, confirmText: 'Delete' })) return;
             
             try {
                 const response = await fetch(`/materials/${id}`, { method: 'DELETE' });
@@ -221,11 +225,11 @@
                 if (result.success) {
                     location.reload();
                 } else {
-                    alert(result.error || 'Delete failed');
+                    ssAlert(result.error || 'Delete failed', { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Network error');
+                ssAlert('Network error', { type: 'error' });
             }
         }
 
@@ -384,5 +388,7 @@
             }
         }
     </style>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

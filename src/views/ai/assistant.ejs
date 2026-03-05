@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -421,14 +422,14 @@
             const subjectName = subjectSelect.value ? subjectSelect.options[subjectSelect.selectedIndex].text : '';
             
             if (!topicName && action !== 'ask') {
-                alert('Please select or enter a topic');
+                ssAlert('Please select or enter a topic', { type: 'warning', title: 'Missing Topic' });
                 return;
             }
 
             if (action === 'ask') {
                 const question = document.getElementById('userQuestion').value.trim();
                 if (!question) {
-                    alert('Please enter a question');
+                    ssAlert('Please enter a question', { type: 'warning', title: 'Missing Question' });
                     return;
                 }
             }
@@ -801,7 +802,7 @@
             // Get the current AI response content from resultsContainer
             const contentDiv = document.getElementById('resultsContainer');
             if (!contentDiv || !contentDiv.innerHTML.trim() || contentDiv.style.display === 'none') {
-                alert('No content to save. Generate AI content first.');
+                ssAlert('No content to save. Generate AI content first.', { type: 'warning', title: 'No Content' });
                 return;
             }
             
@@ -862,7 +863,7 @@
                 }
             } catch (error) {
                 console.error('Error saving note:', error);
-                alert('Failed to save note: ' + error.message);
+                ssAlert('Failed to save note: ' + error.message, { type: 'error' });
                 this.innerHTML = '<i data-lucide="save"></i>';
                 this.disabled = false;
                 lucide.createIcons();
@@ -1511,5 +1512,7 @@
             border-color: #22c55e !important;
         }
     </style>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

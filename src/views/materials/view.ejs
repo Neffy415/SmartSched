@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -293,7 +294,20 @@
                             </button>
                         </div>
                         <div class="card-body" id="textBody" style="display: none;">
-                            <pre class="extracted-text"><%= material.extracted_text %></pre>
+                            <%
+                                let displayText = material.extracted_text;
+                                // Check if extracted_text contains JSON (from old analysis overwrite bug)
+                                try {
+                                    const parsed = JSON.parse(displayText);
+                                    if (parsed && typeof parsed === 'object' && (parsed.topics || parsed.subject_detected)) {
+                                        // This is analysis JSON stored in extracted_text - show a note instead
+                                        displayText = '[Text was replaced by analysis data. Re-upload the file to extract text again.]';
+                                    }
+                                } catch(e) {
+                                    // Not JSON, show as-is (this is correct behavior)
+                                }
+                            %>
+                            <pre class="extracted-text"><%= displayText %></pre>
                         </div>
                     </div>
                 <% } %>
@@ -353,15 +367,18 @@
                 hideLoading();
                 
                 if (result.success) {
-                    alert('Analysis complete!');
-                    location.reload();
+                    let msg = 'Analysis complete!';
+                    if (result.topicsCreated > 0) msg += ` ${result.topicsCreated} topic(s) extracted.`;
+                    if (result.tasksCreated > 0) msg += ` ${result.tasksCreated} task(s) auto-created.`;
+                    ssToast(msg, 'success');
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert(result.error || 'Analysis failed');
+                    ssAlert(result.error || 'Analysis failed', { type: 'error' });
                 }
             } catch (error) {
                 hideLoading();
                 console.error('Error:', error);
-                alert('Network error');
+                ssAlert('Network error', { type: 'error' });
             }
         }
 
@@ -376,21 +393,21 @@
                 hideLoading();
                 
                 if (result.success) {
-                    alert('Summary generated!');
-                    location.reload();
+                    ssToast('Summary generated!', 'success');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    alert(result.error || 'Summary failed');
+                    ssAlert(result.error || 'Summary failed', { type: 'error' });
                 }
             } catch (error) {
                 hideLoading();
                 console.error('Error:', error);
-                alert('Network error');
+                ssAlert('Network error', { type: 'error' });
             }
         }
 
         // Create topics from analysis
         async function createTopics() {
-            if (!confirm('Create topics from the AI analysis? This will add new topics to your schedule.')) return;
+            if (!await ssConfirm('Create topics from the AI analysis? This will add new topics to your schedule.', { title: 'Create Topics', confirmText: 'Create', type: 'info' })) return;
             
             showLoading('Creating topics...');
             
@@ -401,21 +418,21 @@
                 hideLoading();
                 
                 if (result.success) {
-                    alert(`Created ${result.created} topic(s)!`);
-                    location.reload();
+                    ssToast(`Created ${result.created} topic(s)!`, 'success');
+                    setTimeout(() => location.reload(), 1000);
                 } else {
-                    alert(result.error || 'Failed to create topics');
+                    ssAlert(result.error || 'Failed to create topics', { type: 'error' });
                 }
             } catch (error) {
                 hideLoading();
                 console.error('Error:', error);
-                alert('Network error');
+                ssAlert('Network error', { type: 'error' });
             }
         }
 
         // Delete material
         async function deleteMaterial() {
-            if (!confirm('Are you sure you want to delete this material? This cannot be undone.')) return;
+            if (!await ssConfirm('Are you sure you want to delete this material? This cannot be undone.', { danger: true, confirmText: 'Delete' })) return;
             
             try {
                 const response = await fetch(`/materials/${materialId}`, { method: 'DELETE' });
@@ -424,11 +441,11 @@
                 if (result.success) {
                     window.location.href = '/materials';
                 } else {
-                    alert(result.error || 'Delete failed');
+                    ssAlert(result.error || 'Delete failed', { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Network error');
+                ssAlert('Network error', { type: 'error' });
             }
         }
 
@@ -711,5 +728,7 @@
             }
         }
     </style>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

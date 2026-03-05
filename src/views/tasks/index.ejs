@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -226,7 +227,7 @@
                                                     </form>
                                                     <hr class="dropdown-divider">
                                                     <form action="/tasks/<%= task.id %>/delete" method="POST"
-                                                          onsubmit="return confirm('Delete this task?')">
+                                                          class="ss-delete-form" data-msg="Delete this task?">
                                                         <button type="submit" class="dropdown-item text-error">
                                                             <i data-lucide="trash-2"></i> Delete
                                                         </button>
@@ -270,5 +271,7 @@
             document.querySelectorAll('.dropdown.active').forEach(d => d.classList.remove('active'));
         });
     </script>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

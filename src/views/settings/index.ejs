@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -163,7 +164,7 @@
                                         <p>Delete all your subjects, tasks, and study sessions</p>
                                     </div>
                                     <button type="button" class="btn btn-outline-danger" 
-                                            onclick="if(confirm('Are you sure? This will delete ALL your data!')) document.getElementById('clearDataForm').submit()">
+                                            onclick="ssConfirm('Are you sure? This will delete ALL your data!', { danger: true, confirmText: 'Clear All', title: 'Clear All Data' }).then(ok => { if(ok) document.getElementById('clearDataForm').submit(); })">
                                         <i data-lucide="trash-2"></i>
                                         Clear Data
                                     </button>
@@ -176,7 +177,7 @@
                                         <p>Permanently delete your account and all data</p>
                                     </div>
                                     <button type="button" class="btn btn-danger" 
-                                            onclick="if(confirm('Are you sure you want to delete your account? This cannot be undone!')) document.getElementById('deleteAccountForm').submit()">
+                                            onclick="ssConfirm('Are you sure you want to delete your account? This cannot be undone!', { danger: true, confirmText: 'Delete Account', title: 'Delete Account' }).then(ok => { if(ok) document.getElementById('deleteAccountForm').submit(); })">
                                         <i data-lucide="user-x"></i>
                                         Delete Account
                                     </button>
@@ -268,5 +269,7 @@
             }
         }
     </style>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

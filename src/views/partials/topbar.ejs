@@ -10,6 +10,12 @@
     </div>
 
     <div class="top-bar-actions">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode" aria-label="Toggle dark mode">
+            <i data-lucide="moon" class="moon-icon"></i>
+            <i data-lucide="sun" class="sun-icon"></i>
+        </button>
+
         <!-- Notifications Dropdown -->
         <div class="notifications-dropdown" id="notificationsDropdown">
             <button class="icon-btn notifications-trigger" id="notificationsBtn">
@@ -656,4 +662,26 @@ document.addEventListener('DOMContentLoaded', function() {
         return div.innerHTML;
     }
 });
+</script>
+
+<script>
+// Theme Toggle
+(function() {
+    var saved = localStorage.getItem('ss-theme');
+    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    var btn = document.getElementById('themeToggle');
+    if (btn) {
+        btn.addEventListener('click', function() {
+            var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            if (isDark) {
+                document.documentElement.removeAttribute('data-theme');
+                localStorage.setItem('ss-theme', 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', 'dark');
+                localStorage.setItem('ss-theme', 'dark');
+            }
+            lucide.createIcons();
+        });
+    }
+})();
 </script>

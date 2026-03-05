@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
     <style>
@@ -514,7 +515,7 @@
             const count = document.getElementById('ai_count').value;
 
             if (!topic) {
-                alert('Please enter a topic name');
+                ssAlert('Please enter a topic name', { type: 'warning', title: 'Missing Topic' });
                 return;
             }
 
@@ -536,11 +537,11 @@
                 if (data.success && data.flashcards) {
                     displayGeneratedCards(data.flashcards, topic);
                 } else {
-                    alert('Failed to generate flashcards: ' + (data.error || 'Unknown error'));
+                    ssAlert('Failed to generate flashcards: ' + (data.error || 'Unknown error'), { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to generate flashcards. Please try again.');
+                ssAlert('Failed to generate flashcards. Please try again.', { type: 'error' });
             } finally {
                 document.getElementById('loadingOverlay').classList.remove('show');
             }
@@ -610,7 +611,7 @@
             });
 
             if (cards.length === 0) {
-                alert('Please add at least one flashcard');
+                ssAlert('Please add at least one flashcard', { type: 'warning', title: 'No Cards' });
                 return;
             }
 
@@ -634,16 +635,18 @@
                 if (result.success) {
                     window.location.href = '/flashcards/' + result.setId;
                 } else {
-                    alert('Failed to create set: ' + result.error);
+                    ssAlert('Failed to create set: ' + result.error, { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to create flashcard set');
+                ssAlert('Failed to create flashcard set', { type: 'error' });
             }
         }
 
         // Initialize with one card
         addCard();
     </script>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

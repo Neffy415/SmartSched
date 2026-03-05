@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -187,6 +188,149 @@
         }
         .focus-mode-tip svg { width: 18px; height: 18px; flex-shrink: 0; }
 
+        /* Pomodoro Timer Styles */
+        .pomodoro-toggle-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        .pomo-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.25rem;
+            border-radius: var(--radius-full);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            border: 2px solid var(--gray-200);
+            background: var(--gray-50);
+            color: var(--gray-600);
+        }
+        .pomo-toggle-btn:hover { border-color: #ef4444; color: #ef4444; }
+        .pomo-toggle-btn.active {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+        }
+        .pomo-toggle-btn svg { width: 18px; height: 18px; }
+
+        .pomodoro-container { display: none; text-align: center; }
+        .pomodoro-container.active { display: block; }
+        .normal-timer { display: block; }
+        .normal-timer.hidden { display: none; }
+
+        .pomo-ring-wrap {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto var(--spacing-xl);
+        }
+        .pomo-ring-bg, .pomo-ring-fg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+        }
+        .pomo-ring-bg circle {
+            fill: none;
+            stroke: var(--gray-200);
+            stroke-width: 8;
+        }
+        .pomo-ring-fg circle {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: center;
+            transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+        }
+        .pomo-ring-fg.focus circle { stroke: #ef4444; }
+        .pomo-ring-fg.break circle { stroke: #10b981; }
+        .pomo-ring-fg.long-break circle { stroke: #6366f1; }
+
+        .pomo-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .pomo-time {
+            font-size: 3.5rem;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            color: var(--gray-900);
+        }
+        .pomo-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .pomo-label.focus { color: #ef4444; }
+        .pomo-label.break { color: #10b981; }
+        .pomo-label.long-break { color: #6366f1; }
+
+        .pomo-cycles {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: var(--spacing-lg);
+        }
+        .pomo-cycle-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--gray-200);
+            transition: all 0.3s ease;
+        }
+        .pomo-cycle-dot.completed { background: #ef4444; transform: scale(1.15); }
+        .pomo-cycle-dot.active {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+            animation: pomoPulse 2s ease-in-out infinite;
+        }
+        @keyframes pomoPulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 16px rgba(239, 68, 68, 0.7); }
+        }
+
+        .pomo-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .pomo-actions .btn { min-width: 140px; }
+
+        .pomo-settings {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+            font-size: 0.8125rem;
+            color: var(--gray-500);
+        }
+        .pomo-settings label {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+        .pomo-settings input[type="number"] {
+            width: 52px;
+            padding: 0.25rem 0.375rem;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--radius-md);
+            font-size: 0.8125rem;
+            text-align: center;
+            font-family: inherit;
+        }
+
         @media (max-width: 1024px) {
             .study-session-layout { grid-template-columns: 1fr; }
             .study-sidebar { flex-direction: row; overflow-x: auto; }
@@ -231,6 +375,57 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Pomodoro Toggle -->
+                        <div class="pomodoro-toggle-wrap">
+                            <button type="button" class="pomo-toggle-btn" id="pomoToggle" title="Toggle Pomodoro Timer">
+                                <i data-lucide="timer"></i>
+                                <span>Pomodoro</span>
+                            </button>
+                        </div>
+
+                        <!-- Pomodoro Timer (hidden by default) -->
+                        <div class="pomodoro-container" id="pomoContainer">
+                            <div class="pomo-ring-wrap">
+                                <svg class="pomo-ring-bg" viewBox="0 0 280 280">
+                                    <circle cx="140" cy="140" r="124"></circle>
+                                </svg>
+                                <svg class="pomo-ring-fg focus" id="pomoRing" viewBox="0 0 280 280">
+                                    <circle cx="140" cy="140" r="124" 
+                                        stroke-dasharray="779.2" 
+                                        stroke-dashoffset="0"
+                                        id="pomoCircle"></circle>
+                                </svg>
+                                <div class="pomo-center">
+                                    <div class="pomo-time" id="pomoTime">25:00</div>
+                                    <div class="pomo-label focus" id="pomoLabel">FOCUS</div>
+                                </div>
+                            </div>
+                            <div class="pomo-cycles" id="pomoCycles">
+                                <div class="pomo-cycle-dot active"></div>
+                                <div class="pomo-cycle-dot"></div>
+                                <div class="pomo-cycle-dot"></div>
+                                <div class="pomo-cycle-dot"></div>
+                            </div>
+                            <div class="pomo-actions">
+                                <button type="button" class="btn btn-primary btn-lg" id="pomoStartPause">
+                                    <i data-lucide="play"></i>
+                                    Start Focus
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="pomoSkip">
+                                    <i data-lucide="skip-forward"></i>
+                                    Skip
+                                </button>
+                            </div>
+                            <div class="pomo-settings">
+                                <label>Focus <input type="number" id="pomoFocusMin" value="25" min="1" max="90"> min</label>
+                                <label>Break <input type="number" id="pomoBreakMin" value="5" min="1" max="30"> min</label>
+                                <label>Long <input type="number" id="pomoLongMin" value="15" min="1" max="60"> min</label>
+                            </div>
+                        </div>
+
+                        <!-- Normal Timer -->
+                        <div class="normal-timer" id="normalTimer">
                         <div class="timer-display">
                             <div class="timer-time" id="timerDisplay">00:00:00</div>
                             <div class="timer-label">Time Elapsed</div>
@@ -247,7 +442,7 @@
                                 Stop Session
                             </button>
                             <form action="/study/cancel/<%= session.id %>" method="POST" style="display: inline;"
-                                  onsubmit="return confirm('Cancel this session? Your time will not be saved.')">
+                                  class="ss-delete-form" data-msg="Cancel this session? Your time will not be saved.">
                                 <button type="submit" class="btn btn-secondary">
                                     <i data-lucide="x"></i>
                                     Cancel
@@ -280,6 +475,7 @@
                                 </button>
                             </div>
                         </form>
+                        </div><!-- end normal-timer -->
                     </div>
                 </div>
                 <div class="study-sidebar">
@@ -380,7 +576,7 @@
             const noteText = document.getElementById('quickNotes').value.trim();
             const saveBtn = document.getElementById('saveNoteBtn');
             const savedMsg = document.getElementById('noteSavedMsg');
-            if (!noteText) { alert('Please write something before saving.'); return; }
+            if (!noteText) { ssAlert('Please write something before saving.', { type: 'warning', title: 'Empty Note' }); return; }
             saveBtn.disabled = true;
             saveBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i> Saving...';
             lucide.createIcons();
@@ -395,16 +591,208 @@
                     savedMsg.style.display = 'block';
                     document.getElementById('quickNotes').value = '';
                     setTimeout(() => { savedMsg.style.display = 'none'; }, 3000);
-                } else { alert('Failed to save note: ' + data.error); }
+                } else { ssAlert('Failed to save note: ' + data.error, { type: 'error' }); }
             } catch (error) {
                 console.error('Error saving note:', error);
-                alert('Failed to save note. Please try again.');
+                ssAlert('Failed to save note. Please try again.', { type: 'error' });
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i data-lucide="save"></i> Save Note';
                 lucide.createIcons();
             }
         }
+
+        // ============ POMODORO TIMER ============
+        (function() {
+            var CIRCUMFERENCE = 2 * Math.PI * 124; // ~779.2
+            var pomoToggle = document.getElementById('pomoToggle');
+            var pomoContainer = document.getElementById('pomoContainer');
+            var normalTimer = document.getElementById('normalTimer');
+            var pomoTime = document.getElementById('pomoTime');
+            var pomoLabel = document.getElementById('pomoLabel');
+            var pomoRing = document.getElementById('pomoRing');
+            var pomoCircle = document.getElementById('pomoCircle');
+            var pomoCycles = document.getElementById('pomoCycles');
+            var startPauseBtn = document.getElementById('pomoStartPause');
+            var skipBtn = document.getElementById('pomoSkip');
+            var focusInput = document.getElementById('pomoFocusMin');
+            var breakInput = document.getElementById('pomoBreakMin');
+            var longInput = document.getElementById('pomoLongMin');
+
+            var pomoState = {
+                active: false,
+                running: false,
+                phase: 'focus', // 'focus' | 'break' | 'long-break'
+                cycle: 0, // 0-3 (4 cycles per set)
+                remaining: 25 * 60, // seconds
+                total: 25 * 60,
+                interval: null
+            };
+
+            // Audio context for notification sounds
+            function playSound(type) {
+                try {
+                    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    var osc = ctx.createOscillator();
+                    var gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    if (type === 'focus-end') {
+                        osc.frequency.value = 830;
+                        gain.gain.value = 0.3;
+                        osc.start();
+                        osc.frequency.setValueAtTime(830, ctx.currentTime);
+                        osc.frequency.setValueAtTime(660, ctx.currentTime + 0.15);
+                        osc.frequency.setValueAtTime(830, ctx.currentTime + 0.3);
+                        osc.stop(ctx.currentTime + 0.5);
+                    } else {
+                        osc.frequency.value = 660;
+                        gain.gain.value = 0.3;
+                        osc.start();
+                        osc.frequency.setValueAtTime(660, ctx.currentTime);
+                        osc.frequency.setValueAtTime(830, ctx.currentTime + 0.15);
+                        osc.frequency.setValueAtTime(988, ctx.currentTime + 0.3);
+                        osc.stop(ctx.currentTime + 0.5);
+                    }
+                } catch (e) { /* audio not available */ }
+            }
+
+            pomoToggle.addEventListener('click', function() {
+                pomoState.active = !pomoState.active;
+                pomoToggle.classList.toggle('active', pomoState.active);
+                pomoContainer.classList.toggle('active', pomoState.active);
+                normalTimer.classList.toggle('hidden', pomoState.active);
+                if (pomoState.active) {
+                    resetPomodoro();
+                } else {
+                    clearInterval(pomoState.interval);
+                    pomoState.running = false;
+                }
+                lucide.createIcons();
+            });
+
+            startPauseBtn.addEventListener('click', function() {
+                if (pomoState.running) {
+                    pausePomodoro();
+                } else {
+                    startPomodoro();
+                }
+            });
+
+            skipBtn.addEventListener('click', function() {
+                nextPhase();
+            });
+
+            focusInput.addEventListener('change', function() { if (!pomoState.running) resetPomodoro(); });
+            breakInput.addEventListener('change', function() { if (!pomoState.running) resetPomodoro(); });
+            longInput.addEventListener('change', function() { if (!pomoState.running) resetPomodoro(); });
+
+            function getPhaseSeconds() {
+                if (pomoState.phase === 'focus') return (parseInt(focusInput.value) || 25) * 60;
+                if (pomoState.phase === 'break') return (parseInt(breakInput.value) || 5) * 60;
+                return (parseInt(longInput.value) || 15) * 60;
+            }
+
+            function resetPomodoro() {
+                clearInterval(pomoState.interval);
+                pomoState.running = false;
+                pomoState.phase = 'focus';
+                pomoState.cycle = 0;
+                pomoState.total = getPhaseSeconds();
+                pomoState.remaining = pomoState.total;
+                updatePomoDisplay();
+                updatePomoBtn('start');
+                updateCycleDots();
+            }
+
+            function startPomodoro() {
+                pomoState.running = true;
+                updatePomoBtn('pause');
+                pomoState.interval = setInterval(function() {
+                    pomoState.remaining--;
+                    updatePomoDisplay();
+                    if (pomoState.remaining <= 0) {
+                        phaseComplete();
+                    }
+                }, 1000);
+            }
+
+            function pausePomodoro() {
+                clearInterval(pomoState.interval);
+                pomoState.running = false;
+                updatePomoBtn('resume');
+            }
+
+            function phaseComplete() {
+                clearInterval(pomoState.interval);
+                pomoState.running = false;
+                playSound(pomoState.phase === 'focus' ? 'focus-end' : 'break-end');
+                nextPhase();
+            }
+
+            function nextPhase() {
+                clearInterval(pomoState.interval);
+                pomoState.running = false;
+                if (pomoState.phase === 'focus') {
+                    pomoState.cycle++;
+                    if (pomoState.cycle >= 4) {
+                        pomoState.phase = 'long-break';
+                    } else {
+                        pomoState.phase = 'break';
+                    }
+                } else {
+                    if (pomoState.phase === 'long-break') {
+                        pomoState.cycle = 0;
+                    }
+                    pomoState.phase = 'focus';
+                }
+                pomoState.total = getPhaseSeconds();
+                pomoState.remaining = pomoState.total;
+                updatePomoDisplay();
+                updatePomoBtn('start');
+                updateCycleDots();
+            }
+
+            function updatePomoDisplay() {
+                var min = Math.floor(pomoState.remaining / 60);
+                var sec = pomoState.remaining % 60;
+                pomoTime.textContent = String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+
+                var offset = CIRCUMFERENCE * (1 - pomoState.remaining / pomoState.total);
+                pomoCircle.setAttribute('stroke-dashoffset', offset);
+
+                pomoRing.className = 'pomo-ring-fg ' + pomoState.phase;
+                pomoLabel.className = 'pomo-label ' + pomoState.phase;
+                var labels = { 'focus': 'FOCUS', 'break': 'BREAK', 'long-break': 'LONG BREAK' };
+                pomoLabel.textContent = labels[pomoState.phase] || 'FOCUS';
+
+                if (pomoState.active) {
+                    document.title = pomoTime.textContent + ' ' + pomoLabel.textContent + ' - Study Session';
+                }
+            }
+
+            function updatePomoBtn(state) {
+                var icons = { start: 'play', pause: 'pause', resume: 'play' };
+                var labels = {
+                    start: pomoState.phase === 'focus' ? 'Start Focus' : 'Start Break',
+                    pause: 'Pause',
+                    resume: 'Resume'
+                };
+                startPauseBtn.innerHTML = '<i data-lucide="' + icons[state] + '"></i> ' + labels[state];
+                lucide.createIcons();
+            }
+
+            function updateCycleDots() {
+                var dots = pomoCycles.querySelectorAll('.pomo-cycle-dot');
+                dots.forEach(function(dot, i) {
+                    dot.className = 'pomo-cycle-dot';
+                    if (i < pomoState.cycle) dot.classList.add('completed');
+                    if (i === pomoState.cycle && pomoState.phase === 'focus') dot.classList.add('active');
+                });
+            }
+        })();
     </script>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

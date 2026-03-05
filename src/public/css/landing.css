@@ -628,3 +628,65 @@
         gap: var(--spacing-xl);
     }
 }
+
+/* ===================================
+   Dark Mode Overrides
+   =================================== */
+[data-theme="dark"] .nav {
+    background: rgba(15, 23, 42, 0.9);
+    border-color: #334155;
+}
+
+[data-theme="dark"] .dashboard-preview {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .preview-header {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .features {
+    background: #0f172a;
+}
+
+[data-theme="dark"] .feature-card {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .feature-card:hover {
+    background: #334155;
+}
+
+[data-theme="dark"] .feature-card h3 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .feature-card p {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .section-header h2 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .section-header p {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .floating-card {
+    background: #1e293b;
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .hero-title {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .step-content h3 {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .step-content p {
+    color: #9ca3af;
+}

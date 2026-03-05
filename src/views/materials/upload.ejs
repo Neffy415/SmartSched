@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -233,14 +234,14 @@
         uploadForm.addEventListener('submit', (e) => {
             if (!fileInput.files.length) {
                 e.preventDefault();
-                alert('Please select a file to upload');
+                ssAlert('Please select a file to upload', { type: 'warning', title: 'No File Selected' });
                 return;
             }
             
             // Check file size (10MB max)
             if (fileInput.files[0].size > 10 * 1024 * 1024) {
                 e.preventDefault();
-                alert('File size must be less than 10MB');
+                ssAlert('File size must be less than 10MB', { type: 'warning', title: 'File Too Large' });
                 return;
             }
             
@@ -398,5 +399,7 @@
             to { transform: rotate(360deg); }
         }
     </style>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

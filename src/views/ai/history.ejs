@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -174,12 +175,12 @@
                                 </div>
                                 
                                 <div class="history-actions">
-                                    <button class="btn btn-ghost btn-sm view-btn" onclick="viewInteraction(<%= item.id %>)">
+                                    <button class="btn btn-ghost btn-sm view-btn" onclick="viewInteraction('<%= item.id %>')">
                                         <i data-lucide="eye"></i>
                                         View
                                     </button>
                                     <button class="btn btn-ghost btn-sm bookmark-btn <%= item.bookmarked ? 'bookmarked' : '' %>" 
-                                            onclick="toggleBookmark(<%= item.id %>)">
+                                            onclick="toggleBookmark('<%= item.id %>')">
                                         <i data-lucide="<%= item.bookmarked ? 'bookmark-check' : 'bookmark' %>"></i>
                                         <%= item.bookmarked ? 'Bookmarked' : 'Bookmark' %>
                                     </button>
@@ -190,12 +191,12 @@
                                             <% } %>
                                         </span>
                                     <% } else { %>
-                                        <button class="btn btn-ghost btn-sm" onclick="showRating(<%= item.id %>)">
+                                        <button class="btn btn-ghost btn-sm" onclick="showRating('<%= item.id %>')">
                                             <i data-lucide="star"></i>
                                             Rate
                                         </button>
                                     <% } %>
-                                    <button class="btn btn-ghost btn-sm text-error" onclick="deleteInteraction(<%= item.id %>)">
+                                    <button class="btn btn-ghost btn-sm text-error" onclick="deleteInteraction('<%= item.id %>')">
                                         <i data-lucide="trash-2"></i>
                                     </button>
                                 </div>
@@ -292,7 +293,7 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to load interaction');
+                ssAlert('Failed to load interaction', { type: 'error' });
             }
         }
 
@@ -403,7 +404,7 @@
 
         // Delete interaction
         async function deleteInteraction(id) {
-            if (!confirm('Are you sure you want to delete this interaction?')) return;
+            if (!await ssConfirm('Are you sure you want to delete this interaction?', { danger: true, confirmText: 'Delete' })) return;
             
             try {
                 const response = await fetch(`/ai/interaction/${id}`, { method: 'DELETE' });
@@ -724,5 +725,7 @@
             }
         }
     </style>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

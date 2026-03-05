@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
     <style>
@@ -439,7 +440,7 @@
             const back = document.getElementById('newBack').value.trim();
 
             if (!front || !back) {
-                alert('Please fill in both front and back');
+                ssAlert('Please fill in both front and back', { type: 'warning', title: 'Missing Fields' });
                 return;
             }
 
@@ -454,11 +455,11 @@
                 if (data.success) {
                     location.reload();
                 } else {
-                    alert('Failed to add card: ' + data.error);
+                    ssAlert('Failed to add card: ' + data.error, { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to add card');
+                ssAlert('Failed to add card', { type: 'error' });
             }
         }
 
@@ -476,12 +477,12 @@
         async function saveEditedCard() {
             // For now, we'll need to implement an update endpoint
             // This is a placeholder
-            alert('Card editing will be implemented. For now, delete and re-add the card.');
+            ssAlert('Card editing will be implemented. For now, delete and re-add the card.', { type: 'info' });
             closeEditModal();
         }
 
         async function deleteCard(cardId) {
-            if (!confirm('Delete this card? This cannot be undone.')) return;
+            if (!await ssConfirm('Delete this card? This cannot be undone.', { danger: true, confirmText: 'Delete' })) return;
 
             try {
                 const response = await fetch(`/flashcards/card/${cardId}`, {
@@ -492,16 +493,16 @@
                 if (data.success) {
                     document.querySelector(`[data-card-id="${cardId}"]`).remove();
                 } else {
-                    alert('Failed to delete card: ' + data.error);
+                    ssAlert('Failed to delete card: ' + data.error, { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to delete card');
+                ssAlert('Failed to delete card', { type: 'error' });
             }
         }
 
         async function confirmDeleteSet() {
-            if (!confirm('Delete this entire flashcard set? All cards will be permanently removed.')) return;
+            if (!await ssConfirm('Delete this entire flashcard set? All cards will be permanently removed.', { danger: true, confirmText: 'Delete Set' })) return;
 
             try {
                 const response = await fetch(`/flashcards/${setId}`, {
@@ -512,13 +513,15 @@
                 if (data.success) {
                     window.location.href = '/flashcards';
                 } else {
-                    alert('Failed to delete set: ' + data.error);
+                    ssAlert('Failed to delete set: ' + data.error, { type: 'error' });
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to delete set');
+                ssAlert('Failed to delete set', { type: 'error' });
             }
         }
     </script>
+
+    <%- include('../partials/popup') %>
 </body>
 </html>

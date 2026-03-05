@@ -130,7 +130,7 @@ router.post('/login', loginValidation, async (req, res) => {
         });
     }
 
-    const { email, password } = req.body;
+    const { email, password, remember } = req.body;
 
     try {
         // Find user
@@ -165,6 +165,11 @@ router.post('/login', loginValidation, async (req, res) => {
             fullName: user.full_name,
             avatarUrl: user.avatar_url
         };
+
+        // Handle "Remember Me" - extend session to 30 days if checked
+        if (remember) {
+            req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+        }
 
         req.flash('success', `Welcome back, ${user.full_name}!`);
         res.redirect('/dashboard');
