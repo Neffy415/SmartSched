@@ -95,8 +95,8 @@ router.post('/', async (req, res) => {
         const userId = req.session.user.id;
         const { title, description, remind_date, remind_time, reminder_type, task_id, repeat_type } = req.body;
         
-        // Combine date and time
-        const remindAt = new Date(`${remind_date}T${remind_time}`);
+        // Store as-is — the date/time the user picked in their local timezone
+        const remindAt = `${remind_date}T${remind_time}:00`;
         
         // Fetch linked task title if present
         let taskTitle = null;
@@ -176,7 +176,8 @@ router.post('/:id', async (req, res) => {
         const reminderId = req.params.id;
         const { title, description, remind_date, remind_time, reminder_type, task_id, repeat_type } = req.body;
         
-        const remindAt = new Date(`${remind_date}T${remind_time}`);
+        // Store as-is — the date/time the user picked in their local timezone
+        const remindAt = `${remind_date}T${remind_time}:00`;
         
         await pool.query(`
             UPDATE reminders 

@@ -88,13 +88,13 @@
                                     <div class="form-group">
                                         <label for="remind_date">Date <span class="required">*</span></label>
                                         <input type="date" id="remind_date" name="remind_date" 
-                                               value="<%= reminder.remind_at ? new Date(reminder.remind_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>"
+                                               value="<%= reminder.remind_at ? (reminder.remind_at + '').substring(0, 10) : '' %>"
                                                required>
                                     </div>
                                     <div class="form-group">
                                         <label for="remind_time">Time <span class="required">*</span></label>
                                         <input type="time" id="remind_time" name="remind_time" 
-                                               value="<%= reminder.remind_at ? new Date(reminder.remind_at).toTimeString().substring(0,5) : '09:00' %>"
+                                               value="<%= reminder.remind_at ? (reminder.remind_at + '').substring(11, 16) : '' %>"
                                                required>
                                     </div>
                                 </div>
@@ -153,6 +153,22 @@
     <script>
         lucide.createIcons();
 
+        // Set default date/time from browser local time (for new reminders)
+        (function() {
+            var dateInput = document.getElementById('remind_date');
+            var timeInput = document.getElementById('remind_time');
+            if (!dateInput.value) {
+                var now = new Date();
+                var yyyy = now.getFullYear();
+                var mm = String(now.getMonth() + 1).padStart(2, '0');
+                var dd = String(now.getDate()).padStart(2, '0');
+                dateInput.value = yyyy + '-' + mm + '-' + dd;
+            }
+            if (!timeInput.value) {
+                timeInput.value = '09:00';
+            }
+        })();
+
         // Mobile menu toggle
         const menuToggle = document.getElementById('menuToggle');
         const sidebar = document.querySelector('.sidebar');
@@ -189,7 +205,10 @@
                         break;
                 }
                 
-                dateInput.value = targetDate.toISOString().split('T')[0];
+                const yyyy = targetDate.getFullYear();
+                const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(targetDate.getDate()).padStart(2, '0');
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
                 timeInput.value = targetDate.toTimeString().substring(0, 5);
                 
                 // Visual feedback
