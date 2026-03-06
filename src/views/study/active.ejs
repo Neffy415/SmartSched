@@ -552,7 +552,9 @@
     </div>
     <script>
         lucide.createIcons();
-        const startTime = new Date('<%= session.start_time %>');
+        // Append 'Z' so the browser treats the timestamp as UTC (PostgreSQL stores without timezone)
+        const _rawStart = '<%= session.start_time %>';
+        const startTime = new Date(_rawStart.endsWith('Z') || _rawStart.includes('+') ? _rawStart : _rawStart + 'Z');
         const plannedMinutes = <%= session.planned_minutes %>;
         const sessionId = '<%= session.id %>';
         const timerDisplay = document.getElementById('timerDisplay');
