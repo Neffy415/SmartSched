@@ -4,7 +4,7 @@ if (process.env.SENDGRID_API_KEY) {
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'smartsched6@gmail.com';
+const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'smartsched.ade@gmail.com';
 
 // Reminder type config
 const REMINDER_ICONS = {
