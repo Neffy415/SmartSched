@@ -19,6 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "@sendgrid/mail": "^8.1.6",
     "bcrypt": "^5.1.1",
     "connect-flash": "^0.1.1",
     "dotenv": "^16.3.1",
@@ -29,8 +30,7 @@
     "express-validator": "^7.0.1",
     "multer": "^2.0.2",
     "pdf-parse": "^2.4.5",
-    "pg": "^8.17.1",
-    "resend": "^6.9.3"
+    "pg": "^8.17.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
