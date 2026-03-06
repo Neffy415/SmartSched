@@ -240,7 +240,7 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 Generate ${numQuestions} practice questions for: "${topic}
 Difficulty: ${difficulty || 'medium'}
 Question Types: ${qType === 'mixed' ? 'Mix of MCQ, short answer, and conceptual' : qType}
-Please dont include any table included questions as it's not coming in the UI.(Very important)
+You MAY include markdown tables in the question text when data comparison or lookup questions are appropriate. Keep answer options as plain text only (no tables in options).
 
 Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 {
@@ -520,8 +520,9 @@ Create questions that:
 - Include plausible distractors
 - Cover different aspects of the topic
 - Include brief explanations for the correct answer
-- NEVER include tables, markdown tables, or any tabular data in question text or options. If data comparison is needed, describe it in plain text sentences instead.
-- Keep all questions and options as plain text only, no HTML, no markdown formatting
+- You MAY include markdown tables in the question text when data comparison, lookup, or analysis questions are appropriate. Tables will be rendered properly in the UI.
+- Keep all answer OPTIONS as plain text only — no tables, no HTML, no markdown formatting in options.
+- If using a table in the question, format it as a standard markdown table with | and --- separators.
 
 Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 {
