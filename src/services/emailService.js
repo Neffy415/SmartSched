@@ -1,11 +1,8 @@
-const sgMail = require('@sendgrid/mail');
+const { Resend } = require('resend');
 
-if (process.env.SENDGRID_API_KEY) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-}
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'noreply@smartsched.com';
-const FROM_NAME = 'SmartSched';
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'SmartSched <onboarding@resend.dev>';
 
 // Reminder type config
 const REMINDER_ICONS = {
@@ -123,24 +120,22 @@ function buildReminderEmail(reminder, userName) {
 }
 
 async function sendReminderEmail(userEmail, userName, reminder) {
-    if (!process.env.SENDGRID_API_KEY) {
-        console.log('SendGrid API key not set — skipping email for reminder:', reminder.title);
+    if (!resend) {
+        console.log('Resend API key not set — skipping email for reminder:', reminder.title);
         return false;
     }
 
-    const msg = {
-        to: userEmail,
-        from: { email: FROM_EMAIL, name: FROM_NAME },
-        subject: `${REMINDER_ICONS[reminder.reminder_type] || '🔔'} Reminder: ${reminder.title}`,
-        html: buildReminderEmail(reminder, userName),
-    };
-
     try {
-        await sgMail.send(msg);
+        await resend.emails.send({
+            from: FROM_EMAIL,
+            to: userEmail,
+            subject: `${REMINDER_ICONS[reminder.reminder_type] || '🔔'} Reminder: ${reminder.title}`,
+            html: buildReminderEmail(reminder, userName),
+        });
         console.log(`📧 Reminder email sent to ${userEmail} for "${reminder.title}"`);
         return true;
     } catch (error) {
-        console.error('SendGrid email error:', error.response?.body || error.message);
+        console.error('Resend email error:', error.message || error);
         return false;
     }
 }
