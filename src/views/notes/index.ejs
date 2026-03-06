@@ -521,6 +521,17 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .note-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .note-card h3 { color: #f3f4f6; }
+        [data-theme="dark"] .note-card p { color: #d1d5db; }
+        [data-theme="dark"] .note-preview { color: #9ca3af; }
+        [data-theme="dark"] .empty-state { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .empty-state h3 { color: #f3f4f6; }
+        [data-theme="dark"] .empty-state p { color: #9ca3af; }
+        [data-theme="dark"] .filter-group select,
+        [data-theme="dark"] .filter-group input { background: #1e293b; color: #f3f4f6; border-color: #334155; }
     </style>
 
     <script>

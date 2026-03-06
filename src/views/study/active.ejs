@@ -342,6 +342,23 @@
             .study-sidebar { flex-direction: column; }
             .sidebar-panel { min-width: auto; }
         }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .timer-display { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .timer-time { color: #f3f4f6; }
+        [data-theme="dark"] .sidebar-panel { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .panel-header { background: #0f172a; border-color: #334155; color: #f3f4f6; }
+        [data-theme="dark"] .panel-header h3 { color: #f3f4f6; }
+        [data-theme="dark"] .topic-progress-mini .progress-circle::before { background: #1e293b; }
+        [data-theme="dark"] .topic-progress-mini .progress-value { color: #d1d5db; }
+        [data-theme="dark"] .topic-progress-mini .progress-label { color: #9ca3af; }
+        [data-theme="dark"] .topic-progress-mini .progress-stats { color: #d1d5db; }
+        [data-theme="dark"] .study-notes-section { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .study-notes-section textarea { background: #0f172a; color: #f3f4f6; border-color: #334155; }
+        [data-theme="dark"] .pomo-time { color: #f3f4f6; }
+        [data-theme="dark"] .pomo-ring-bg circle { stroke: #334155; }
+        [data-theme="dark"] .pomo-toggle-btn { background: #1e293b; color: #d1d5db; border-color: #334155; }
+        [data-theme="dark"] .pomo-cycle-dot { background: #334155; }
     </style>
 </head>
 <body>
@@ -450,6 +467,7 @@
                             </form>
                         </div>
                         <form action="/study/stop/<%= session.id %>" method="POST" class="stop-form" id="stopForm" style="display: none;">
+                            <input type="hidden" name="client_elapsed_minutes" id="clientElapsedMinutes" value="0">
                             <div class="form-group">
                                 <label>How was your focus?</label>
                                 <div class="quality-rating">
@@ -539,6 +557,7 @@
         const sessionId = '<%= session.id %>';
         const timerDisplay = document.getElementById('timerDisplay');
         const progressBar = document.getElementById('progressBar');
+        const clientElapsedField = document.getElementById('clientElapsedMinutes');
 
         function updateTimer() {
             const now = new Date();
@@ -547,6 +566,8 @@
             const minutes = Math.floor((elapsed % 3600) / 60);
             const seconds = elapsed % 60;
             timerDisplay.textContent = String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+            // Update hidden field with elapsed minutes for accurate server-side tracking
+            clientElapsedField.value = Math.round(elapsed / 60);
             const elapsedMinutes = elapsed / 60;
             const progress = Math.min((elapsedMinutes / plannedMinutes) * 100, 100);
             progressBar.style.width = progress + '%';
@@ -562,6 +583,18 @@
         }
         updateTimer();
         setInterval(updateTimer, 1000);
+
+        // Warn user before navigating away from active session
+        let isSubmitting = false;
+        window.addEventListener('beforeunload', function(e) {
+            if (isSubmitting) return;
+            e.preventDefault();
+            e.returnValue = 'You have an active study session. Are you sure you want to leave?';
+        });
+        // Disable beforeunload when submitting stop/cancel forms
+        document.querySelectorAll('form').forEach(function(f) {
+            f.addEventListener('submit', function() { isSubmitting = true; });
+        });
 
         function showStopForm() {
             document.getElementById('runningActions').style.display = 'none';

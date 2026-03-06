@@ -10,11 +10,52 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
+// Get user timezone from cookie (set by client JS), fallback to DB preference, then UTC
+function getUserTimezone(req) {
+    // Parse timezone from cookie header without cookie-parser
+    const cookieHeader = req.headers.cookie || '';
+    const match = cookieHeader.match(/(?:^|;\s*)timezone=([^;]+)/);
+    const tz = match ? decodeURIComponent(match[1]) : null;
+    return tz || req.session.user?.timezone || 'UTC';
+}
+
+// Auto-complete stale sessions older than 4 hours
+async function cleanupStaleSessions(userId) {
+    try {
+        const staleResult = await pool.query(`
+            SELECT id, start_time FROM study_sessions
+            WHERE user_id = $1 AND status = 'active'
+              AND start_time < NOW() - INTERVAL '4 hours'
+        `, [userId]);
+
+        for (const session of staleResult.rows) {
+            const actualMinutes = Math.round((Date.now() - new Date(session.start_time).getTime()) / (1000 * 60));
+            // Cap stale sessions at their planned_minutes or 120 min max
+            const cappedMinutes = Math.min(actualMinutes, 120);
+            await pool.query(`
+                UPDATE study_sessions SET
+                    status = 'completed',
+                    end_time = start_time + INTERVAL '1 minute' * $1,
+                    actual_minutes = $1,
+                    notes = 'Auto-completed: session was left running'
+                WHERE id = $2
+            `, [cappedMinutes, session.id]);
+        }
+    } catch (err) {
+        console.error('Error cleaning stale sessions:', err);
+    }
+}
+
 router.use(requireAuth);
 
 // GET /study - Study sessions overview
 router.get('/', async (req, res) => {
     try {
+        // Auto-complete any stale sessions
+        await cleanupStaleSessions(req.session.user.id);
+
+        const tz = getUserTimezone(req);
+
         // Check for active session
         const activeResult = await pool.query(`
             SELECT ss.*, t.title as task_title, tp.name as topic_name, s.name as subject_name, s.color as subject_color
@@ -38,16 +79,16 @@ router.get('/', async (req, res) => {
             LIMIT 20
         `, [req.session.user.id]);
 
-        // Get today's stats
+        // Get today's stats (timezone-aware)
         const todayResult = await pool.query(`
             SELECT 
                 COUNT(*) as session_count,
                 COALESCE(SUM(actual_minutes), 0) as total_minutes
             FROM study_sessions
-            WHERE user_id = $1 AND DATE(start_time) = CURRENT_DATE AND status = 'completed'
-        `, [req.session.user.id]);
+            WHERE user_id = $1 AND (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date = (NOW() AT TIME ZONE $2)::date AND status = 'completed'
+        `, [req.session.user.id, tz]);
 
-        // Get weekly stats
+        // Get weekly stats (timezone-aware)
         const weeklyResult = await pool.query(`
             SELECT 
                 COUNT(*) as session_count,
@@ -55,9 +96,9 @@ router.get('/', async (req, res) => {
                 COALESCE(AVG(actual_minutes), 0) as avg_minutes
             FROM study_sessions
             WHERE user_id = $1 
-            AND start_time >= DATE_TRUNC('week', CURRENT_DATE)
+            AND (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date >= DATE_TRUNC('week', (NOW() AT TIME ZONE $2)::date)
             AND status = 'completed'
-        `, [req.session.user.id]);
+        `, [req.session.user.id, tz]);
 
         // Get subjects for quick start
         const subjectsResult = await pool.query(`
@@ -165,6 +206,9 @@ router.post('/start', async (req, res) => {
     try {
         const { topic_id, task_id, planned_minutes } = req.body;
 
+        // Auto-complete any stale sessions before starting new one
+        await cleanupStaleSessions(req.session.user.id);
+
         // Check for existing active session
         const activeCheck = await pool.query(
             'SELECT id FROM study_sessions WHERE user_id = $1 AND status = $2',
@@ -219,6 +263,9 @@ router.post('/start', async (req, res) => {
 // GET /study/active/:id - Active session page
 router.get('/active/:id', async (req, res) => {
     try {
+        // Clean up ALL stale sessions for this user first
+        await cleanupStaleSessions(req.session.user.id);
+
         const result = await pool.query(`
             SELECT ss.*, 
                    t.title as task_title, t.estimated_minutes as task_estimated,
@@ -239,6 +286,7 @@ router.get('/active/:id', async (req, res) => {
 
         const session = result.rows[0];
 
+        // If session was just auto-completed by cleanup, or already completed
         if (session.status !== 'active') {
             return res.redirect(`/study/complete/${session.id}`);
         }
@@ -288,7 +336,8 @@ router.get('/active/:id', async (req, res) => {
 // POST /study/stop/:id - Stop a session
 router.post('/stop/:id', async (req, res) => {
     try {
-        const { notes, quality_rating } = req.body;
+        const { notes, quality_rating, client_elapsed_minutes } = req.body;
+        const tz = getUserTimezone(req);
 
         // Get session and calculate duration
         const sessionResult = await pool.query(
@@ -304,7 +353,18 @@ router.post('/stop/:id', async (req, res) => {
         const session = sessionResult.rows[0];
         const startTime = new Date(session.start_time);
         const endTime = new Date();
-        const actualMinutes = Math.round((endTime - startTime) / (1000 * 60));
+        const serverMinutes = Math.round((endTime - startTime) / (1000 * 60));
+        
+        // Use client-provided elapsed time if available and reasonable, else server calc
+        let actualMinutes = serverMinutes;
+        if (client_elapsed_minutes) {
+            const clientMin = parseInt(client_elapsed_minutes, 10);
+            if (!isNaN(clientMin) && clientMin >= 0 && clientMin <= serverMinutes + 5) {
+                actualMinutes = clientMin;
+            }
+        }
+        // Cap at a reasonable max (4 hours) to prevent runaway timers
+        actualMinutes = Math.min(actualMinutes, 240);
 
         // Update session
         await pool.query(`
@@ -339,15 +399,15 @@ router.post('/stop/:id', async (req, res) => {
             `Completed study session: ${actualMinutes} minutes`
         ]);
 
-        // Update daily stats
+        // Update daily stats (timezone-aware: use the user's local date)
         await pool.query(`
             INSERT INTO daily_stats (user_id, stat_date, study_minutes, sessions_count)
-            VALUES ($1, CURRENT_DATE, $2, 1)
+            VALUES ($1, (NOW() AT TIME ZONE $3)::date, $2, 1)
             ON CONFLICT (user_id, stat_date) DO UPDATE SET
                 study_minutes = daily_stats.study_minutes + $2,
                 sessions_count = daily_stats.sessions_count + 1,
                 updated_at = NOW()
-        `, [req.session.user.id, actualMinutes]);
+        `, [req.session.user.id, actualMinutes, tz]);
 
         req.flash('success_msg', `Session completed! You studied for ${actualMinutes} minutes.`);
         res.redirect(`/study/complete/${req.params.id}`);
@@ -361,6 +421,7 @@ router.post('/stop/:id', async (req, res) => {
 // GET /study/complete/:id - Session completion page
 router.get('/complete/:id', async (req, res) => {
     try {
+        const tz = getUserTimezone(req);
         const result = await pool.query(`
             SELECT ss.*, 
                    t.title as task_title,
@@ -380,12 +441,12 @@ router.get('/complete/:id', async (req, res) => {
 
         const session = result.rows[0];
 
-        // Get today's total
+        // Get today's total (timezone-aware)
         const todayResult = await pool.query(`
             SELECT COALESCE(SUM(actual_minutes), 0) as total_today
             FROM study_sessions
-            WHERE user_id = $1 AND DATE(start_time) = CURRENT_DATE AND status = 'completed'
-        `, [req.session.user.id]);
+            WHERE user_id = $1 AND (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date = (NOW() AT TIME ZONE $2)::date AND status = 'completed'
+        `, [req.session.user.id, tz]);
 
         res.render('study/complete', {
             title: 'Session Complete - SmartSched',

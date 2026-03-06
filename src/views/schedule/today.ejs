@@ -572,6 +572,25 @@
         .progress-stat svg {
             color: var(--primary);
         }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .today-progress-card {
+            background: linear-gradient(135deg, #1e293b 0%, #1e1b4b 100%);
+            border-color: #4f46e5;
+        }
+        [data-theme="dark"] .progress-info h3 { color: #f3f4f6; }
+        [data-theme="dark"] .progress-info p { color: #9ca3af; }
+        [data-theme="dark"] .progress-stat { color: #d1d5db; }
+        [data-theme="dark"] .progress-stat.warning { color: #fbbf24; }
+        [data-theme="dark"] .task-title { color: #f3f4f6; }
+        [data-theme="dark"] .task-topic { color: #9ca3af; }
+        [data-theme="dark"] .task-priority-badge { background: #334155; color: #9ca3af; }
+        [data-theme="dark"] .task-priority-badge.priority-5 { background: #7f1d1d; color: #fca5a5; }
+        [data-theme="dark"] .task-priority-badge.priority-4 { background: #7c2d12; color: #fdba74; }
+        [data-theme="dark"] .task-priority-badge.priority-3 { background: #78350f; color: #fcd34d; }
+        [data-theme="dark"] .status-badge.completed { background: #064e3b; color: #6ee7b7; }
+        [data-theme="dark"] .today-task-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .today-task-card.completed { background: #0f172a; }
     </style>
 </body>
 </html>

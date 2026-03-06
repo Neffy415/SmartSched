@@ -162,6 +162,28 @@
     .ss-toast-error { background: linear-gradient(135deg, #ef4444, #dc2626); }
     .ss-toast-warning { background: linear-gradient(135deg, #f59e0b, #d97706); }
     .ss-toast-info { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+
+    /* Dark mode overrides */
+    [data-theme="dark"] .ss-popup {
+        background: #1e293b;
+    }
+    [data-theme="dark"] .ss-popup-title {
+        color: #f3f4f6;
+    }
+    [data-theme="dark"] .ss-popup-message {
+        color: #9ca3af;
+    }
+    [data-theme="dark"] .ss-btn-cancel {
+        background: #334155;
+        color: #d1d5db;
+    }
+    [data-theme="dark"] .ss-btn-cancel:hover {
+        background: #475569;
+    }
+    [data-theme="dark"] .ss-popup-icon.ss-icon-success { background: #064e3b; }
+    [data-theme="dark"] .ss-popup-icon.ss-icon-error { background: #7f1d1d; }
+    [data-theme="dark"] .ss-popup-icon.ss-icon-warning { background: #78350f; }
+    [data-theme="dark"] .ss-popup-icon.ss-icon-info { background: #312e81; }
 </style>
 
 <script>

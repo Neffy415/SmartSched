@@ -490,7 +490,10 @@ class SchedulerService {
             JOIN topics tp ON t.topic_id = tp.id
             JOIN subjects s ON tp.subject_id = s.id
             WHERE t.user_id = $1 
-              AND t.scheduled_date = CURRENT_DATE
+              AND (
+                t.scheduled_date = CURRENT_DATE
+                OR (t.scheduled_date IS NULL AND t.deadline IS NOT NULL AND t.deadline::date = CURRENT_DATE)
+              )
               AND t.status != 'completed'
             ORDER BY t.priority_score DESC, t.priority ASC
         `, [userId]);
@@ -511,20 +514,26 @@ class SchedulerService {
                    tp.difficulty,
                    s.name as subject_name,
                    s.color as subject_color,
-                   EXTRACT(DOW FROM t.scheduled_date) as day_of_week
+                   COALESCE(t.scheduled_date, t.deadline::date) as effective_date,
+                   EXTRACT(DOW FROM COALESCE(t.scheduled_date, t.deadline::date)) as day_of_week
             FROM tasks t
             JOIN topics tp ON t.topic_id = tp.id
             JOIN subjects s ON tp.subject_id = s.id
             WHERE t.user_id = $1 
-              AND t.scheduled_date >= $2
-              AND t.scheduled_date < ($2::date + INTERVAL '7 days')
-            ORDER BY t.scheduled_date ASC, t.priority_score DESC
+              AND (
+                (t.scheduled_date >= $2 AND t.scheduled_date < ($2::date + INTERVAL '7 days'))
+                OR
+                (t.scheduled_date IS NULL AND t.deadline IS NOT NULL 
+                 AND t.deadline::date >= $2::date AND t.deadline::date < ($2::date + INTERVAL '7 days'))
+              )
+            ORDER BY COALESCE(t.scheduled_date, t.deadline::date) ASC, t.priority_score DESC
         `, [userId, startStr]);
         
         // Group by date
         const tasksByDate = {};
         result.rows.forEach(task => {
-            const dateKey = new Date(task.scheduled_date).toISOString().split('T')[0];
+            const dateSource = task.effective_date || task.scheduled_date || task.deadline;
+            const dateKey = new Date(dateSource).toISOString().split('T')[0];
             if (!tasksByDate[dateKey]) {
                 tasksByDate[dateKey] = [];
             }
@@ -710,11 +719,23 @@ class SchedulerService {
     async getScheduleStats(userId) {
         const result = await db.query(`
             SELECT 
-                (SELECT COUNT(*) FROM tasks WHERE user_id = $1 AND scheduled_date = CURRENT_DATE AND status = 'pending') as today_pending,
-                (SELECT COUNT(*) FROM tasks WHERE user_id = $1 AND scheduled_date = CURRENT_DATE AND status = 'completed') as today_completed,
-                (SELECT COUNT(*) FROM tasks WHERE user_id = $1 AND scheduled_date = CURRENT_DATE AND status = 'skipped') as today_skipped,
-                (SELECT COALESCE(SUM(estimated_minutes), 0) FROM tasks WHERE user_id = $1 AND scheduled_date = CURRENT_DATE AND status = 'pending') as today_minutes_remaining,
-                (SELECT COUNT(*) FROM tasks WHERE user_id = $1 AND scheduled_date > CURRENT_DATE AND scheduled_date <= CURRENT_DATE + 7) as week_tasks
+                (SELECT COUNT(*) FROM tasks WHERE user_id = $1 
+                    AND (scheduled_date = CURRENT_DATE OR (scheduled_date IS NULL AND deadline::date = CURRENT_DATE))
+                    AND status = 'pending') as today_pending,
+                (SELECT COUNT(*) FROM tasks WHERE user_id = $1 
+                    AND (scheduled_date = CURRENT_DATE OR (scheduled_date IS NULL AND deadline::date = CURRENT_DATE))
+                    AND status = 'completed') as today_completed,
+                (SELECT COUNT(*) FROM tasks WHERE user_id = $1 
+                    AND (scheduled_date = CURRENT_DATE OR (scheduled_date IS NULL AND deadline::date = CURRENT_DATE))
+                    AND status = 'skipped') as today_skipped,
+                (SELECT COALESCE(SUM(estimated_minutes), 0) FROM tasks WHERE user_id = $1 
+                    AND (scheduled_date = CURRENT_DATE OR (scheduled_date IS NULL AND deadline::date = CURRENT_DATE))
+                    AND status = 'pending') as today_minutes_remaining,
+                (SELECT COUNT(*) FROM tasks WHERE user_id = $1 
+                    AND (
+                        (scheduled_date > CURRENT_DATE AND scheduled_date <= CURRENT_DATE + 7)
+                        OR (scheduled_date IS NULL AND deadline IS NOT NULL AND deadline::date > CURRENT_DATE AND deadline::date <= CURRENT_DATE + 7)
+                    )) as week_tasks
         `, [userId]);
         
         return result.rows[0];

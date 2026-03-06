@@ -91,7 +91,26 @@
             color: var(--gray-900);
             margin-bottom: var(--spacing-lg);
             line-height: 1.6;
+            white-space: pre-line;
         }
+        .quiz-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: var(--spacing-md) 0;
+            font-size: 0.9375rem;
+        }
+        .quiz-table th, .quiz-table td {
+            border: 1px solid var(--gray-200);
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+        }
+        .quiz-table th {
+            background: var(--gray-50);
+            font-weight: 600;
+        }
+        [data-theme="dark"] .quiz-table th { background: #334155; color: #f3f4f6; }
+        [data-theme="dark"] .quiz-table td { border-color: #334155; color: #d1d5db; }
+        [data-theme="dark"] .quiz-table th { border-color: #475569; }
 
         .options-list {
             display: flex;
@@ -193,6 +212,14 @@
             display: none;
         }
         .unanswered-warning.show { display: block; }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .question-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .question-text { color: #f3f4f6; }
+        [data-theme="dark"] .option-label { color: #d1d5db; background: #0f172a; border-color: #334155; }
+        [data-theme="dark"] .option-label:hover { background: #334155; }
+        [data-theme="dark"] .timer { background: #1e293b; border-color: #334155; color: #f3f4f6; }
+        [data-theme="dark"] .quiz-actions { background: #1e293b; border-color: #334155; }
     </style>
 </head>
 <body>
@@ -278,6 +305,46 @@
 
     <script>
         lucide.createIcons();
+
+        // Convert any markdown tables in question text to HTML tables
+        document.querySelectorAll('.question-text').forEach(function(el) {
+            var text = el.textContent;
+            if (text.indexOf('|') !== -1) {
+                var lines = text.split('\n').filter(function(l) { return l.trim().length > 0; });
+                var tableLines = [];
+                var beforeTable = [];
+                var afterTable = [];
+                var inTable = false;
+                lines.forEach(function(line) {
+                    if (line.trim().match(/^\|.*\|$/)) {
+                        inTable = true;
+                        if (!line.trim().match(/^\|[\s\-:|]+\|$/)) {
+                            tableLines.push(line);
+                        }
+                    } else {
+                        if (inTable) afterTable.push(line);
+                        else beforeTable.push(line);
+                    }
+                });
+                if (tableLines.length > 0) {
+                    var html = beforeTable.map(function(l) { return '<p>' + l.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>'; }).join('');
+                    html += '<table class="quiz-table"><thead><tr>';
+                    var headerCells = tableLines[0].split('|').filter(function(c) { return c.trim(); });
+                    headerCells.forEach(function(c) { html += '<th>' + c.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</th>'; });
+                    html += '</tr></thead><tbody>';
+                    for (var i = 1; i < tableLines.length; i++) {
+                        html += '<tr>';
+                        tableLines[i].split('|').filter(function(c) { return c.trim(); }).forEach(function(c) {
+                            html += '<td>' + c.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</td>';
+                        });
+                        html += '</tr>';
+                    }
+                    html += '</tbody></table>';
+                    html += afterTable.map(function(l) { return '<p>' + l.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>'; }).join('');
+                    el.innerHTML = html;
+                }
+            }
+        });
 
         const quizId = '<%= quiz.id %>';
         const totalQuestions = <%= questions.length %>;

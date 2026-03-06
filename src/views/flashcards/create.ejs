@@ -234,6 +234,17 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .create-section,
+        [data-theme="dark"] .card-pair { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .create-tab.active { background: #1e293b; color: #f3f4f6; }
+        [data-theme="dark"] .create-tab { color: #9ca3af; }
+        [data-theme="dark"] .generated-preview,
+        [data-theme="dark"] .modal-content { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .modal-header { border-color: #334155; color: #f3f4f6; }
+        [data-theme="dark"] .card-pair h4 { color: #f3f4f6; }
+        [data-theme="dark"] .card-pair p { color: #9ca3af; }
     </style>
 </head>
 <body>

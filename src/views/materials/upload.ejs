@@ -398,6 +398,16 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .upload-form-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .upload-form-card h2 { color: #f3f4f6; }
+        [data-theme="dark"] .upload-form-card label { color: #d1d5db; }
+        [data-theme="dark"] .upload-form-card input,
+        [data-theme="dark"] .upload-form-card select,
+        [data-theme="dark"] .upload-form-card textarea { background: #0f172a; color: #f3f4f6; border-color: #334155; }
+        [data-theme="dark"] .preview-icon { background: #334155; border-color: #475569; }
+        [data-theme="dark"] .dropzone { background: #0f172a; border-color: #334155; color: #d1d5db; }
     </style>
 
     <%- include('../partials/popup') %>

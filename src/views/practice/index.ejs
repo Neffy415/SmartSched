@@ -67,12 +67,19 @@
         .generate-section h2 svg { color: var(--primary); }
         .generate-form {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: 2fr 1fr 1fr auto;
             gap: var(--spacing-md);
             align-items: end;
         }
         .generate-form .btn-primary {
             height: fit-content;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .generate-form {
+                grid-template-columns: 1fr;
+            }
         }
 
         .section-title {
@@ -204,13 +211,14 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255,255,255,0.9);
+            background: rgba(0,0,0,0.6);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 1000;
             flex-direction: column;
             gap: var(--spacing-md);
+            color: #f3f4f6;
         }
         .loading-overlay.show { display: flex; }
         .loading-spinner {
@@ -222,6 +230,25 @@
             animation: spin 1s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .stat-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .stat-card h3 { color: #f3f4f6; }
+        [data-theme="dark"] .stat-card p { color: #9ca3af; }
+        [data-theme="dark"] .quiz-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .quiz-card h3 { color: #f3f4f6; }
+        [data-theme="dark"] .quiz-card p { color: #9ca3af; }
+        [data-theme="dark"] .quiz-card-header { border-color: #334155; }
+        [data-theme="dark"] .quiz-card-meta { color: #9ca3af; }
+        [data-theme="dark"] .quiz-questions-count { color: #9ca3af; }
+        [data-theme="dark"] .attempts-section { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .attempts-section h3 { color: #f3f4f6; }
+        [data-theme="dark"] .attempts-section-header { border-color: #334155; }
+        [data-theme="dark"] .generate-section { background: linear-gradient(135deg, #1e1b4b, #172554); }
+        [data-theme="dark"] .generate-section h2 { color: #f3f4f6; }
+        [data-theme="dark"] .generate-form input,
+        [data-theme="dark"] .generate-form select { background: #1e293b; color: #f3f4f6; border-color: #334155; }
+        [data-theme="dark"] .generate-form label { color: #d1d5db; }
     </style>
 </head>
 <body>

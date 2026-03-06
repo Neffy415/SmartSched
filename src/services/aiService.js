@@ -520,6 +520,8 @@ Create questions that:
 - Include plausible distractors
 - Cover different aspects of the topic
 - Include brief explanations for the correct answer
+- NEVER include tables, markdown tables, or any tabular data in question text or options. If data comparison is needed, describe it in plain text sentences instead.
+- Keep all questions and options as plain text only, no HTML, no markdown formatting
 
 Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 {

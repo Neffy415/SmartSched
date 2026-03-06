@@ -575,6 +575,21 @@
             .rating-buttons { grid-template-columns: repeat(2, 1fr); }
             .completion-screen h2 { font-size: 1.5rem; }
         }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .card-front { background: linear-gradient(145deg, #1e293b, #0f172a); }
+        [data-theme="dark"] .card-back { background: linear-gradient(145deg, #1e293b, #0f172a); }
+        [data-theme="dark"] .card-text { color: #f3f4f6; }
+        [data-theme="dark"] .card-front .card-label { color: #818cf8; }
+        [data-theme="dark"] .card-back .card-label { color: #6ee7b7; }
+        [data-theme="dark"] .stats-row { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .stat-card { background: #0f172a; }
+        [data-theme="dark"] .stat-card-label { color: #9ca3af; }
+        [data-theme="dark"] .stat-card-value { color: #f3f4f6; }
+        [data-theme="dark"] .rating-btn { background: #1e293b; border-color: #334155; color: #d1d5db; }
+        [data-theme="dark"] .empty-state h2 { color: #f3f4f6; }
+        [data-theme="dark"] .empty-state p { color: #9ca3af; }
+        [data-theme="dark"] .btn-white { background: #1e293b; color: #f3f4f6; border-color: #334155; }
     </style>
 </head>
 <body>

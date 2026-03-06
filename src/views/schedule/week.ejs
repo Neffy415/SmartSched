@@ -93,8 +93,8 @@
                             <div class="day-tasks-container">
                                 <% if (day.tasks.length === 0) { %>
                                     <div class="no-tasks-placeholder">
-                                        <i data-lucide="coffee"></i>
-                                        <span>Free day</span>
+                                        <i data-lucide="calendar-off"></i>
+                                        <span>No tasks</span>
                                     </div>
                                 <% } else { %>
                                     <% day.tasks.forEach(task => { %>
@@ -622,6 +622,19 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .week-day-column { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .day-header { background: #0f172a; color: #d1d5db; border-color: #334155; }
+        [data-theme="dark"] .day-name { color: #d1d5db; }
+        [data-theme="dark"] .day-date { color: #9ca3af; }
+        [data-theme="dark"] .week-task-card { background: #334155; border-color: #475569; }
+        [data-theme="dark"] .week-task-title { color: #f3f4f6; }
+        [data-theme="dark"] .week-task-card.completed { background: #064e3b; border-color: #065f46; }
+        [data-theme="dark"] .week-task-card.skipped { background: #7f1d1d; border-color: #991b1b; }
+        [data-theme="dark"] .info-box { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #d1d5db; }
+        [data-theme="dark"] .legend-color.completed { background: #064e3b; }
+        [data-theme="dark"] .legend-color.skipped { background: #7f1d1d; }
     </style>
 </body>
 </html>

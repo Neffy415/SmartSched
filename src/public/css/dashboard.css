@@ -4154,3 +4154,50 @@ tbody tr:last-child td {
     background: #1e293b;
     border-color: #334155;
 }
+
+/* Additional dark mode overrides */
+[data-theme="dark"] .task-checkbox .checkbox-btn {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+[data-theme="dark"] .banner-icon {
+    background: #1e293b;
+}
+
+[data-theme="dark"] .quick-topic {
+    background: #1e293b;
+    color: #d1d5db;
+}
+
+[data-theme="dark"] .quick-topic:hover {
+    background: #334155;
+}
+
+[data-theme="dark"] .preset-btn {
+    background: #1e293b;
+    color: #d1d5db;
+}
+
+[data-theme="dark"] .preset-btn:hover {
+    background: #334155;
+}
+
+[data-theme="dark"] .preset-btn svg {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .preset-label {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .session-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .reminder-item {
+    background: #1e293b;
+    border-color: #334155;
+    color: #d1d5db;
+}

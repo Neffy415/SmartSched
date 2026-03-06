@@ -690,3 +690,38 @@
 [data-theme="dark"] .step-content p {
     color: #9ca3af;
 }
+
+[data-theme="dark"] .navbar {
+    background: rgba(15, 23, 42, 0.85);
+    border-color: #334155;
+}
+
+[data-theme="dark"] .navbar .btn-ghost {
+    color: #f3f4f6;
+    border: 1px solid #475569;
+}
+
+[data-theme="dark"] .navbar .btn-ghost:hover {
+    background: #334155;
+    color: #fff;
+}
+
+[data-theme="dark"] .navbar .logo-text {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .hero-subtitle {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .hero-stats .stat-value {
+    color: #f3f4f6;
+}
+
+[data-theme="dark"] .hero-stats .stat-label {
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .hero-stats .stat-divider {
+    background: #334155;
+}

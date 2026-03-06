@@ -724,6 +724,19 @@
                 flex-direction: column;
             }
         }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .history-card { background: #1e293b; border-color: #334155; color: #d1d5db; }
+        [data-theme="dark"] .history-card h3 { color: #f3f4f6; }
+        [data-theme="dark"] .conversation-item { background: #1e293b; border-color: #334155; color: #d1d5db; }
+        [data-theme="dark"] .modal-content { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .modal-content h2,
+        [data-theme="dark"] .modal-content h3 { color: #f3f4f6; }
+        [data-theme="dark"] .modal-content p { color: #d1d5db; }
+        [data-theme="dark"] .filter-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .filter-card label { color: #d1d5db; }
+        [data-theme="dark"] .filter-card select,
+        [data-theme="dark"] .filter-card input { background: #0f172a; color: #f3f4f6; border-color: #334155; }
     </style>
 
     <%- include('../partials/popup') %>

@@ -10,12 +10,21 @@ const requireAuth = (req, res, next) => {
     next();
 };
 
+// Get user timezone from cookie (set by client JS)
+function getUserTimezone(req) {
+    const cookieHeader = req.headers.cookie || '';
+    const match = cookieHeader.match(/(?:^|;\s*)timezone=([^;]+)/);
+    const tz = match ? decodeURIComponent(match[1]) : null;
+    return tz || req.session.user?.timezone || 'UTC';
+}
+
 router.use(requireAuth);
 
 // GET /analytics - Main analytics dashboard
 router.get('/', async (req, res) => {
     try {
         const userId = req.session.user.id;
+        const tz = getUserTimezone(req);
         const now = new Date();
         const startOfWeek = new Date(now);
         startOfWeek.setDate(now.getDate() - now.getDay());
@@ -57,19 +66,19 @@ router.get('/', async (req, res) => {
             AND start_time < $3
         `, [userId, lastWeekStart, startOfWeek]);
 
-        // Daily breakdown for the past 7 days
+        // Daily breakdown for the past 7 days (timezone-aware)
         const dailyBreakdown = await pool.query(`
             SELECT 
-                DATE(start_time) as date,
+                (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date as date,
                 COALESCE(SUM(actual_minutes), 0) as minutes,
                 COUNT(*) as sessions
             FROM study_sessions 
             WHERE user_id = $1 
             AND status = 'completed'
             AND start_time >= NOW() - INTERVAL '7 days'
-            GROUP BY DATE(start_time)
+            GROUP BY (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date
             ORDER BY date
-        `, [userId]);
+        `, [userId, tz]);
 
         // Subject distribution
         const subjectDistribution = await pool.query(`
@@ -122,10 +131,10 @@ router.get('/', async (req, res) => {
             LIMIT 5
         `, [userId]);
 
-        // Streak calculation
+        // Streak calculation (timezone-aware)
         const streakResult = await pool.query(`
             WITH daily_activity AS (
-                SELECT DISTINCT DATE(start_time) as study_date
+                SELECT DISTINCT (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date as study_date
                 FROM study_sessions
                 WHERE user_id = $1 AND status = 'completed'
                 ORDER BY study_date DESC
@@ -137,31 +146,31 @@ router.get('/', async (req, res) => {
             )
             SELECT COUNT(*) as streak
             FROM streak_calc
-            WHERE grp = (SELECT grp FROM streak_calc WHERE study_date = CURRENT_DATE LIMIT 1)
-        `, [userId]);
+            WHERE grp = (SELECT grp FROM streak_calc WHERE study_date = (NOW() AT TIME ZONE $2)::date LIMIT 1)
+        `, [userId, tz]);
 
-        // Best day stats
+        // Best day stats (timezone-aware)
         const bestDay = await pool.query(`
             SELECT 
-                DATE(start_time) as date,
+                (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date as date,
                 COALESCE(SUM(actual_minutes), 0) as minutes
             FROM study_sessions
             WHERE user_id = $1 AND status = 'completed'
-            GROUP BY DATE(start_time)
+            GROUP BY (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date
             ORDER BY minutes DESC
             LIMIT 1
-        `, [userId]);
+        `, [userId, tz]);
 
-        // Consistency score (days studied this month / days in month so far)
+        // Consistency score (timezone-aware)
         const daysThisMonth = now.getDate();
         const daysStudied = await pool.query(`
-            SELECT COUNT(DISTINCT DATE(start_time)) as days
+            SELECT COUNT(DISTINCT (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date) as days
             FROM study_sessions
             WHERE user_id = $1 
             AND status = 'completed'
-            AND EXTRACT(MONTH FROM start_time) = EXTRACT(MONTH FROM CURRENT_DATE)
-            AND EXTRACT(YEAR FROM start_time) = EXTRACT(YEAR FROM CURRENT_DATE)
-        `, [userId]);
+            AND EXTRACT(MONTH FROM start_time AT TIME ZONE 'UTC' AT TIME ZONE $2) = EXTRACT(MONTH FROM NOW() AT TIME ZONE $2)
+            AND EXTRACT(YEAR FROM start_time AT TIME ZONE 'UTC' AT TIME ZONE $2) = EXTRACT(YEAR FROM NOW() AT TIME ZONE $2)
+        `, [userId, tz]);
         
         const consistencyScore = Math.round((daysStudied.rows[0]?.days || 0) / daysThisMonth * 100);
 

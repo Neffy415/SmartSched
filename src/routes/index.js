@@ -3,6 +3,14 @@ const router = express.Router();
 const db = require('../config/database');
 const scheduler = require('../services/scheduler');
 
+// Get user timezone from cookie (set by client JS)
+function getUserTimezone(req) {
+    const cookieHeader = req.headers.cookie || '';
+    const match = cookieHeader.match(/(?:^|;\s*)timezone=([^;]+)/);
+    const tz = match ? decodeURIComponent(match[1]) : null;
+    return tz || req.session?.user?.timezone || 'UTC';
+}
+
 // Landing page
 router.get('/', (req, res) => {
     if (req.session.user) {
@@ -20,15 +28,39 @@ router.get('/dashboard', async (req, res) => {
 
     try {
         const userId = req.session.user.id;
+        const tz = getUserTimezone(req);
 
-        // Get today's stats
+        // Auto-complete stale sessions (>4 hours old)
+        try {
+            const staleResult = await db.query(`
+                SELECT id, start_time FROM study_sessions
+                WHERE user_id = $1 AND status = 'active'
+                  AND start_time < NOW() - INTERVAL '4 hours'
+            `, [userId]);
+            for (const session of staleResult.rows) {
+                const cappedMinutes = Math.min(
+                    Math.round((Date.now() - new Date(session.start_time).getTime()) / (1000 * 60)),
+                    120
+                );
+                await db.query(`
+                    UPDATE study_sessions SET
+                        status = 'completed',
+                        end_time = start_time + INTERVAL '1 minute' * $1,
+                        actual_minutes = $1,
+                        notes = 'Auto-completed: session was left running'
+                    WHERE id = $2
+                `, [cappedMinutes, session.id]);
+            }
+        } catch (e) { console.error('Stale session cleanup error:', e); }
+
+        // Get today's stats (timezone-aware)
         const todayStats = await db.query(`
             SELECT 
                 COALESCE(SUM(actual_minutes), 0) as minutes_today,
                 COUNT(*) as sessions_today
             FROM study_sessions
-            WHERE user_id = $1 AND DATE(start_time) = CURRENT_DATE AND status = 'completed'
-        `, [userId]);
+            WHERE user_id = $1 AND (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date = (NOW() AT TIME ZONE $2)::date AND status = 'completed'
+        `, [userId, tz]);
 
         // Get active session
         const activeSession = await db.query(`
@@ -132,10 +164,10 @@ router.get('/dashboard', async (req, res) => {
             LIMIT 5
         `, [userId]);
 
-        // Calculate streak
+        // Calculate streak (timezone-aware)
         const streakResult = await db.query(`
             WITH daily_activity AS (
-                SELECT DISTINCT DATE(start_time) as study_date
+                SELECT DISTINCT (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date as study_date
                 FROM study_sessions
                 WHERE user_id = $1 AND status = 'completed'
                 ORDER BY study_date DESC
@@ -147,8 +179,8 @@ router.get('/dashboard', async (req, res) => {
             )
             SELECT COUNT(*) as streak
             FROM streak_calc
-            WHERE grp = (SELECT grp FROM streak_calc WHERE study_date = CURRENT_DATE LIMIT 1)
-        `, [userId]);
+            WHERE grp = (SELECT grp FROM streak_calc WHERE study_date = (NOW() AT TIME ZONE $2)::date LIMIT 1)
+        `, [userId, tz]);
 
         res.render('dashboard/index', { 
             title: 'Dashboard - SmartSched',
@@ -196,15 +228,16 @@ router.get('/dashboard', async (req, res) => {
 router.get('/api/heatmap', async (req, res) => {
     if (!req.session.user) return res.json({ success: false });
     try {
+        const tz = getUserTimezone(req);
         const result = await db.query(`
-            SELECT DATE(start_time) as study_date, 
+            SELECT (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date as study_date, 
                    COALESCE(SUM(actual_minutes), 0) as total_minutes
             FROM study_sessions
             WHERE user_id = $1 AND status = 'completed'
-              AND start_time >= CURRENT_DATE - INTERVAL '150 days'
-            GROUP BY DATE(start_time)
+              AND start_time >= NOW() - INTERVAL '150 days'
+            GROUP BY (start_time AT TIME ZONE 'UTC' AT TIME ZONE $2)::date
             ORDER BY study_date
-        `, [req.session.user.id]);
+        `, [req.session.user.id, tz]);
         res.json({ success: true, data: result.rows });
     } catch (e) {
         res.json({ success: true, data: [] });

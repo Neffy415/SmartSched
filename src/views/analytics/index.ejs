@@ -243,6 +243,21 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Dark mode overrides */
+        [data-theme="dark"] .metric-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .metric-card h3 { color: #f3f4f6; }
+        [data-theme="dark"] .metric-card p { color: #9ca3af; }
+        [data-theme="dark"] .metric-value { color: #f3f4f6; }
+        [data-theme="dark"] .metric-label { color: #9ca3af; }
+        [data-theme="dark"] .metric-change.positive { background: #064e3b; color: #6ee7b7; }
+        [data-theme="dark"] .metric-change.negative { background: #7f1d1d; color: #fca5a5; }
+        [data-theme="dark"] .chart-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .chart-card h3 { color: #f3f4f6; }
+        [data-theme="dark"] .streak-info h3 { color: #fbbf24; }
+        [data-theme="dark"] .streak-value { color: #fcd34d; }
+        [data-theme="dark"] .streak-record-badge { color: #fbbf24; }
+        [data-theme="dark"] .streak-text { color: #d1d5db; }
     </style>
 </head>
 <body>
