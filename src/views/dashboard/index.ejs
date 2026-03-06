@@ -1204,7 +1204,11 @@
         fetch('/api/heatmap').then(function(r){ return r.json(); }).then(function(json) {
             var map = {};
             if (json.success && json.data) {
-                json.data.forEach(function(r) { map[r.study_date] = +r.total_minutes; });
+                json.data.forEach(function(r) {
+                    // Normalize to YYYY-MM-DD: pg may return Date as "2026-03-06T00:00:00.000Z" or "2026-03-06"
+                    var dateStr = (r.study_date + '').substring(0, 10);
+                    map[dateStr] = +r.total_minutes;
+                });
             }
 
             /* Build date range ending today, starting on a Sunday */
