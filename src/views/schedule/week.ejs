@@ -110,19 +110,23 @@
                                             <div class="week-task-title"><%= task.title.replace('Study: ', '') %></div>
                                             <div class="week-task-topic"><%= task.topic_name %></div>
                                             
-                                            <% if (day.isToday && task.status !== 'completed') { %>
+                                            <% if (task.status !== 'completed') { %>
                                                 <div class="week-task-actions">
                                                     <a href="/study/start?topic=<%= task.topic_id %>&task=<%= task.id %>" 
-                                                       class="week-action-btn start" title="Start">
+                                                       class="week-action-btn start" title="Start Study">
                                                         <i data-lucide="play"></i>
                                                     </a>
+                                                    <a href="/tasks/<%= task.id %>" 
+                                                       class="week-action-btn view" title="View Task">
+                                                        <i data-lucide="eye"></i>
+                                                    </a>
                                                     <form action="/schedule/task/<%= task.id %>/complete" method="POST" class="inline-form">
-                                                        <button type="submit" class="week-action-btn complete" title="Complete">
+                                                        <button type="submit" class="week-action-btn complete" title="Mark Complete">
                                                             <i data-lucide="check"></i>
                                                         </button>
                                                     </form>
                                                 </div>
-                                            <% } else if (task.status === 'completed') { %>
+                                            <% } else { %>
                                                 <div class="week-task-completed">
                                                     <i data-lucide="check-circle"></i>
                                                 </div>
@@ -425,6 +429,15 @@
             margin-top: var(--spacing-xs);
             padding-top: var(--spacing-xs);
             border-top: 1px solid rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.2s ease, max-height 0.2s ease;
+        }
+
+        .week-task-card:hover .week-task-actions {
+            opacity: 1;
+            max-height: 40px;
         }
 
         .week-action-btn {
@@ -472,17 +485,20 @@
             box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
         }
 
-        /* Ensure action buttons are always visible for today's tasks */
-        .week-day-column.today .week-task-actions {
-            display: flex !important;
-            opacity: 1 !important;
-            visibility: visible !important;
+        /* Always show action buttons for today's tasks */
+        .week-day-column.today .week-task-card:not(.completed) .week-task-actions {
+            opacity: 1;
+            max-height: 40px;
         }
 
-        .week-day-column.today .week-action-btn {
-            opacity: 1 !important;
-            visibility: visible !important;
-            z-index: 10;
+        .week-action-btn.view {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .week-action-btn.view:hover {
+            background: var(--gray-300);
+            transform: scale(1.15);
         }
 
         .week-task-completed {
@@ -632,6 +648,10 @@
         [data-theme="dark"] .week-task-title { color: #f3f4f6; }
         [data-theme="dark"] .week-task-card.completed { background: #064e3b; border-color: #065f46; }
         [data-theme="dark"] .week-task-card.skipped { background: #7f1d1d; border-color: #991b1b; }
+        [data-theme="dark"] .week-task-card:hover { background: #3b4a5e; }
+        [data-theme="dark"] .week-task-actions { border-top-color: rgba(255, 255, 255, 0.1); }
+        [data-theme="dark"] .week-action-btn.view { background: #475569; color: #d1d5db; }
+        [data-theme="dark"] .week-action-btn.view:hover { background: #64748b; }
         [data-theme="dark"] .info-box { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: #d1d5db; }
         [data-theme="dark"] .legend-color.completed { background: #064e3b; }
         [data-theme="dark"] .legend-color.skipped { background: #7f1d1d; }
