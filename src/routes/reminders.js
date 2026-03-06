@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
+const { sendReminderEmail } = require('../services/emailService');
 
 // Auth middleware
 const requireAuth = (req, res, next) => {
@@ -97,11 +98,30 @@ router.post('/', async (req, res) => {
         // Combine date and time
         const remindAt = new Date(`${remind_date}T${remind_time}`);
         
+        // Fetch linked task title if present
+        let taskTitle = null;
+        if (task_id) {
+            const taskResult = await pool.query('SELECT title FROM tasks WHERE id = $1', [task_id]);
+            if (taskResult.rows.length > 0) taskTitle = taskResult.rows[0].title;
+        }
+
         await pool.query(`
             INSERT INTO reminders (user_id, title, description, remind_at, reminder_type, task_id, repeat_type)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
         `, [userId, title, description || null, remindAt, reminder_type || 'custom', task_id || null, repeat_type || 'none']);
-        
+
+        // Send confirmation email
+        const userEmail = req.session.user.email;
+        const userName = req.session.user.full_name || req.session.user.name || 'there';
+        sendReminderEmail(userEmail, userName, {
+            title,
+            description: description || null,
+            remind_at: remindAt,
+            reminder_type: reminder_type || 'custom',
+            task_title: taskTitle,
+            repeat_type: repeat_type || 'none'
+        }).catch(err => console.error('Email send failed:', err));
+
         req.flash('success', 'Reminder created successfully!');
         res.redirect('/reminders');
     } catch (error) {
