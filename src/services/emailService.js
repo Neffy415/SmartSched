@@ -1,20 +1,6 @@
-const nodemailer = require('nodemailer');
-
-const GMAIL_USER = process.env.GMAIL_USER || 'smartsched.ade@gmail.com';
-const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
-
-const transporter = GMAIL_APP_PASSWORD ? nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-        user: GMAIL_USER,
-        pass: GMAIL_APP_PASSWORD
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000
-}) : null;
+const BREVO_API_KEY = process.env.BREVO_API_KEY;
+const FROM_EMAIL = process.env.BREVO_FROM_EMAIL || 'smartsched.ade@gmail.com';
+const FROM_NAME = 'SmartSched';
 
 // Reminder type config
 const REMINDER_ICONS = {
@@ -132,22 +118,36 @@ function buildReminderEmail(reminder, userName) {
 }
 
 async function sendReminderEmail(userEmail, userName, reminder) {
-    if (!transporter) {
-        console.log('Gmail App Password not set — skipping email for reminder:', reminder.title);
+    if (!BREVO_API_KEY) {
+        console.log('Brevo API key not set — skipping email for reminder:', reminder.title);
         return false;
     }
 
     try {
-        await transporter.sendMail({
-            from: `SmartSched <${GMAIL_USER}>`,
-            to: userEmail,
-            subject: `${REMINDER_ICONS[reminder.reminder_type] || '🔔'} Reminder: ${reminder.title}`,
-            html: buildReminderEmail(reminder, userName),
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': BREVO_API_KEY,
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: { name: FROM_NAME, email: FROM_EMAIL },
+                to: [{ email: userEmail, name: userName }],
+                subject: `${REMINDER_ICONS[reminder.reminder_type] || '🔔'} Reminder: ${reminder.title}`,
+                htmlContent: buildReminderEmail(reminder, userName)
+            })
         });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || JSON.stringify(err));
+        }
+
         console.log(`📧 Reminder email sent to ${userEmail} for "${reminder.title}"`);
         return true;
     } catch (error) {
-        console.error('Email error:', error.message);
+        console.error('Brevo email error:', error.message);
         return false;
     }
 }
