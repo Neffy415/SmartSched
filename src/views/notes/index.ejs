@@ -158,7 +158,7 @@
                                     <div class="note-footer">
                                         <span class="note-date">
                                             <i data-lucide="calendar"></i>
-                                            <%= new Date(note.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+                                            <span class="local-date-short" data-utc="<%= note.created_at %>"></span>
                                         </span>
                                         <div class="note-actions">
                                             <a href="/notes/<%= note.id %>" class="btn btn-sm btn-outline">
@@ -602,5 +602,11 @@
     </script>
 
     <%- include('../partials/popup') %>
+    <script>
+        document.querySelectorAll('.local-date-short').forEach(el => {
+            const d = new Date(el.dataset.utc);
+            el.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        });
+    </script>
 </body>
 </html>

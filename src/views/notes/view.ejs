@@ -65,14 +65,7 @@
                             
                             <div class="note-date-info">
                                 <i data-lucide="calendar"></i>
-                                Created: <%= new Date(note.created_at).toLocaleDateString('en-US', { 
-                                    weekday: 'long', 
-                                    year: 'numeric', 
-                                    month: 'long', 
-                                    day: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                }) %>
+                                Created: <span class="local-date" data-utc="<%= note.created_at %>"></span>
                             </div>
                         </div>
                         
@@ -437,5 +430,11 @@
     </script>
 
     <%- include('../partials/popup') %>
+    <script>
+        document.querySelectorAll('.local-date').forEach(el => {
+            const d = new Date(el.dataset.utc);
+            el.textContent = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        });
+    </script>
 </body>
 </html>
