@@ -1,10 +1,15 @@
-const sgMail = require('@sendgrid/mail');
+const nodemailer = require('nodemailer');
 
-if (process.env.SENDGRID_API_KEY) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-}
+const GMAIL_USER = process.env.GMAIL_USER || 'smartsched.ade@gmail.com';
+const GMAIL_APP_PASSWORD = process.env.GMAIL_APP_PASSWORD;
 
-const FROM_EMAIL = process.env.SENDGRID_FROM_EMAIL || 'smartsched.ade@gmail.com';
+const transporter = GMAIL_APP_PASSWORD ? nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: GMAIL_USER,
+        pass: GMAIL_APP_PASSWORD
+    }
+}) : null;
 
 // Reminder type config
 const REMINDER_ICONS = {
@@ -122,24 +127,22 @@ function buildReminderEmail(reminder, userName) {
 }
 
 async function sendReminderEmail(userEmail, userName, reminder) {
-    if (!process.env.SENDGRID_API_KEY) {
-        console.log('SendGrid API key not set — skipping email for reminder:', reminder.title);
+    if (!transporter) {
+        console.log('Gmail App Password not set — skipping email for reminder:', reminder.title);
         return false;
     }
 
-    const msg = {
-        to: userEmail,
-        from: { email: FROM_EMAIL, name: 'SmartSched' },
-        subject: `${REMINDER_ICONS[reminder.reminder_type] || '🔔'} Reminder: ${reminder.title}`,
-        html: buildReminderEmail(reminder, userName),
-    };
-
     try {
-        await sgMail.send(msg);
+        await transporter.sendMail({
+            from: `SmartSched <${GMAIL_USER}>`,
+            to: userEmail,
+            subject: `${REMINDER_ICONS[reminder.reminder_type] || '🔔'} Reminder: ${reminder.title}`,
+            html: buildReminderEmail(reminder, userName),
+        });
         console.log(`📧 Reminder email sent to ${userEmail} for "${reminder.title}"`);
         return true;
     } catch (error) {
-        console.error('SendGrid email error:', error.response?.body || error.message);
+        console.error('Email error:', error.message);
         return false;
     }
 }
