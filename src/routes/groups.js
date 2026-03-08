@@ -247,7 +247,7 @@ router.get('/:id', async (req, res) => {
             [userId]
         );
         const materialsResult = await db.query(
-            'SELECT id, original_name as title FROM user_files WHERE user_id = $1 ORDER BY uploaded_at DESC',
+            'SELECT id, original_name as title FROM user_files WHERE user_id = $1 ORDER BY created_at DESC',
             [userId]
         );
 
