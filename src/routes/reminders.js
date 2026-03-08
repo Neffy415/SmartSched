@@ -93,10 +93,11 @@ router.get('/new', async (req, res) => {
 router.post('/', async (req, res) => {
     try {
         const userId = req.session.user.id;
-        const { title, description, remind_date, remind_time, reminder_type, task_id, repeat_type } = req.body;
+        const { title, description, remind_date, remind_time, reminder_type, task_id, repeat_type, user_timezone } = req.body;
         
-        // Store as-is — the date/time the user picked in their local timezone
-        const remindAt = `${remind_date}T${remind_time}:00`;
+        // Build naive timestamp from user input, then convert to UTC using their timezone
+        const remindAtLocal = `${remind_date}T${remind_time}:00`;
+        const tz = user_timezone || 'Asia/Kolkata';
         
         // Fetch linked task title if present
         let taskTitle = null;
@@ -107,8 +108,8 @@ router.post('/', async (req, res) => {
 
         await pool.query(`
             INSERT INTO reminders (user_id, title, description, remind_at, reminder_type, task_id, repeat_type)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-        `, [userId, title, description || null, remindAt, reminder_type || 'custom', task_id || null, repeat_type || 'none']);
+            VALUES ($1, $2, $3, $4::timestamp AT TIME ZONE $5, $6, $7, $8)
+        `, [userId, title, description || null, remindAtLocal, tz, reminder_type || 'custom', task_id || null, repeat_type || 'none']);
 
         // Send confirmation email
         const userEmail = req.session.user.email;
@@ -116,7 +117,7 @@ router.post('/', async (req, res) => {
         sendReminderEmail(userEmail, userName, {
             title,
             description: description || null,
-            remind_at: remindAt,
+            remind_at: remindAtLocal,
             reminder_type: reminder_type || 'custom',
             task_title: taskTitle,
             repeat_type: repeat_type || 'none'
@@ -174,17 +175,18 @@ router.post('/:id', async (req, res) => {
     try {
         const userId = req.session.user.id;
         const reminderId = req.params.id;
-        const { title, description, remind_date, remind_time, reminder_type, task_id, repeat_type } = req.body;
+        const { title, description, remind_date, remind_time, reminder_type, task_id, repeat_type, user_timezone } = req.body;
         
-        // Store as-is — the date/time the user picked in their local timezone
-        const remindAt = `${remind_date}T${remind_time}:00`;
+        // Convert user's local time to UTC using their timezone
+        const remindAtLocal = `${remind_date}T${remind_time}:00`;
+        const tz = user_timezone || 'Asia/Kolkata';
         
         await pool.query(`
             UPDATE reminders 
-            SET title = $1, description = $2, remind_at = $3, reminder_type = $4, task_id = $5, repeat_type = $6,
+            SET title = $1, description = $2, remind_at = $3::timestamp AT TIME ZONE $4, reminder_type = $5, task_id = $6, repeat_type = $7,
                 is_triggered = false
-            WHERE id = $7 AND user_id = $8
-        `, [title, description || null, remindAt, reminder_type || 'custom', task_id || null, repeat_type || 'none', reminderId, userId]);
+            WHERE id = $8 AND user_id = $9
+        `, [title, description || null, remindAtLocal, tz, reminder_type || 'custom', task_id || null, repeat_type || 'none', reminderId, userId]);
         
         req.flash('success', 'Reminder updated successfully!');
         res.redirect('/reminders');
