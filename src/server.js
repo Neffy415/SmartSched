@@ -57,6 +57,7 @@ app.use('/materials', require('./routes/materials'));
 app.use('/notes', require('./routes/notes'));
 app.use('/flashcards', require('./routes/flashcards'));
 app.use('/practice', require('./routes/practice'));
+app.use('/groups', require('./routes/groups'));
 
 // 404 handler
 app.use((req, res) => {

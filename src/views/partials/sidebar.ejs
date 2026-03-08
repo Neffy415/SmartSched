@@ -75,6 +75,15 @@
         </div>
 
         <div class="nav-section">
+            <span class="nav-section-title">Collaborate</span>
+            <a href="/groups" class="nav-item <%= typeof page !== 'undefined' && page === 'groups' ? 'active' : '' %>">
+                <i data-lucide="users"></i>
+                <span>Study Groups</span>
+                <span class="nav-badge">New</span>
+            </a>
+        </div>
+
+        <div class="nav-section">
             <span class="nav-section-title">Tools</span>
             <a href="/study" class="nav-item <%= typeof page !== 'undefined' && page === 'study' ? 'active' : '' %>">
                 <i data-lucide="play-circle"></i>

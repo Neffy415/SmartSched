@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .group-view-container { max-width: 960px; margin: 0 auto; }
+
+        /* Group Header */
+        .group-header {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-bottom: var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+        }
+        .group-header-gradient {
+            height: 6px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+        }
+        .group-header-body {
+            padding: var(--spacing-xl);
+        }
+        .group-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+        .group-header-info h1 {
+            font-size: 1.5rem;
+            margin-bottom: 4px;
+        }
+        .group-header-info p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-top: var(--spacing-sm);
+            max-width: 600px;
+        }
+        .group-header-meta {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+        }
+        .group-header-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .group-header-meta svg { width: 14px; height: 14px; }
+        .group-header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            flex-shrink: 0;
+        }
+
+        /* Invite Code Banner */
+        .invite-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md) var(--spacing-lg);
+            margin-top: var(--spacing-lg);
+        }
+        .invite-banner-left {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+        .invite-banner-left svg { color: var(--primary); width: 18px; height: 18px; }
+        .invite-code-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            color: var(--primary);
+            margin-left: var(--spacing-sm);
+        }
+
+        /* Tabs */
+        .group-tabs {
+            display: flex;
+            gap: var(--spacing-xs);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 4px;
+            margin-bottom: var(--spacing-xl);
+            border: 1px solid var(--border);
+        }
+        .group-tab {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            border: none;
+            background: none;
+        }
+        .group-tab:hover { color: var(--text-primary); background: var(--bg-primary); }
+        .group-tab.active {
+            background: var(--bg-primary);
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+            font-weight: 600;
+        }
+        .group-tab svg { width: 16px; height: 16px; }
+        .tab-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: var(--radius-full);
+            min-width: 18px;
+            text-align: center;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Shared Items */
+        .shared-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: var(--spacing-md);
+        }
+        .shared-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            transition: all 0.15s ease;
+        }
+        .shared-card:hover {
+            box-shadow: var(--shadow-sm);
+            border-color: var(--primary);
+        }
+        .shared-card-top {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+        .shared-type-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .shared-type-icon svg { width: 18px; height: 18px; color: white; }
+        .shared-type-icon.note { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        .shared-type-icon.flashcard_set { background: linear-gradient(135deg, #f59e0b, #f97316); }
+        .shared-type-icon.material { background: linear-gradient(135deg, #10b981, #14b8a6); }
+        .shared-card-title {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+        .shared-card-meta {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+        }
+        .shared-card-actions {
+            display: flex;
+            gap: var(--spacing-xs);
+            margin-top: var(--spacing-md);
+        }
+
+        .share-empty {
+            text-align: center;
+            padding: var(--spacing-xl);
+            color: var(--text-secondary);
+        }
+        .share-empty svg { width: 48px; height: 48px; color: var(--text-tertiary); margin-bottom: var(--spacing-md); }
+
+        /* Discussion */
+        .messages-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+        }
+        .messages-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        .message-item {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+        .message-body {
+            flex: 1;
+            min-width: 0;
+        }
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: 2px;
+        }
+        .message-author {
+            font-weight: 600;
+            font-size: 0.8125rem;
+            color: var(--text-primary);
+        }
+        .message-author.is-you {
+            color: var(--primary);
+        }
+        .message-time {
+            font-size: 0.6875rem;
+            color: var(--text-tertiary);
+        }
+        .message-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .message-delete {
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .message-item:hover .message-delete {
+            opacity: 1;
+        }
+        .message-delete button {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 2px;
+        }
+        .message-delete button:hover { color: var(--error); }
+
+        .message-form {
+            display: flex;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-top: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        .message-form input {
+            flex: 1;
+            padding: 0.625rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+        .message-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .messages-empty {
+            text-align: center;
+            padding: var(--spacing-3xl);
+            color: var(--text-tertiary);
+        }
+        .messages-empty svg { width: 48px; height: 48px; margin-bottom: var(--spacing-sm); }
+
+        /* Members */
+        .members-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+        .member-card {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md) var(--spacing-lg);
+        }
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+        .member-info { flex: 1; }
+        .member-name {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+        }
+        .member-detail {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+        }
+
+        /* Share Modal */
+        .share-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .share-modal.show { display: flex; }
+        .share-modal-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+        }
+        .share-modal-content {
+            position: relative;
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 520px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .share-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-lg) var(--spacing-xl);
+            border-bottom: 1px solid var(--border);
+        }
+        .share-modal-header h3 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .share-modal-header h3 svg { color: var(--primary); }
+        .share-modal-close {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 4px;
+        }
+        .share-modal-close:hover { color: var(--text-primary); }
+        .share-modal-body {
+            padding: var(--spacing-lg) var(--spacing-xl);
+            overflow-y: auto;
+            flex: 1;
+        }
+        .share-category {
+            margin-bottom: var(--spacing-lg);
+        }
+        .share-category-title {
+            font-weight: 600;
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        .share-category-title svg { width: 14px; height: 14px; }
+        .share-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            transition: background 0.15s;
+        }
+        .share-item:hover { background: var(--bg-secondary); }
+        .share-item-name {
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+            margin-right: var(--spacing-sm);
+        }
+        .share-item form { flex-shrink: 0; }
+        .share-nothing {
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+            padding: var(--spacing-sm) var(--spacing-md);
+            font-style: italic;
+        }
+
+        /* Leave/Delete confirm */
+        .danger-zone {
+            margin-top: var(--spacing-xl);
+            padding-top: var(--spacing-xl);
+            border-top: 1px solid var(--border);
+        }
+        .danger-zone h3 {
+            color: var(--error);
+            font-size: 0.875rem;
+            margin-bottom: var(--spacing-md);
+        }
+
+        @media (max-width: 640px) {
+            .group-header-top { flex-direction: column; }
+            .group-tabs { flex-wrap: wrap; }
+            .shared-grid { grid-template-columns: 1fr; }
+            .invite-banner { flex-direction: column; gap: var(--spacing-sm); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar', { page: 'groups' }) %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="content-area">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <p><%= error_msg %></p>
+                    </div>
+                <% } %>
+
+                <div class="group-view-container">
+                    <!-- Breadcrumb -->
+                    <nav class="breadcrumb" style="margin-bottom: var(--spacing-lg);">
+                        <a href="/groups" style="color: var(--primary); text-decoration: none;">Study Groups</a>
+                        <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: var(--text-tertiary);"></i>
+                        <span style="color: var(--text-secondary);"><%= group.name %></span>
+                    </nav>
+
+                    <!-- Group Header Card -->
+                    <div class="group-header">
+                        <div class="group-header-gradient"></div>
+                        <div class="group-header-body">
+                            <div class="group-header-top">
+                                <div class="group-header-info">
+                                    <h1><%= group.name %></h1>
+                                    <div class="group-header-meta">
+                                        <span><i data-lucide="user"></i> Created by <%= group.creator_name %></span>
+                                        <span><i data-lucide="users"></i> <%= members.length %> members</span>
+                                        <span><i data-lucide="calendar"></i> <span class="local-date" data-utc="<%= group.created_at %>"></span></span>
+                                    </div>
+                                    <% if (group.description) { %>
+                                        <p><%= group.description %></p>
+                                    <% } %>
+                                </div>
+                                <div class="group-header-actions">
+                                    <% if (membership.role === 'admin') { %>
+                                        <a href="/groups/<%= group.id %>/edit" class="btn btn-secondary btn-sm">
+                                            <i data-lucide="edit-3"></i> Edit
+                                        </a>
+                                    <% } %>
+                                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('shareModal').classList.add('show')">
+                                        <i data-lucide="share-2"></i> Share
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Invite Code -->
+                            <div class="invite-banner">
+                                <div class="invite-banner-left">
+                                    <i data-lucide="link"></i>
+                                    Share this code to invite friends:
+                                    <span class="invite-code-display"><%= group.invite_code %></span>
+                                </div>
+                                <button class="btn btn-sm btn-outline" onclick="copyInviteCode()">
+                                    <i data-lucide="copy"></i> Copy
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="group-tabs">
+                        <button class="group-tab active" data-tab="shared">
+                            <i data-lucide="share-2"></i>
+                            Shared Items
+                            <% if (sharedItems.length > 0) { %><span class="tab-badge"><%= sharedItems.length %></span><% } %>
+                        </button>
+                        <button class="group-tab" data-tab="discussion">
+                            <i data-lucide="message-circle"></i>
+                            Discussion
+                            <% if (messages.length > 0) { %><span class="tab-badge"><%= messages.length %></span><% } %>
+                        </button>
+                        <button class="group-tab" data-tab="members">
+                            <i data-lucide="users"></i>
+                            Members
+                            <span class="tab-badge"><%= members.length %></span>
+                        </button>
+                    </div>
+
+                    <!-- Shared Items Tab -->
+                    <div class="tab-content active" id="tab-shared">
+                        <% if (sharedItems.length === 0) { %>
+                            <div class="share-empty">
+                                <i data-lucide="share-2"></i>
+                                <h3>No shared items yet</h3>
+                                <p>Share your notes, flashcards, or materials with the group!</p>
+                                <button class="btn btn-primary" onclick="document.getElementById('shareModal').classList.add('show')" style="margin-top: var(--spacing-md);">
+                                    <i data-lucide="plus"></i> Share Something
+                                </button>
+                            </div>
+                        <% } else { %>
+                            <div class="shared-grid">
+                                <% sharedItems.forEach(item => { %>
+                                    <div class="shared-card">
+                                        <div class="shared-card-top">
+                                            <div class="shared-type-icon <%= item.item_type %>">
+                                                <% if (item.item_type === 'note') { %>
+                                                    <i data-lucide="file-text"></i>
+                                                <% } else if (item.item_type === 'flashcard_set') { %>
+                                                    <i data-lucide="layers"></i>
+                                                <% } else { %>
+                                                    <i data-lucide="file"></i>
+                                                <% } %>
+                                            </div>
+                                            <div style="flex: 1; min-width: 0;">
+                                                <div class="shared-card-title"><%= item.item_title %></div>
+                                                <div class="shared-card-meta">
+                                                    <% if (item.item_type === 'note') { %>📝 Note<% } else if (item.item_type === 'flashcard_set') { %>📇 Flashcard Set<% } else { %>📄 Material<% } %>
+                                                    · Shared by <%= item.shared_by_name %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="shared-card-actions">
+                                            <a href="/groups/<%= group.id %>/item/<%= item.item_type %>/<%= item.item_id %>" class="btn btn-sm btn-primary">
+                                                <i data-lucide="eye"></i> View
+                                            </a>
+                                            <% if (item.user_id === userId || membership.role === 'admin') { %>
+                                                <form action="/groups/<%= group.id %>/unshare" method="POST" style="display:inline;">
+                                                    <input type="hidden" name="shared_item_id" value="<%= item.id %>">
+                                                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error);" onclick="return confirm('Remove this item from the group?')">
+                                                        <i data-lucide="x"></i>
+                                                    </button>
+                                                </form>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Discussion Tab -->
+                    <div class="tab-content" id="tab-discussion">
+                        <div class="messages-container" id="discussion">
+                            <% if (messages.length === 0) { %>
+                                <div class="messages-empty">
+                                    <i data-lucide="message-circle"></i>
+                                    <h3>No messages yet</h3>
+                                    <p>Start the conversation!</p>
+                                </div>
+                            <% } else { %>
+                                <div class="messages-list" id="messagesList">
+                                    <% messages.forEach(msg => { %>
+                                        <div class="message-item">
+                                            <div class="message-avatar">
+                                                <%= msg.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() %>
+                                            </div>
+                                            <div class="message-body">
+                                                <div class="message-header">
+                                                    <span class="message-author <%= msg.user_id === userId ? 'is-you' : '' %>">
+                                                        <%= msg.full_name %><%= msg.user_id === userId ? ' (You)' : '' %>
+                                                    </span>
+                                                    <span class="message-time local-datetime" data-utc="<%= msg.created_at %>"></span>
+                                                </div>
+                                                <div class="message-text"><%= msg.message %></div>
+                                            </div>
+                                            <% if (msg.user_id === userId || membership.role === 'admin') { %>
+                                                <div class="message-delete">
+                                                    <form action="/groups/<%= group.id %>/message/<%= msg.id %>/delete" method="POST">
+                                                        <button type="submit" title="Delete message" onclick="return confirm('Delete this message?')">
+                                                            <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            <% } %>
+                                        </div>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+
+                            <form action="/groups/<%= group.id %>/message" method="POST" class="message-form">
+                                <input type="text" name="message" placeholder="Type a message..." required maxlength="2000" autocomplete="off">
+                                <button type="submit" class="btn btn-primary btn-sm">
+                                    <i data-lucide="send"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Members Tab -->
+                    <div class="tab-content" id="tab-members">
+                        <div class="members-list">
+                            <% members.forEach(member => { %>
+                                <div class="member-card">
+                                    <div class="member-avatar">
+                                        <%= member.full_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() %>
+                                    </div>
+                                    <div class="member-info">
+                                        <div class="member-name">
+                                            <%= member.full_name %><%= member.user_id === userId ? ' (You)' : '' %>
+                                        </div>
+                                        <div class="member-detail">
+                                            <span class="group-role-badge <%= member.role %>" style="font-size: 0.625rem; padding: 2px 6px;"><%= member.role %></span>
+                                            · Joined <span class="local-date-short" data-utc="<%= member.joined_at %>"></span>
+                                        </div>
+                                    </div>
+                                    <% if (membership.role === 'admin' && member.user_id !== userId) { %>
+                                        <form action="/groups/<%= group.id %>/remove-member" method="POST" style="flex-shrink: 0;">
+                                            <input type="hidden" name="member_user_id" value="<%= member.user_id %>">
+                                            <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error);" onclick="return confirm('Remove ' + '<%= member.full_name %>' + ' from the group?')">
+                                                <i data-lucide="user-x"></i>
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                </div>
+                            <% }); %>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="danger-zone">
+                            <h3><i data-lucide="alert-triangle" style="width: 14px; height: 14px; display: inline;"></i> Danger Zone</h3>
+                            <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+                                <form action="/groups/<%= group.id %>/leave" method="POST">
+                                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error);" onclick="return confirm('Are you sure you want to leave this group?')">
+                                        <i data-lucide="log-out"></i> Leave Group
+                                    </button>
+                                </form>
+                                <% if (membership.role === 'admin') { %>
+                                    <form action="/groups/<%= group.id %>/delete" method="POST">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('DELETE this group? This cannot be undone!')">
+                                            <i data-lucide="trash-2"></i> Delete Group
+                                        </button>
+                                    </form>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="share-modal" id="shareModal">
+        <div class="share-modal-backdrop" onclick="this.parentElement.classList.remove('show')"></div>
+        <div class="share-modal-content">
+            <div class="share-modal-header">
+                <h3><i data-lucide="share-2"></i> Share with Group</h3>
+                <button class="share-modal-close" onclick="document.getElementById('shareModal').classList.remove('show')">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="share-modal-body">
+                <!-- Notes -->
+                <div class="share-category">
+                    <div class="share-category-title"><i data-lucide="file-text"></i> My Notes</div>
+                    <% if (userNotes.length === 0) { %>
+                        <div class="share-nothing">No notes available to share</div>
+                    <% } else { %>
+                        <% userNotes.forEach(note => { %>
+                            <div class="share-item">
+                                <div class="share-item-name">📝 <%= note.title %></div>
+                                <form action="/groups/<%= group.id %>/share" method="POST">
+                                    <input type="hidden" name="item_type" value="note">
+                                    <input type="hidden" name="item_id" value="<%= note.id %>">
+                                    <button type="submit" class="btn btn-sm btn-primary">Share</button>
+                                </form>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+
+                <!-- Flashcard Sets -->
+                <div class="share-category">
+                    <div class="share-category-title"><i data-lucide="layers"></i> My Flashcard Sets</div>
+                    <% if (userFlashcards.length === 0) { %>
+                        <div class="share-nothing">No flashcard sets available to share</div>
+                    <% } else { %>
+                        <% userFlashcards.forEach(set => { %>
+                            <div class="share-item">
+                                <div class="share-item-name">📇 <%= set.title %></div>
+                                <form action="/groups/<%= group.id %>/share" method="POST">
+                                    <input type="hidden" name="item_type" value="flashcard_set">
+                                    <input type="hidden" name="item_id" value="<%= set.id %>">
+                                    <button type="submit" class="btn btn-sm btn-primary">Share</button>
+                                </form>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+
+                <!-- Materials -->
+                <div class="share-category">
+                    <div class="share-category-title"><i data-lucide="file"></i> My Materials</div>
+                    <% if (userMaterials.length === 0) { %>
+                        <div class="share-nothing">No materials available to share</div>
+                    <% } else { %>
+                        <% userMaterials.forEach(mat => { %>
+                            <div class="share-item">
+                                <div class="share-item-name">📄 <%= mat.title %></div>
+                                <form action="/groups/<%= group.id %>/share" method="POST">
+                                    <input type="hidden" name="item_type" value="material">
+                                    <input type="hidden" name="item_id" value="<%= mat.id %>">
+                                    <button type="submit" class="btn btn-sm btn-primary">Share</button>
+                                </form>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/popup') %>
+
+    <script>
+        lucide.createIcons();
+
+        // Tab switching
+        document.querySelectorAll('.group-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.group-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Auto-scroll messages to bottom
+        const messagesList = document.getElementById('messagesList');
+        if (messagesList) messagesList.scrollTop = messagesList.scrollHeight;
+
+        // If URL has #discussion hash, switch to discussion tab
+        if (window.location.hash === '#discussion') {
+            document.querySelector('[data-tab="discussion"]').click();
+        }
+
+        // Copy invite code
+        function copyInviteCode() {
+            navigator.clipboard.writeText('<%= group.invite_code %>').then(() => {
+                showToast('Invite code copied!', 'success');
+            });
+        }
+
+        function showToast(msg, type) {
+            const toast = document.createElement('div');
+            toast.textContent = msg;
+            toast.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:12px 24px;border-radius:8px;color:white;font-size:14px;z-index:9999;animation:fadeIn 0.2s;';
+            toast.style.background = type === 'success' ? '#22c55e' : '#ef4444';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Format dates client-side
+        document.querySelectorAll('.local-date').forEach(el => {
+            const d = new Date(el.dataset.utc);
+            el.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        });
+        document.querySelectorAll('.local-date-short').forEach(el => {
+            const d = new Date(el.dataset.utc);
+            el.textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        });
+        document.querySelectorAll('.local-datetime').forEach(el => {
+            const d = new Date(el.dataset.utc);
+            el.textContent = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .shared-fc-container { max-width: 900px; margin: 0 auto; }
+        .shared-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            margin-bottom: var(--spacing-md);
+        }
+        .shared-badge svg { width: 12px; height: 12px; }
+
+        .fc-set-header {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+        }
+        .fc-set-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: var(--spacing-xs);
+        }
+        .fc-set-header p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        .fc-set-stats {
+            display: flex;
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-md);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border);
+        }
+        .fc-set-stats span {
+            font-size: 0.8125rem;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .fc-set-stats svg { width: 14px; height: 14px; }
+
+        .cards-grid {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+        .flashcard-item {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            transition: all 0.15s ease;
+        }
+        .flashcard-item:hover {
+            box-shadow: var(--shadow-sm);
+        }
+        .fc-front {
+            padding: var(--spacing-lg);
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .fc-front .fc-number {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+        .fc-back {
+            padding: 0 var(--spacing-lg) var(--spacing-lg);
+            padding-left: calc(var(--spacing-lg) + 28px + var(--spacing-sm));
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            display: none;
+            border-top: 1px dashed var(--border);
+            padding-top: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+        }
+        .flashcard-item.revealed .fc-back { display: block; }
+        .fc-toggle-hint {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-left: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar', { page: 'groups' }) %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="content-area">
+                <div class="shared-fc-container">
+                    <nav class="breadcrumb" style="margin-bottom: var(--spacing-lg);">
+                        <a href="/groups" style="color: var(--primary); text-decoration: none;">Groups</a>
+                        <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: var(--text-tertiary);"></i>
+                        <a href="/groups/<%= groupId %>" style="color: var(--primary); text-decoration: none;"><%= groupName %></a>
+                        <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: var(--text-tertiary);"></i>
+                        <span style="color: var(--text-secondary);"><%= flashcardSet.title %></span>
+                    </nav>
+
+                    <div class="shared-badge">
+                        <i data-lucide="share-2"></i> Shared Flashcard Set (Read Only)
+                    </div>
+
+                    <div class="fc-set-header">
+                        <h1><%= flashcardSet.title %></h1>
+                        <% if (flashcardSet.description) { %>
+                            <p><%= flashcardSet.description %></p>
+                        <% } %>
+                        <div class="fc-set-stats">
+                            <span><i data-lucide="layers"></i> <strong><%= cards.length %></strong> cards</span>
+                            <% if (flashcardSet.subject_name) { %>
+                                <span><i data-lucide="book-open"></i> <%= flashcardSet.subject_name %></span>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <div class="cards-grid">
+                        <% cards.forEach((card, i) => { %>
+                            <div class="flashcard-item" onclick="this.classList.toggle('revealed')">
+                                <div class="fc-front">
+                                    <span class="fc-number"><%= i + 1 %></span>
+                                    <span><%= card.front_text %></span>
+                                    <span class="fc-toggle-hint">Click to reveal</span>
+                                </div>
+                                <div class="fc-back"><%= card.back_text %></div>
+                            </div>
+                        <% }); %>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-xl);">
+                        <a href="/groups/<%= groupId %>" class="btn btn-secondary">
+                            <i data-lucide="arrow-left"></i> Back to Group
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

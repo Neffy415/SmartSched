@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .groups-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-xl);
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+        .groups-header h1 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .groups-header h1 svg {
+            color: var(--primary);
+        }
+        .groups-header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+        }
+
+        .join-section {
+            background: var(--bg-primary);
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            text-align: center;
+        }
+        .join-section h3 {
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+        }
+        .join-section h3 svg { color: var(--primary); }
+        .join-section p {
+            color: var(--text-secondary);
+            margin-bottom: var(--spacing-lg);
+            font-size: 0.875rem;
+        }
+        .join-form {
+            display: flex;
+            gap: var(--spacing-sm);
+            justify-content: center;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .join-form input {
+            flex: 1;
+            padding: 0.625rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 1rem;
+            letter-spacing: 3px;
+            text-align: center;
+            text-transform: uppercase;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        .join-form input::placeholder {
+            letter-spacing: 1px;
+            text-transform: none;
+        }
+        .join-form input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .groups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--spacing-lg);
+        }
+
+        .group-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .group-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .group-card-gradient {
+            height: 4px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #a855f7);
+        }
+
+        .group-card-body {
+            padding: var(--spacing-lg);
+        }
+
+        .group-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .group-card-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        .group-card-title a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .group-card-title a:hover {
+            color: var(--primary);
+        }
+
+        .group-card-desc {
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            margin-bottom: var(--spacing-md);
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .group-role-badge {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        .group-role-badge.admin {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+        .group-role-badge.member {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .group-card-stats {
+            display: flex;
+            gap: var(--spacing-lg);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border);
+        }
+        .group-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8125rem;
+            color: var(--text-secondary);
+        }
+        .group-stat svg {
+            width: 14px;
+            height: 14px;
+        }
+        .group-stat strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .group-card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+        }
+        .group-code {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            letter-spacing: 2px;
+        }
+        .group-code svg {
+            width: 13px;
+            height: 13px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-3xl) var(--spacing-xl);
+        }
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--spacing-lg);
+        }
+        .empty-state-icon svg {
+            width: 36px;
+            height: 36px;
+            color: var(--primary);
+        }
+        .empty-state h3 {
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-primary);
+        }
+        .empty-state p {
+            color: var(--text-secondary);
+            max-width: 400px;
+            margin: 0 auto var(--spacing-lg);
+        }
+
+        @media (max-width: 640px) {
+            .groups-header { flex-direction: column; align-items: flex-start; }
+            .join-form { flex-direction: column; }
+            .groups-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar', { page: 'groups' }) %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="content-area">
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in">
+                        <i data-lucide="check-circle"></i>
+                        <p><%= success_msg %></p>
+                    </div>
+                <% } %>
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in">
+                        <i data-lucide="alert-circle"></i>
+                        <p><%= error_msg %></p>
+                    </div>
+                <% } %>
+
+                <div class="groups-header">
+                    <div>
+                        <h1>
+                            <i data-lucide="users"></i>
+                            Study Groups
+                        </h1>
+                        <p style="color: var(--text-secondary); margin-top: 4px; font-size: 0.875rem;">
+                            Collaborate with friends — share notes, flashcards & discuss
+                        </p>
+                    </div>
+                    <div class="groups-header-actions">
+                        <a href="/groups/create" class="btn btn-primary">
+                            <i data-lucide="plus"></i>
+                            Create Group
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Join Section -->
+                <div class="join-section">
+                    <h3>
+                        <i data-lucide="link"></i>
+                        Join a Study Group
+                    </h3>
+                    <p>Enter an invite code from a friend to join their study group</p>
+                    <form action="/groups/join" method="POST" class="join-form">
+                        <input type="text" name="invite_code" placeholder="Enter code" maxlength="8" required autocomplete="off">
+                        <button type="submit" class="btn btn-primary">
+                            <i data-lucide="log-in"></i>
+                            Join
+                        </button>
+                    </form>
+                </div>
+
+                <% if (groups.length === 0) { %>
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i data-lucide="users"></i>
+                        </div>
+                        <h3>No groups yet</h3>
+                        <p>Create a study group to collaborate with friends, or join one using an invite code above.</p>
+                        <a href="/groups/create" class="btn btn-primary">
+                            <i data-lucide="plus"></i>
+                            Create Your First Group
+                        </a>
+                    </div>
+                <% } else { %>
+                    <div class="groups-grid">
+                        <% groups.forEach(group => { %>
+                            <div class="group-card">
+                                <div class="group-card-gradient"></div>
+                                <div class="group-card-body">
+                                    <div class="group-card-top">
+                                        <div>
+                                            <div class="group-card-title">
+                                                <a href="/groups/<%= group.id %>"><%= group.name %></a>
+                                            </div>
+                                            <div style="font-size: 0.75rem; color: var(--text-tertiary);">
+                                                Created by <%= group.creator_name %>
+                                            </div>
+                                        </div>
+                                        <span class="group-role-badge <%= group.role %>"><%= group.role %></span>
+                                    </div>
+                                    
+                                    <% if (group.description) { %>
+                                        <div class="group-card-desc"><%= group.description %></div>
+                                    <% } %>
+
+                                    <div class="group-card-stats">
+                                        <div class="group-stat">
+                                            <i data-lucide="users"></i>
+                                            <strong><%= group.member_count %></strong> members
+                                        </div>
+                                        <div class="group-stat">
+                                            <i data-lucide="share-2"></i>
+                                            <strong><%= group.shared_count %></strong> shared
+                                        </div>
+                                        <div class="group-stat">
+                                            <i data-lucide="message-circle"></i>
+                                            <strong><%= group.message_count %></strong> messages
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="group-card-footer">
+                                    <div class="group-code">
+                                        <i data-lucide="key"></i>
+                                        <%= group.invite_code %>
+                                    </div>
+                                    <a href="/groups/<%= group.id %>" class="btn btn-sm btn-primary">
+                                        Open <i data-lucide="arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

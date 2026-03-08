@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .shared-mat-container { max-width: 900px; margin: 0 auto; }
+        .shared-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            margin-bottom: var(--spacing-md);
+        }
+        .shared-badge svg { width: 12px; height: 12px; }
+
+        .material-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+            text-align: center;
+        }
+        .material-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-xl);
+            background: linear-gradient(135deg, #10b981, #14b8a6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--spacing-lg);
+        }
+        .material-icon svg { width: 36px; height: 36px; color: white; }
+        .material-card h1 {
+            font-size: 1.25rem;
+            margin-bottom: var(--spacing-sm);
+            word-break: break-word;
+        }
+        .material-info {
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-lg);
+            color: var(--text-tertiary);
+            font-size: 0.8125rem;
+            margin-bottom: var(--spacing-xl);
+        }
+        .material-info span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .material-info svg { width: 14px; height: 14px; }
+        .material-preview {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            margin-top: var(--spacing-lg);
+            text-align: left;
+        }
+        .material-preview iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+            border-radius: var(--radius-md);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar', { page: 'groups' }) %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="content-area">
+                <div class="shared-mat-container">
+                    <nav class="breadcrumb" style="margin-bottom: var(--spacing-lg);">
+                        <a href="/groups" style="color: var(--primary); text-decoration: none;">Groups</a>
+                        <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: var(--text-tertiary);"></i>
+                        <a href="/groups/<%= groupId %>" style="color: var(--primary); text-decoration: none;"><%= groupName %></a>
+                        <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: var(--text-tertiary);"></i>
+                        <span style="color: var(--text-secondary);"><%= material.original_name %></span>
+                    </nav>
+
+                    <div class="shared-badge">
+                        <i data-lucide="share-2"></i> Shared Material (Read Only)
+                    </div>
+
+                    <div class="material-card">
+                        <div class="material-icon">
+                            <i data-lucide="file-text"></i>
+                        </div>
+                        <h1><%= material.original_name %></h1>
+                        <div class="material-info">
+                            <span><i data-lucide="hard-drive"></i> <%= (material.file_size / 1024).toFixed(1) %> KB</span>
+                            <span><i data-lucide="file-type"></i> <%= material.mime_type %></span>
+                        </div>
+
+                        <% if (material.mime_type === 'application/pdf') { %>
+                            <div class="material-preview">
+                                <iframe src="/uploads/<%= material.user_id %>/<%= material.stored_name %>"></iframe>
+                            </div>
+                        <% } else if (material.mime_type && material.mime_type.startsWith('image/')) { %>
+                            <div class="material-preview">
+                                <img src="/uploads/<%= material.user_id %>/<%= material.stored_name %>" alt="<%= material.original_name %>" style="max-width: 100%; border-radius: var(--radius-md);">
+                            </div>
+                        <% } else { %>
+                            <p style="color: var(--text-secondary); margin-top: var(--spacing-md);">
+                                Preview not available for this file type. The file can be viewed by the owner.
+                            </p>
+                        <% } %>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-xl);">
+                        <a href="/groups/<%= groupId %>" class="btn btn-secondary">
+                            <i data-lucide="arrow-left"></i> Back to Group
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

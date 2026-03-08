@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .form-header {
+            margin-bottom: var(--spacing-xl);
+        }
+        .form-header h1 {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .form-header h1 svg { color: var(--primary); }
+        .form-header p {
+            color: var(--text-secondary);
+            margin-top: 4px;
+            font-size: 0.875rem;
+        }
+
+        .form-card {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            overflow: hidden;
+        }
+        .form-body {
+            padding: var(--spacing-xl);
+        }
+        .form-group {
+            margin-bottom: var(--spacing-lg);
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-primary);
+        }
+        .form-group label .required {
+            color: var(--error);
+        }
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.625rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            font-size: 0.9375rem;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all 0.15s ease;
+        }
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .form-hint {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: var(--spacing-md);
+            padding: var(--spacing-lg) var(--spacing-xl);
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border);
+        }
+
+        .validation-errors {
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+        .validation-errors li {
+            color: var(--error);
+            font-size: 0.875rem;
+            margin-left: var(--spacing-md);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar', { page: 'groups' }) %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="content-area">
+                <div class="form-container">
+                    <div class="form-header">
+                        <nav class="breadcrumb" style="margin-bottom: var(--spacing-md);">
+                            <a href="/groups" style="color: var(--primary); text-decoration: none;">Study Groups</a>
+                            <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: var(--text-tertiary);"></i>
+                            <span style="color: var(--text-secondary);"><%= group && group.id ? 'Edit Group' : 'Create Group' %></span>
+                        </nav>
+                        <h1>
+                            <i data-lucide="<%= group && group.id ? 'edit-3' : 'plus-circle' %>"></i>
+                            <%= group && group.id ? 'Edit Group' : 'Create New Group' %>
+                        </h1>
+                        <p><%= group && group.id ? 'Update your group details' : 'Start a study group and invite friends to collaborate' %></p>
+                    </div>
+
+                    <% if (errors && errors.length > 0) { %>
+                        <div class="validation-errors">
+                            <ul>
+                                <% errors.forEach(err => { %>
+                                    <li><%= err.msg %></li>
+                                <% }); %>
+                            </ul>
+                        </div>
+                    <% } %>
+
+                    <div class="form-card">
+                        <form action="<%= group && group.id ? '/groups/' + group.id + '/edit' : '/groups/create' %>" method="POST">
+                            <div class="form-body">
+                                <div class="form-group">
+                                    <label>Group Name <span class="required">*</span></label>
+                                    <input type="text" name="name" value="<%= group ? group.name || '' : '' %>" placeholder="e.g., IoT Study Group" required minlength="2" maxlength="100">
+                                    <div class="form-hint">Give your group a clear, recognizable name</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Description</label>
+                                    <textarea name="description" placeholder="What's this group about? e.g., Preparing for IoT exam together..."><%= group ? group.description || '' : '' %></textarea>
+                                    <div class="form-hint">Optional — helps members understand the group's purpose</div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <a href="/groups" class="btn btn-secondary">Cancel</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-lucide="<%= group && group.id ? 'save' : 'plus' %>"></i>
+                                    <%= group && group.id ? 'Save Changes' : 'Create Group' %>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

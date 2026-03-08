@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .shared-note-container { max-width: 900px; margin: 0 auto; }
+        .shared-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1));
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            margin-bottom: var(--spacing-md);
+        }
+        .shared-badge svg { width: 12px; height: 12px; }
+        .note-view-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-xl);
+        }
+        .note-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+        }
+        .note-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+        .note-subject-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+        }
+        .subject-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--subject-color, var(--primary));
+        }
+        .note-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-lg);
+        }
+        .note-content {
+            font-size: 0.9375rem;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+        .note-content h2, .note-content h3, .note-content h4 {
+            color: var(--text-primary);
+            margin-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-sm);
+        }
+        .note-content ul, .note-content ol {
+            padding-left: var(--spacing-xl);
+            margin-bottom: var(--spacing-md);
+        }
+        .note-content li { margin-bottom: var(--spacing-xs); }
+        .note-content p { margin-bottom: var(--spacing-md); }
+        .note-content strong { color: var(--text-primary); }
+        .note-content code {
+            background: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar', { page: 'groups' }) %>
+
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+
+            <div class="content-area">
+                <div class="shared-note-container">
+                    <nav class="breadcrumb" style="margin-bottom: var(--spacing-lg);">
+                        <a href="/groups" style="color: var(--primary); text-decoration: none;">Groups</a>
+                        <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: var(--text-tertiary);"></i>
+                        <a href="/groups/<%= groupId %>" style="color: var(--primary); text-decoration: none;"><%= groupName %></a>
+                        <i data-lucide="chevron-right" style="width: 14px; height: 14px; color: var(--text-tertiary);"></i>
+                        <span style="color: var(--text-secondary);"><%= note.title %></span>
+                    </nav>
+
+                    <div class="shared-badge">
+                        <i data-lucide="share-2"></i> Shared Note (Read Only)
+                    </div>
+
+                    <div class="note-view-card">
+                        <div class="note-meta">
+                            <div class="note-type-badge">
+                                <i data-lucide="file-text"></i>
+                                <%= note.note_type ? note.note_type.charAt(0).toUpperCase() + note.note_type.slice(1) : 'Note' %>
+                            </div>
+                            <% if (note.subject_name) { %>
+                                <div class="note-subject-badge" style="--subject-color: <%= note.subject_color || '#6366f1' %>">
+                                    <span class="subject-dot"></span>
+                                    <%= note.subject_name %>
+                                    <% if (note.topic_name) { %> › <%= note.topic_name %><% } %>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <h1 class="note-title"><%= note.title %></h1>
+                        <div class="note-content"><%- note.content %></div>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-lg);">
+                        <a href="/groups/<%= groupId %>" class="btn btn-secondary">
+                            <i data-lucide="arrow-left"></i> Back to Group
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
