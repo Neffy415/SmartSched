@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const db = require('../config/database');
+const aiService = require('../services/aiService');
 
 // Auth middleware
 const requireAuth = (req, res, next) => {
@@ -237,6 +238,16 @@ router.get('/:id', async (req, res) => {
             LIMIT 50
         `, [groupId]);
 
+        // Get AI Q&A queries (latest 30)
+        const aiQueriesResult = await db.query(`
+            SELECT gaq.*, u.full_name
+            FROM group_ai_queries gaq
+            JOIN users u ON gaq.user_id = u.id
+            WHERE gaq.group_id = $1
+            ORDER BY gaq.created_at DESC
+            LIMIT 30
+        `, [groupId]);
+
         // Get user's shareable items for the share modal
         const notesResult = await db.query(
             'SELECT id, title FROM saved_notes WHERE user_id = $1 ORDER BY created_at DESC',
@@ -265,6 +276,7 @@ router.get('/:id', async (req, res) => {
             userNotes: notesResult.rows.filter(n => !alreadyShared.includes(n.id)),
             userFlashcards: flashcardSetsResult.rows.filter(f => !alreadyShared.includes(f.id)),
             userMaterials: materialsResult.rows.filter(m => !alreadyShared.includes(m.id)),
+            aiQueries: aiQueriesResult.rows,
             userId
         });
     } catch (error) {
@@ -728,6 +740,102 @@ router.post('/:id/edit', async (req, res) => {
         console.error('Error updating group:', error);
         req.flash('error', 'Failed to update group');
         res.redirect(`/groups/${req.params.id}`);
+    }
+});
+
+// ============================================
+// POST /groups/:id/ask - Ask AI a question (shared with group)
+// ============================================
+router.post('/:id/ask', async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const groupId = req.params.id;
+        const { question } = req.body;
+
+        const membership = await checkMembership(groupId, userId);
+        if (!membership) {
+            return res.status(403).json({ error: 'Not a member' });
+        }
+
+        if (!question || question.trim().length === 0) {
+            req.flash('error', 'Please enter a question');
+            return res.redirect(`/groups/${groupId}#ai-qa`);
+        }
+
+        if (question.trim().length > 1000) {
+            req.flash('error', 'Question too long (max 1000 characters)');
+            return res.redirect(`/groups/${groupId}#ai-qa`);
+        }
+
+        if (!aiService.isConfigured()) {
+            req.flash('error', 'AI service is currently unavailable');
+            return res.redirect(`/groups/${groupId}#ai-qa`);
+        }
+
+        // Get group name for context
+        const groupResult = await db.query('SELECT name, description FROM study_groups WHERE id = $1', [groupId]);
+        const group = groupResult.rows[0];
+
+        const prompt = `You are a helpful study assistant for a study group called "${group.name}"${group.description ? ` (${group.description})` : ''}.
+
+A student asks: "${question.trim()}"
+
+Provide a clear, helpful, and educational answer. Use simple language. If the question is about a specific topic, give a thorough but concise explanation. Format your response using markdown for readability (use **bold**, *italic*, bullet points, numbered lists, etc. as appropriate).
+
+Keep your answer focused and under 800 words.`;
+
+        const result = await aiService.callGemini(prompt);
+        const responseText = result.raw_response || (typeof result === 'string' ? result : JSON.stringify(result));
+
+        await db.query(`
+            INSERT INTO group_ai_queries (group_id, user_id, question, response)
+            VALUES ($1, $2, $3, $4)
+        `, [groupId, userId, question.trim(), responseText]);
+
+        await db.query('UPDATE study_groups SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [groupId]);
+
+        req.flash('success', 'AI answered your question!');
+        res.redirect(`/groups/${groupId}#ai-qa`);
+    } catch (error) {
+        console.error('Error with AI query:', error);
+        req.flash('error', 'AI failed to respond. Please try again.');
+        res.redirect(`/groups/${req.params.id}#ai-qa`);
+    }
+});
+
+// ============================================
+// POST /groups/:id/ai-query/:queryId/delete - Delete AI Q&A
+// ============================================
+router.post('/:id/ai-query/:queryId/delete', async (req, res) => {
+    try {
+        const userId = req.session.user.id;
+        const groupId = req.params.id;
+        const queryId = req.params.queryId;
+
+        const membership = await checkMembership(groupId, userId);
+        if (!membership) {
+            return res.status(403).json({ error: 'Not a member' });
+        }
+
+        // Only author or admin can delete
+        const query = await db.query('SELECT user_id FROM group_ai_queries WHERE id = $1 AND group_id = $2', [queryId, groupId]);
+        if (query.rows.length === 0) {
+            req.flash('error', 'Query not found');
+            return res.redirect(`/groups/${groupId}#ai-qa`);
+        }
+
+        if (query.rows[0].user_id !== userId && membership.role !== 'admin') {
+            req.flash('error', 'You can only delete your own queries');
+            return res.redirect(`/groups/${groupId}#ai-qa`);
+        }
+
+        await db.query('DELETE FROM group_ai_queries WHERE id = $1', [queryId]);
+        req.flash('success', 'AI query deleted');
+        res.redirect(`/groups/${groupId}#ai-qa`);
+    } catch (error) {
+        console.error('Error deleting AI query:', error);
+        req.flash('error', 'Failed to delete query');
+        res.redirect(`/groups/${req.params.id}#ai-qa`);
     }
 });
 

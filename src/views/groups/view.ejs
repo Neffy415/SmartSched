@@ -460,6 +460,154 @@
             .shared-grid { grid-template-columns: 1fr; }
             .invite-banner { flex-direction: column; gap: var(--spacing-sm); }
         }
+
+        /* AI Q&A */
+        .ai-qa-ask {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            margin-bottom: var(--spacing-xl);
+        }
+        .ai-qa-ask-header {
+            padding: var(--spacing-lg) var(--spacing-xl);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .ai-qa-ask-header h3 {
+            font-size: 0.9375rem;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        .ai-qa-ask-header h3 svg { color: var(--primary); width: 18px; height: 18px; }
+        .ai-qa-ask form {
+            display: flex;
+            gap: var(--spacing-sm);
+            padding: var(--spacing-md) var(--spacing-xl);
+            background: var(--bg-secondary);
+        }
+        .ai-qa-ask form input {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+        .ai-qa-ask form input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        .ai-qa-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+        .ai-qa-card {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            transition: box-shadow 0.15s;
+        }
+        .ai-qa-card:hover { box-shadow: var(--shadow-sm); }
+        .ai-qa-question {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), rgba(139, 92, 246, 0.04));
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+        .ai-qa-question-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-full);
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .ai-qa-question-icon svg { width: 14px; height: 14px; color: white; }
+        .ai-qa-question-body { flex: 1; min-width: 0; }
+        .ai-qa-question-text {
+            font-weight: 600;
+            font-size: 0.9375rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .ai-qa-question-meta {
+            font-size: 0.6875rem;
+            color: var(--text-tertiary);
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        .ai-qa-answer {
+            padding: var(--spacing-lg);
+        }
+        .ai-qa-answer-label {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        .ai-qa-answer-label svg { width: 14px; height: 14px; }
+        .ai-qa-answer-content {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            word-break: break-word;
+        }
+        .ai-qa-answer-content p { margin-bottom: 0.5em; }
+        .ai-qa-answer-content strong { color: var(--text-primary); }
+        .ai-qa-answer-content ul, .ai-qa-answer-content ol {
+            padding-left: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        .ai-qa-answer-content li { margin-bottom: 0.25em; }
+        .ai-qa-answer-content code {
+            background: var(--bg-secondary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8125rem;
+        }
+        .ai-qa-answer-content pre {
+            background: var(--bg-secondary);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            margin-bottom: 0.5em;
+        }
+        .ai-qa-answer-content pre code {
+            background: none;
+            padding: 0;
+        }
+        .ai-qa-delete {
+            display: flex;
+            justify-content: flex-end;
+            padding: 0 var(--spacing-lg) var(--spacing-md);
+        }
+        .ai-qa-empty {
+            text-align: center;
+            padding: var(--spacing-3xl);
+            color: var(--text-tertiary);
+        }
+        .ai-qa-empty svg { width: 48px; height: 48px; margin-bottom: var(--spacing-sm); }
     </style>
 </head>
 <body>
@@ -544,6 +692,11 @@
                             <i data-lucide="message-circle"></i>
                             Discussion
                             <% if (messages.length > 0) { %><span class="tab-badge"><%= messages.length %></span><% } %>
+                        </button>
+                        <button class="group-tab" data-tab="ai-qa">
+                            <i data-lucide="sparkles"></i>
+                            AI Q&A
+                            <% if (aiQueries.length > 0) { %><span class="tab-badge"><%= aiQueries.length %></span><% } %>
                         </button>
                         <button class="group-tab" data-tab="members">
                             <i data-lucide="users"></i>
@@ -650,6 +803,61 @@
                                 </button>
                             </form>
                         </div>
+                    </div>
+
+                    <!-- AI Q&A Tab -->
+                    <div class="tab-content" id="tab-ai-qa">
+                        <div class="ai-qa-ask">
+                            <div class="ai-qa-ask-header">
+                                <h3><i data-lucide="sparkles"></i> Ask AI a Question</h3>
+                            </div>
+                            <form action="/groups/<%= group.id %>/ask" method="POST">
+                                <input type="text" name="question" placeholder="Ask anything... e.g. 'Explain binary search trees'" required maxlength="1000" autocomplete="off">
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-lucide="send"></i> Ask
+                                </button>
+                            </form>
+                        </div>
+
+                        <% if (aiQueries.length === 0) { %>
+                            <div class="ai-qa-empty">
+                                <i data-lucide="sparkles"></i>
+                                <h3>No questions yet</h3>
+                                <p>Ask AI a question and the answer will be shared with the group!</p>
+                            </div>
+                        <% } else { %>
+                            <div class="ai-qa-list">
+                                <% aiQueries.forEach(q => { %>
+                                    <div class="ai-qa-card">
+                                        <div class="ai-qa-question">
+                                            <div class="ai-qa-question-icon">
+                                                <i data-lucide="help-circle"></i>
+                                            </div>
+                                            <div class="ai-qa-question-body">
+                                                <div class="ai-qa-question-text"><%= q.question %></div>
+                                                <div class="ai-qa-question-meta">
+                                                    Asked by <%= q.full_name %><%= q.user_id === userId ? ' (You)' : '' %>
+                                                    · <span class="local-datetime" data-utc="<%= q.created_at %>"></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="ai-qa-answer">
+                                            <div class="ai-qa-answer-label"><i data-lucide="sparkles"></i> AI Response</div>
+                                            <div class="ai-qa-answer-content" data-markdown><%= q.response %></div>
+                                        </div>
+                                        <% if (q.user_id === userId || membership.role === 'admin') { %>
+                                            <div class="ai-qa-delete">
+                                                <form action="/groups/<%= group.id %>/ai-query/<%= q.id %>/delete" method="POST">
+                                                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error); font-size: 0.75rem;" onclick="return confirm('Delete this Q&A?')">
+                                                        <i data-lucide="trash-2"></i> Delete
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
                     </div>
 
                     <!-- Members Tab -->
@@ -799,6 +1007,9 @@
         if (window.location.hash === '#discussion') {
             document.querySelector('[data-tab="discussion"]').click();
         }
+        if (window.location.hash === '#ai-qa') {
+            document.querySelector('[data-tab="ai-qa"]').click();
+        }
 
         // Copy invite code
         function copyInviteCode() {
@@ -828,6 +1039,34 @@
         document.querySelectorAll('.local-datetime').forEach(el => {
             const d = new Date(el.dataset.utc);
             el.textContent = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+        });
+
+        // Simple markdown rendering for AI responses
+        document.querySelectorAll('[data-markdown]').forEach(el => {
+            let text = el.textContent;
+            // Escape HTML
+            text = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            // Code blocks
+            text = text.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+            // Inline code
+            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+            // Bold
+            text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            // Italic
+            text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            // Headers
+            text = text.replace(/^### (.+)$/gm, '<strong style="font-size:1em;display:block;margin:0.5em 0 0.25em;">$1</strong>');
+            text = text.replace(/^## (.+)$/gm, '<strong style="font-size:1.05em;display:block;margin:0.5em 0 0.25em;">$1</strong>');
+            // Unordered lists
+            text = text.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+            text = text.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+            // Ordered lists  
+            text = text.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+            // Paragraphs
+            text = text.replace(/\n\n/g, '</p><p>');
+            text = '<p>' + text + '</p>';
+            text = text.replace(/<p><\/p>/g, '');
+            el.innerHTML = text;
         });
     </script>
 </body>
