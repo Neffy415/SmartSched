@@ -207,7 +207,7 @@ CREATE TABLE IF NOT EXISTS reminders (
     task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
     description TEXT,
-    remind_at TIMESTAMP NOT NULL,
+    remind_at TIMESTAMPTZ NOT NULL,
     reminder_type VARCHAR(30) DEFAULT 'custom' CHECK (reminder_type IN ('task_deadline', 'study_session', 'exam', 'custom')),
     is_triggered BOOLEAN DEFAULT false,
     is_dismissed BOOLEAN DEFAULT false,

@@ -21,7 +21,6 @@ try {
 async function checkDueReminders() {
     try {
         // Find reminders that are due, not yet triggered, and not dismissed
-        // remind_at stores UTC values in a TIMESTAMP column, so explicitly interpret as UTC
         const result = await db.query(`
             SELECT r.*, u.email as user_email, u.full_name as user_name,
                    t.title as task_title
@@ -30,7 +29,7 @@ async function checkDueReminders() {
             LEFT JOIN tasks t ON r.task_id = t.id
             WHERE r.is_triggered = false
               AND r.is_dismissed = false
-              AND (r.remind_at AT TIME ZONE 'UTC') <= NOW()
+              AND r.remind_at <= NOW()
         `);
 
         for (const reminder of result.rows) {

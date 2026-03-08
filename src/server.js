@@ -72,7 +72,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`
     ╔═══════════════════════════════════════════╗
     ║                                           ║
@@ -82,6 +82,21 @@ app.listen(PORT, () => {
     ║                                           ║
     ╚═══════════════════════════════════════════╝
     `);
+
+    // One-time migration: ensure remind_at is TIMESTAMPTZ
+    try {
+        const { pool } = require('./config/database');
+        const colCheck = await pool.query(`
+            SELECT data_type FROM information_schema.columns 
+            WHERE table_name = 'reminders' AND column_name = 'remind_at'
+        `);
+        if (colCheck.rows.length > 0 && colCheck.rows[0].data_type !== 'timestamp with time zone') {
+            await pool.query(`ALTER TABLE reminders ALTER COLUMN remind_at TYPE TIMESTAMPTZ USING remind_at AT TIME ZONE 'Asia/Singapore'`);
+            console.log('✅ Migrated remind_at to TIMESTAMPTZ');
+        }
+    } catch (e) {
+        console.error('Migration check failed:', e.message);
+    }
 
     // Start background cron jobs (due reminders + streak emails)
     const { startCronJobs } = require('./services/cronJobs');
