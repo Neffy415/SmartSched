@@ -743,9 +743,9 @@
                                                 <i data-lucide="eye"></i> View
                                             </a>
                                             <% if (item.user_id === userId || membership.role === 'admin') { %>
-                                                <form action="/groups/<%= group.id %>/unshare" method="POST" style="display:inline;">
+                                                <form action="/groups/<%= group.id %>/unshare" method="POST" style="display:inline;" class="ss-delete-form" data-msg="Remove this item from the group?">
                                                     <input type="hidden" name="shared_item_id" value="<%= item.id %>">
-                                                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error);" onclick="return confirm('Remove this item from the group?')">
+                                                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error);">
                                                         <i data-lucide="x"></i>
                                                     </button>
                                                 </form>
@@ -784,8 +784,8 @@
                                             </div>
                                             <% if (msg.user_id === userId || membership.role === 'admin') { %>
                                                 <div class="message-delete">
-                                                    <form action="/groups/<%= group.id %>/message/<%= msg.id %>/delete" method="POST">
-                                                        <button type="submit" title="Delete message" onclick="return confirm('Delete this message?')">
+                                                    <form action="/groups/<%= group.id %>/message/<%= msg.id %>/delete" method="POST" class="ss-delete-form" data-msg="Delete this message?">
+                                                        <button type="submit" title="Delete message">
                                                             <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                                                         </button>
                                                     </form>
@@ -847,8 +847,8 @@
                                         </div>
                                         <% if (q.user_id === userId || membership.role === 'admin') { %>
                                             <div class="ai-qa-delete">
-                                                <form action="/groups/<%= group.id %>/ai-query/<%= q.id %>/delete" method="POST">
-                                                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error); font-size: 0.75rem;" onclick="return confirm('Delete this Q&A?')">
+                                                <form action="/groups/<%= group.id %>/ai-query/<%= q.id %>/delete" method="POST" class="ss-delete-form" data-msg="Delete this Q&A?">
+                                                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error); font-size: 0.75rem;">
                                                         <i data-lucide="trash-2"></i> Delete
                                                     </button>
                                                 </form>
@@ -878,9 +878,9 @@
                                         </div>
                                     </div>
                                     <% if (membership.role === 'admin' && member.user_id !== userId) { %>
-                                        <form action="/groups/<%= group.id %>/remove-member" method="POST" style="flex-shrink: 0;">
+                                        <form action="/groups/<%= group.id %>/remove-member" method="POST" style="flex-shrink: 0;" class="ss-delete-form" data-msg="Remove <%= member.full_name %> from the group?">
                                             <input type="hidden" name="member_user_id" value="<%= member.user_id %>">
-                                            <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error);" onclick="return confirm('Remove ' + '<%= member.full_name %>' + ' from the group?')">
+                                            <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error);">
                                                 <i data-lucide="user-x"></i>
                                             </button>
                                         </form>
@@ -893,14 +893,14 @@
                         <div class="danger-zone">
                             <h3><i data-lucide="alert-triangle" style="width: 14px; height: 14px; display: inline;"></i> Danger Zone</h3>
                             <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
-                                <form action="/groups/<%= group.id %>/leave" method="POST">
-                                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error);" onclick="return confirm('Are you sure you want to leave this group?')">
+                                <form action="/groups/<%= group.id %>/leave" method="POST" class="ss-delete-form" data-msg="Are you sure you want to leave this group?">
+                                    <button type="submit" class="btn btn-sm btn-outline" style="color: var(--error); border-color: var(--error);">
                                         <i data-lucide="log-out"></i> Leave Group
                                     </button>
                                 </form>
                                 <% if (membership.role === 'admin') { %>
-                                    <form action="/groups/<%= group.id %>/delete" method="POST">
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('DELETE this group? This cannot be undone!')">
+                                    <form action="/groups/<%= group.id %>/delete" method="POST" class="ss-delete-form" data-msg="DELETE this group? This cannot be undone!">
+                                        <button type="submit" class="btn btn-sm btn-danger">
                                             <i data-lucide="trash-2"></i> Delete Group
                                         </button>
                                     </form>
@@ -1014,17 +1014,8 @@
         // Copy invite code
         function copyInviteCode() {
             navigator.clipboard.writeText('<%= group.invite_code %>').then(() => {
-                showToast('Invite code copied!', 'success');
+                ssToast('Invite code copied!', 'success');
             });
-        }
-
-        function showToast(msg, type) {
-            const toast = document.createElement('div');
-            toast.textContent = msg;
-            toast.style.cssText = 'position:fixed;bottom:20px;right:20px;padding:12px 24px;border-radius:8px;color:white;font-size:14px;z-index:9999;animation:fadeIn 0.2s;';
-            toast.style.background = type === 'success' ? '#22c55e' : '#ef4444';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
         }
 
         // Format dates client-side

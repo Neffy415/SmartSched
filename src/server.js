@@ -82,6 +82,10 @@ app.listen(PORT, () => {
     ║                                           ║
     ╚═══════════════════════════════════════════╝
     `);
+
+    // Start background cron jobs (due reminders + streak emails)
+    const { startCronJobs } = require('./services/cronJobs');
+    startCronJobs();
 });
 
 module.exports = app;
