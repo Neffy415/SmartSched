@@ -384,11 +384,20 @@ router.post('/review', async (req, res) => {
                 repetitions = flashcard_progress.repetitions + 1
         `, [card_id, userId, nextReview, easeFactor, intervalDays, correctCount, wrongCount]);
 
+        // Award XP for flashcard review
+        let xpAwarded = 0;
+        try {
+            const { onFlashcardReview } = require('../services/gamificationService');
+            const result = await onFlashcardReview(userId, card_id, ratingNum);
+            xpAwarded = result.xpAwarded;
+        } catch (e) { console.error('XP award failed:', e.message); }
+
         res.json({ 
             success: true, 
             nextReview: nextReview.toISOString(),
             intervalDays,
-            easeFactor
+            easeFactor,
+            xpAwarded
         });
     } catch (error) {
         console.error('Error submitting review:', error);

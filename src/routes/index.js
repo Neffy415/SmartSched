@@ -182,6 +182,20 @@ router.get('/dashboard', async (req, res) => {
             WHERE grp = (SELECT grp FROM streak_calc WHERE study_date = (NOW() AT TIME ZONE $2)::date LIMIT 1)
         `, [userId, tz]);
 
+        // Get XP info
+        let xpInfo = { level: 1, currentLevelXP: 0, nextLevelXP: 100, totalXP: 0 };
+        let recentBadges = [];
+        try {
+            const { getUserXP } = require('../services/gamificationService');
+            xpInfo = await getUserXP(userId);
+            const badgeR = await pool.query(`
+                SELECT a.name, a.icon, ua.unlocked_at FROM user_achievements ua
+                JOIN achievements a ON ua.achievement_id = a.id
+                WHERE ua.user_id = $1 ORDER BY ua.unlocked_at DESC LIMIT 3
+            `, [userId]);
+            recentBadges = badgeR.rows;
+        } catch (e) { /* gamification tables may not exist yet */ }
+
         res.render('dashboard/index', { 
             title: 'Dashboard - SmartSched',
             page: 'dashboard',
@@ -200,7 +214,9 @@ router.get('/dashboard', async (req, res) => {
             },
             flashcardStats,
             quizStats,
-            todayTasks: todayTasks.slice(0, 3), // Show top 3 tasks
+            xpInfo,
+            recentBadges,
+            todayTasks: todayTasks.slice(0, 3),
             activeSession: activeSession.rows[0] || null,
             upcomingTasks: upcomingTasks.rows,
             subjects: subjects.rows,
@@ -215,6 +231,8 @@ router.get('/dashboard', async (req, res) => {
             scheduleStats: { todayPending: 0, todayCompleted: 0, todayMinutes: 0, weekTasks: 0 },
             flashcardStats: { dueToday: 0, totalCards: 0, masteryPercentage: 0 },
             quizStats: { recentScore: null, totalAttempts: 0, avgScore: 0 },
+            xpInfo: { level: 1, currentLevelXP: 0, nextLevelXP: 100, totalXP: 0 },
+            recentBadges: [],
             todayTasks: [],
             activeSession: null,
             upcomingTasks: [],

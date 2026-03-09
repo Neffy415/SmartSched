@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="page-content">
+
+                <!-- XP Header (compact) -->
+                <div class="xp-hero compact">
+                    <div class="xp-hero-left">
+                        <div class="xp-level-ring">
+                            <svg viewBox="0 0 120 120" class="level-circle">
+                                <circle cx="60" cy="60" r="54" class="level-bg"/>
+                                <circle cx="60" cy="60" r="54" class="level-fill"
+                                    style="stroke-dasharray: <%= Math.round((xpInfo.currentLevelXP / xpInfo.nextLevelXP) * 339.3) %> 339.3"/>
+                            </svg>
+                            <div class="xp-level-number"><%= xpInfo.level %></div>
+                        </div>
+                        <div class="xp-info">
+                            <h1>Level <%= xpInfo.level %> • <%= xpInfo.totalXP.toLocaleString() %> XP</h1>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="ach-tabs">
+                    <a href="/achievements" class="ach-tab">
+                        <i data-lucide="trophy"></i> Achievements
+                    </a>
+                    <a href="/achievements/leaderboard" class="ach-tab active">
+                        <i data-lucide="crown"></i> Leaderboard
+                    </a>
+                </div>
+
+                <% if (leaderboards.length === 0) { %>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="empty-state">
+                                <div class="empty-icon"><i data-lucide="users"></i></div>
+                                <h4>No Study Groups Yet</h4>
+                                <p>Join or create a study group to see leaderboards</p>
+                                <a href="/groups" class="btn btn-primary btn-sm">
+                                    <i data-lucide="plus"></i> Browse Groups
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <% leaderboards.forEach(lb => { %>
+                        <div class="card lb-card">
+                            <div class="card-header">
+                                <h3><i data-lucide="users"></i> <%= lb.group.name %></h3>
+                            </div>
+                            <div class="card-body" style="padding: 0;">
+                                <table class="lb-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px">Rank</th>
+                                            <th>Member</th>
+                                            <th style="text-align: center">Badges</th>
+                                            <th style="text-align: right">XP</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% lb.members.forEach(m => { 
+                                            const lvl = (() => { let l=1, n=0; while(n+l*100<=parseInt(m.total_xp)){n+=l*100;l++;} return l; })();
+                                        %>
+                                            <tr class="<%= m.isYou ? 'lb-you' : '' %>">
+                                                <td class="lb-rank">
+                                                    <% if (m.rank === 1) { %>
+                                                        <span class="rank-medal gold">🥇</span>
+                                                    <% } else if (m.rank === 2) { %>
+                                                        <span class="rank-medal silver">🥈</span>
+                                                    <% } else if (m.rank === 3) { %>
+                                                        <span class="rank-medal bronze">🥉</span>
+                                                    <% } else { %>
+                                                        <span class="rank-num">#<%= m.rank %></span>
+                                                    <% } %>
+                                                </td>
+                                                <td>
+                                                    <div class="lb-member">
+                                                        <div class="lb-avatar">
+                                                            <%= (m.full_name || 'U').charAt(0).toUpperCase() %>
+                                                        </div>
+                                                        <div>
+                                                            <span class="lb-name"><%= m.full_name || 'Student' %> <% if (m.isYou) { %><span class="lb-you-tag">(You)</span><% } %></span>
+                                                            <span class="lb-level">Level <%= lvl %></span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td style="text-align: center"><%= m.badge_count %></td>
+                                                <td style="text-align: right; font-weight: 700; color: #f59e0b;"><%= parseInt(m.total_xp).toLocaleString() %> XP</td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+
+    <script>
+        lucide.createIcons();
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+    </script>
+
+    <style>
+        .xp-hero.compact { padding: 1.5rem 2rem; margin-bottom: var(--spacing-lg); }
+        .xp-hero { background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: var(--radius-xl); color: white; display: flex; align-items: center; }
+        .xp-hero-left { display: flex; align-items: center; gap: 1.25rem; }
+        .xp-level-ring { position: relative; width: 60px; height: 60px; flex-shrink: 0; }
+        .level-circle { transform: rotate(-90deg); }
+        .level-bg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 8; }
+        .level-fill { fill: none; stroke: #fbbf24; stroke-width: 8; stroke-linecap: round; }
+        .xp-level-number { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800; }
+        .xp-info h1 { font-size: 1.25rem; font-weight: 700; margin: 0; }
+
+        .ach-tabs { display: flex; gap: 0.5rem; margin-bottom: var(--spacing-xl); }
+        .ach-tab { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem; border-radius: var(--radius-lg); font-weight: 600; font-size: 0.9rem; color: var(--gray-500); background: var(--gray-100); text-decoration: none; transition: all 0.2s; }
+        .ach-tab:hover { color: var(--primary); background: var(--primary-50); }
+        .ach-tab.active { color: white; background: var(--primary); }
+        .ach-tab svg { width: 16px; height: 16px; }
+
+        .lb-card { margin-bottom: var(--spacing-lg); overflow: hidden; }
+        .lb-table { width: 100%; border-collapse: collapse; }
+        .lb-table th { padding: 0.75rem 1rem; text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-500); border-bottom: 1px solid var(--border-color); }
+        .lb-table td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border-color, #f3f4f6); }
+        .lb-table tr:last-child td { border-bottom: none; }
+        .lb-you { background: rgba(99, 102, 241, 0.06); }
+        .lb-rank { text-align: center; }
+        .rank-medal { font-size: 1.3rem; }
+        .rank-num { font-weight: 700; color: var(--gray-400); }
+        .lb-member { display: flex; align-items: center; gap: 0.75rem; }
+        .lb-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+        .lb-name { font-weight: 600; color: var(--gray-900); display: block; }
+        .lb-level { font-size: 0.75rem; color: var(--gray-400); }
+        .lb-you-tag { color: var(--primary); font-size: 0.8rem; }
+
+        @media (max-width: 768px) {
+            .xp-hero.compact { padding: 1rem 1.25rem; }
+        }
+    </style>
+</body>
+</html>

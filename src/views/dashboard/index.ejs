@@ -111,6 +111,41 @@
                     </div>
                 </div>
 
+                <!-- XP & Level Widget -->
+                <div class="xp-widget">
+                    <div class="xp-widget-left">
+                        <div class="xp-widget-ring">
+                            <svg viewBox="0 0 80 80">
+                                <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="6"/>
+                                <circle cx="40" cy="40" r="34" fill="none" stroke="#fbbf24" stroke-width="6" stroke-linecap="round"
+                                    style="transform: rotate(-90deg); transform-origin: center; stroke-dasharray: <%= Math.round((xpInfo.currentLevelXP / xpInfo.nextLevelXP) * 213.6) %> 213.6"/>
+                            </svg>
+                            <span class="xp-widget-level"><%= xpInfo.level %></span>
+                        </div>
+                        <div class="xp-widget-info">
+                            <h3>Level <%= xpInfo.level %></h3>
+                            <div class="xp-widget-bar">
+                                <div class="xp-widget-bar-fill" style="width: <%= Math.round((xpInfo.currentLevelXP / xpInfo.nextLevelXP) * 100) %>%"></div>
+                            </div>
+                            <span class="xp-widget-label"><%= xpInfo.currentLevelXP %>/<%= xpInfo.nextLevelXP %> XP • <%= xpInfo.totalXP.toLocaleString() %> total</span>
+                        </div>
+                    </div>
+                    <div class="xp-widget-right">
+                        <% if (typeof recentBadges !== 'undefined' && recentBadges.length > 0) { %>
+                            <div class="xp-widget-badges">
+                                <% recentBadges.forEach(b => { %>
+                                    <div class="xp-badge-mini" title="<%= b.name %>">
+                                        <i data-lucide="<%= b.icon %>"></i>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                        <a href="/achievements" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; border: none;">
+                            <i data-lucide="trophy"></i> View All
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Study Activity Heatmap -->
                 <div class="heatmap-card">
                     <div class="heatmap-header">
@@ -467,6 +502,31 @@
     </script>
 
     <style>
+        /* XP Widget */
+        .xp-widget {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+            border-radius: var(--radius-xl);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            margin-bottom: var(--spacing-xl);
+            gap: 1rem;
+        }
+        .xp-widget-left { display: flex; align-items: center; gap: 1rem; flex: 1; }
+        .xp-widget-ring { position: relative; width: 56px; height: 56px; flex-shrink: 0; }
+        .xp-widget-level { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800; }
+        .xp-widget-info h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+        .xp-widget-bar { height: 6px; background: rgba(255,255,255,0.2); border-radius: 999px; overflow: hidden; margin: 0.35rem 0 0.25rem; min-width: 140px; }
+        .xp-widget-bar-fill { height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); border-radius: 999px; transition: width 0.8s ease; }
+        .xp-widget-label { font-size: 0.75rem; opacity: 0.8; }
+        .xp-widget-right { display: flex; align-items: center; gap: 0.75rem; }
+        .xp-widget-badges { display: flex; gap: 0.4rem; }
+        .xp-badge-mini { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; }
+        .xp-badge-mini svg { width: 16px; height: 16px; }
+        @media (max-width: 640px) { .xp-widget { flex-direction: column; align-items: flex-start; } .xp-widget-right { width: 100%; justify-content: flex-end; } }
+
         /* Smart Schedule Card Styles */
         .smart-schedule-card {
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);

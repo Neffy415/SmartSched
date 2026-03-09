@@ -231,12 +231,21 @@ router.post('/:quizId/submit', async (req, res) => {
             RETURNING id
         `, [userId, quizId, score, questions.length, percentage, timeTaken || 0, JSON.stringify(results)]);
 
+        // Award XP for quiz completion
+        let xpAwarded = 0;
+        try {
+            const { onQuizComplete } = require('../services/gamificationService');
+            const xpResult = await onQuizComplete(userId, attemptResult.rows[0].id, percentage);
+            xpAwarded = xpResult.xpAwarded;
+        } catch (e) { console.error('XP award failed:', e.message); }
+
         res.json({
             success: true,
             attemptId: attemptResult.rows[0].id,
             score,
             total: questions.length,
             percentage,
+            xpAwarded,
             results
         });
     } catch (error) {

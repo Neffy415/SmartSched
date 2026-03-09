@@ -409,6 +409,12 @@ router.post('/stop/:id', async (req, res) => {
                 updated_at = NOW()
         `, [req.session.user.id, actualMinutes, tz]);
 
+        // Award XP for study session
+        try {
+            const { onStudySessionComplete } = require('../services/gamificationService');
+            await onStudySessionComplete(req.session.user.id, req.params.id, actualMinutes);
+        } catch (e) { console.error('XP award failed:', e.message); }
+
         req.flash('success_msg', `Session completed! You studied for ${actualMinutes} minutes.`);
         res.redirect(`/study/complete/${req.params.id}`);
     } catch (error) {

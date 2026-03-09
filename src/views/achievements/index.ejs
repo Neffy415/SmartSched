@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="page-content">
+
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in"><i data-lucide="check-circle"></i><p><%= success_msg %></p></div>
+                <% } %>
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in"><i data-lucide="alert-circle"></i><p><%= error_msg %></p></div>
+                <% } %>
+
+                <!-- XP Header -->
+                <div class="xp-hero">
+                    <div class="xp-hero-left">
+                        <div class="xp-level-ring">
+                            <svg viewBox="0 0 120 120" class="level-circle">
+                                <circle cx="60" cy="60" r="54" class="level-bg"/>
+                                <circle cx="60" cy="60" r="54" class="level-fill"
+                                    style="stroke-dasharray: <%= Math.round((xpInfo.currentLevelXP / xpInfo.nextLevelXP) * 339.3) %> 339.3"/>
+                            </svg>
+                            <div class="xp-level-number"><%= xpInfo.level %></div>
+                        </div>
+                        <div class="xp-info">
+                            <h1>Level <%= xpInfo.level %></h1>
+                            <p class="xp-total"><%= xpInfo.totalXP.toLocaleString() %> Total XP</p>
+                            <div class="xp-bar-container">
+                                <div class="xp-bar">
+                                    <div class="xp-bar-fill" style="width: <%= Math.round((xpInfo.currentLevelXP / xpInfo.nextLevelXP) * 100) %>%"></div>
+                                </div>
+                                <span class="xp-bar-label"><%= xpInfo.currentLevelXP %> / <%= xpInfo.nextLevelXP %> XP to Level <%= xpInfo.level + 1 %></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="xp-hero-right">
+                        <div class="xp-stat">
+                            <span class="xp-stat-value"><%= unlockedCount %></span>
+                            <span class="xp-stat-label">Badges Earned</span>
+                        </div>
+                        <div class="xp-stat">
+                            <span class="xp-stat-value"><%= totalAchievements %></span>
+                            <span class="xp-stat-label">Total Badges</span>
+                        </div>
+                        <div class="xp-stat">
+                            <span class="xp-stat-value"><%= Math.round(unlockedCount / totalAchievements * 100) %>%</span>
+                            <span class="xp-stat-label">Completion</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="ach-tabs">
+                    <a href="/achievements" class="ach-tab active">
+                        <i data-lucide="trophy"></i> Achievements
+                    </a>
+                    <a href="/achievements/leaderboard" class="ach-tab">
+                        <i data-lucide="crown"></i> Leaderboard
+                    </a>
+                </div>
+
+                <!-- Achievement Categories -->
+                <% 
+                const categoryLabels = {
+                    streak: { name: 'Study Streaks', icon: 'flame', color: '#f97316' },
+                    study: { name: 'Study Time', icon: 'clock', color: '#6366f1' },
+                    session: { name: 'Sessions', icon: 'play-circle', color: '#10b981' },
+                    flashcard: { name: 'Flashcards', icon: 'layers', color: '#8b5cf6' },
+                    quiz: { name: 'Practice Quizzes', icon: 'brain', color: '#f59e0b' },
+                    task: { name: 'Task Completion', icon: 'check-square', color: '#14b8a6' },
+                    subject: { name: 'Subject Mastery', icon: 'book-open', color: '#ec4899' },
+                    social: { name: 'Social', icon: 'users', color: '#3b82f6' },
+                    level: { name: 'Level Milestones', icon: 'star', color: '#eab308' },
+                };
+                %>
+
+                <% Object.keys(categories).forEach(cat => { 
+                    const meta = categoryLabels[cat] || { name: cat, icon: 'award', color: '#6366f1' };
+                    const achs = categories[cat];
+                    const catUnlocked = achs.filter(a => a.unlocked).length;
+                %>
+                    <div class="ach-category">
+                        <div class="ach-category-header">
+                            <div class="ach-category-title">
+                                <i data-lucide="<%= meta.icon %>" style="color: <%= meta.color %>"></i>
+                                <h2><%= meta.name %></h2>
+                                <span class="ach-category-count"><%= catUnlocked %>/<%= achs.length %></span>
+                            </div>
+                        </div>
+                        <div class="ach-grid">
+                            <% achs.forEach(ach => { %>
+                                <div class="ach-card <%= ach.unlocked ? 'unlocked' : 'locked' %>">
+                                    <div class="ach-icon" style="<%= ach.unlocked ? 'background: linear-gradient(135deg, ' + meta.color + ', ' + meta.color + '40)' : '' %>">
+                                        <i data-lucide="<%= ach.icon %>"></i>
+                                    </div>
+                                    <div class="ach-info">
+                                        <h3><%= ach.name %></h3>
+                                        <p><%= ach.description %></p>
+                                        <span class="ach-xp">+<%= ach.xp_reward %> XP</span>
+                                    </div>
+                                    <% if (ach.unlocked) { %>
+                                        <div class="ach-check"><i data-lucide="check-circle-2"></i></div>
+                                    <% } %>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% }); %>
+
+                <!-- Recent XP Activity -->
+                <div class="card" style="margin-top: var(--spacing-xl);">
+                    <div class="card-header">
+                        <h3><i data-lucide="activity"></i> Recent XP Activity</h3>
+                    </div>
+                    <div class="card-body">
+                        <% if (recentXP.length === 0) { %>
+                            <div class="empty-state small">
+                                <i data-lucide="sparkles"></i>
+                                <p>Start studying to earn XP!</p>
+                            </div>
+                        <% } else { %>
+                            <div class="xp-log-list">
+                                <% recentXP.forEach(entry => { %>
+                                    <div class="xp-log-item">
+                                        <div class="xp-log-info">
+                                            <span class="xp-log-desc"><%= entry.description || entry.source %></span>
+                                            <span class="xp-log-time"><%= new Date(entry.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></span>
+                                        </div>
+                                        <span class="xp-log-amount">+<%= entry.amount %> XP</span>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+
+    <script>
+        lucide.createIcons();
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+    </script>
+
+    <style>
+        /* XP Hero */
+        .xp-hero {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+            border-radius: var(--radius-xl);
+            padding: 2rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            margin-bottom: var(--spacing-xl);
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .xp-hero-left { display: flex; align-items: center; gap: 1.5rem; }
+        .xp-level-ring { position: relative; width: 100px; height: 100px; flex-shrink: 0; }
+        .level-circle { transform: rotate(-90deg); }
+        .level-bg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 8; }
+        .level-fill { fill: none; stroke: #fbbf24; stroke-width: 8; stroke-linecap: round; transition: stroke-dasharray 1s ease; }
+        .xp-level-number {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 2rem; font-weight: 800;
+        }
+        .xp-info h1 { font-size: 1.75rem; font-weight: 800; margin: 0; }
+        .xp-total { opacity: 0.85; margin: 0.25rem 0 0.75rem; font-size: 0.95rem; }
+        .xp-bar-container { min-width: 250px; }
+        .xp-bar { height: 10px; background: rgba(255,255,255,0.2); border-radius: 999px; overflow: hidden; }
+        .xp-bar-fill { height: 100%; background: linear-gradient(90deg, #fbbf24, #f59e0b); border-radius: 999px; transition: width 1s ease; }
+        .xp-bar-label { font-size: 0.8rem; opacity: 0.8; margin-top: 0.35rem; display: block; }
+        .xp-hero-right { display: flex; gap: 1.5rem; }
+        .xp-stat { text-align: center; }
+        .xp-stat-value { display: block; font-size: 1.75rem; font-weight: 800; }
+        .xp-stat-label { font-size: 0.75rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Tabs */
+        .ach-tabs { display: flex; gap: 0.5rem; margin-bottom: var(--spacing-xl); }
+        .ach-tab {
+            display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.25rem;
+            border-radius: var(--radius-lg); font-weight: 600; font-size: 0.9rem;
+            color: var(--gray-500); background: var(--gray-100); text-decoration: none;
+            transition: all 0.2s;
+        }
+        .ach-tab:hover { color: var(--primary); background: var(--primary-50); }
+        .ach-tab.active { color: white; background: var(--primary); }
+        .ach-tab svg { width: 16px; height: 16px; }
+
+        /* Category */
+        .ach-category { margin-bottom: var(--spacing-xl); }
+        .ach-category-header { margin-bottom: var(--spacing-md); }
+        .ach-category-title { display: flex; align-items: center; gap: 0.5rem; }
+        .ach-category-title h2 { font-size: 1.1rem; font-weight: 700; margin: 0; color: var(--gray-900); }
+        .ach-category-title svg { width: 20px; height: 20px; }
+        .ach-category-count {
+            font-size: 0.75rem; font-weight: 600; background: var(--gray-100);
+            padding: 0.2rem 0.6rem; border-radius: 999px; color: var(--gray-500);
+        }
+
+        /* Achievement Grid */
+        .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-md); }
+        .ach-card {
+            display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem;
+            background: var(--card-bg, white); border: 1px solid var(--border-color, #e5e7eb);
+            border-radius: var(--radius-lg); transition: all 0.2s; position: relative;
+        }
+        .ach-card.unlocked {
+            border-color: transparent;
+            box-shadow: 0 2px 12px rgba(99, 102, 241, 0.15);
+        }
+        .ach-card.locked { opacity: 0.5; }
+        .ach-card.locked .ach-icon { background: var(--gray-100); color: var(--gray-400); }
+        .ach-icon {
+            width: 48px; height: 48px; border-radius: var(--radius-lg);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; color: white;
+        }
+        .ach-icon svg { width: 24px; height: 24px; }
+        .ach-card.locked .ach-icon svg { color: var(--gray-400); }
+        .ach-info h3 { font-size: 0.95rem; font-weight: 700; margin: 0; color: var(--gray-900); }
+        .ach-info p { font-size: 0.8rem; color: var(--gray-500); margin: 0.15rem 0; }
+        .ach-xp { font-size: 0.75rem; font-weight: 700; color: #f59e0b; }
+        .ach-check { position: absolute; top: 0.75rem; right: 0.75rem; color: #10b981; }
+        .ach-check svg { width: 20px; height: 20px; }
+
+        /* XP Log */
+        .xp-log-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .xp-log-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 1rem; background: var(--gray-50, #f9fafb);
+            border-radius: var(--radius-md);
+        }
+        .xp-log-desc { font-size: 0.875rem; font-weight: 500; color: var(--gray-800); }
+        .xp-log-time { font-size: 0.75rem; color: var(--gray-400); display: block; margin-top: 0.15rem; }
+        .xp-log-amount { font-weight: 700; color: #f59e0b; font-size: 0.9rem; white-space: nowrap; }
+
+        @media (max-width: 768px) {
+            .xp-hero { padding: 1.5rem; flex-direction: column; align-items: flex-start; }
+            .xp-hero-right { width: 100%; justify-content: space-around; }
+            .xp-bar-container { min-width: unset; width: 100%; }
+            .ach-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</body>
+</html>

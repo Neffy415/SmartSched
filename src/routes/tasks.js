@@ -403,7 +403,7 @@ router.post('/:id/status', async (req, res) => {
             WHERE id = $2 AND user_id = $3
         `, [status, req.params.id, req.session.user.id]);
 
-        // If completed, also log progress
+        // If completed, also log progress and award XP
         if (status === 'completed') {
             const taskResult = await pool.query(
                 'SELECT topic_id FROM tasks WHERE id = $1',
@@ -416,6 +416,11 @@ router.post('/:id/status', async (req, res) => {
                     VALUES ($1, $2, $3, 100, 'Completed task')
                 `, [req.session.user.id, taskResult.rows[0].topic_id, req.params.id]);
             }
+
+            try {
+                const { onTaskComplete } = require('../services/gamificationService');
+                await onTaskComplete(req.session.user.id, req.params.id);
+            } catch (e) { console.error('XP award failed:', e.message); }
         }
 
         res.redirect('back');
