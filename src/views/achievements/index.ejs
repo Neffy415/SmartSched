@@ -222,14 +222,14 @@
         .ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--spacing-md); }
         .ach-card {
             display: flex; align-items: center; gap: 1rem; padding: 1rem 1.25rem;
-            background: var(--card-bg, white); border: 1px solid var(--border-color, #e5e7eb);
+            background: var(--bg-primary, white); border: 1px solid var(--border-color, #e5e7eb);
             border-radius: var(--radius-lg); transition: all 0.2s; position: relative;
         }
         .ach-card.unlocked {
             border-color: transparent;
             box-shadow: 0 2px 12px rgba(99, 102, 241, 0.15);
         }
-        .ach-card.locked { opacity: 0.5; }
+        .ach-card.locked { opacity: 0.6; filter: grayscale(0.3); }
         .ach-card.locked .ach-icon { background: var(--gray-100); color: var(--gray-400); }
         .ach-icon {
             width: 48px; height: 48px; border-radius: var(--radius-lg);
@@ -260,6 +260,45 @@
             .xp-hero-right { width: 100%; justify-content: space-around; }
             .xp-bar-container { min-width: unset; width: 100%; }
             .ach-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Dark Mode */
+        [data-theme="dark"] .xp-hero {
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 50%, #7c3aed 100%);
+        }
+        [data-theme="dark"] .ach-tab {
+            background: #1e293b;
+            color: #9ca3af;
+        }
+        [data-theme="dark"] .ach-tab:hover {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+        }
+        [data-theme="dark"] .ach-tab.active {
+            background: #6366f1;
+            color: white;
+        }
+        [data-theme="dark"] .ach-card {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        [data-theme="dark"] .ach-card.unlocked {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 2px 12px rgba(99, 102, 241, 0.1);
+        }
+        [data-theme="dark"] .ach-card.locked .ach-icon {
+            background: #334155;
+            color: #64748b;
+        }
+        [data-theme="dark"] .ach-card.locked .ach-icon svg {
+            color: #64748b;
+        }
+        [data-theme="dark"] .ach-category-count {
+            background: #334155;
+            color: #9ca3af;
+        }
+        [data-theme="dark"] .xp-log-item {
+            background: #1e293b;
         }
     </style>
 </body>
