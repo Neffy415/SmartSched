@@ -29,10 +29,18 @@
                     </div>
                     <span class="logo-text">SmartSched</span>
                 </a>
+                <div class="navbar-links">
+                    <a href="#features" class="nav-link">Features</a>
+                    <a href="#showcase" class="nav-link">AI Power</a>
+                    <a href="#how-it-works" class="nav-link">How It Works</a>
+                </div>
                 <div class="navbar-actions">
                     <a href="/auth/login" class="btn btn-ghost">Log In</a>
                     <a href="/auth/register" class="btn btn-primary">Get Started</a>
                 </div>
+                <button class="mobile-menu-btn" aria-label="Menu">
+                    <i data-lucide="menu"></i>
+                </button>
             </div>
         </div>
     </nav>
@@ -40,74 +48,136 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-bg">
-            <div class="hero-gradient"></div>
-            <div class="hero-pattern"></div>
+            <div class="mesh-gradient"></div>
+            <div class="hero-grid"></div>
+            <div class="hero-orb orb-1"></div>
+            <div class="hero-orb orb-2"></div>
+            <div class="hero-orb orb-3"></div>
         </div>
         <div class="container">
             <div class="hero-content">
-                <div class="hero-badge animate-fade-in">
-                    <i data-lucide="sparkles"></i>
-                    <span>AI-Powered Study Scheduling</span>
+                <div class="hero-badge reveal">
+                    <span class="badge-pulse"></span>
+                    <span>AI-Powered Learning Platform</span>
                 </div>
-                <h1 class="hero-title animate-slide-up">
+                <h1 class="hero-title reveal">
                     Study Smarter,<br>
                     <span class="text-gradient">Not Harder</span>
                 </h1>
-                <p class="hero-subtitle animate-slide-up">
-                    SmartSched creates personalized study schedules that adapt to your learning pace, 
-                    track your progress, and help you excel in your exams.
+                <p class="hero-subtitle reveal">
+                    Your all-in-one AI study companion — smart scheduling, live exam simulations, 
+                    interactive concept maps, and gamified learning to ace your exams.
                 </p>
-                <div class="hero-actions animate-slide-up">
-                    <a href="/auth/register" class="btn btn-primary btn-lg">
+                <div class="hero-actions reveal">
+                    <a href="/auth/register" class="btn btn-primary btn-lg btn-glow">
                         <i data-lucide="rocket"></i>
                         Start Free Today
                     </a>
-                    <a href="#features" class="btn btn-secondary btn-lg">
+                    <a href="#features" class="btn btn-glass btn-lg">
                         <i data-lucide="play-circle"></i>
-                        See How It Works
+                        Explore Features
                     </a>
                 </div>
-                <div class="hero-stats animate-fade-in">
-                    <div class="stat">
-                        <span class="stat-value">10,000+</span>
-                        <span class="stat-label">Study Sessions</span>
+                <div class="hero-trust reveal">
+                    <div class="trust-avatars">
+                        <div class="avatar" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">S</div>
+                        <div class="avatar" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">A</div>
+                        <div class="avatar" style="background: linear-gradient(135deg, #10b981, #14b8a6);">M</div>
+                        <div class="avatar" style="background: linear-gradient(135deg, #f59e0b, #f97316);">R</div>
+                        <div class="avatar" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">K</div>
                     </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat">
-                        <span class="stat-value">95%</span>
-                        <span class="stat-label">Success Rate</span>
-                    </div>
-                    <div class="stat-divider"></div>
-                    <div class="stat">
-                        <span class="stat-value">4.9/5</span>
-                        <span class="stat-label">Student Rating</span>
-                    </div>
+                    <p>Trusted by <strong>students</strong> who want to ace their exams</p>
                 </div>
             </div>
-            <div class="hero-image animate-slide-up">
-                <div class="dashboard-preview">
-                    <div class="preview-header">
+            <div class="hero-visual reveal">
+                <div class="app-preview">
+                    <div class="preview-bar">
                         <div class="preview-dots">
                             <span></span><span></span><span></span>
                         </div>
-                        <span class="preview-title">Dashboard</span>
+                        <span class="preview-url">smartsched.app/dashboard</span>
                     </div>
-                    <div class="preview-content">
-                        <div class="preview-sidebar">
-                            <div class="preview-menu-item active"></div>
-                            <div class="preview-menu-item"></div>
-                            <div class="preview-menu-item"></div>
-                            <div class="preview-menu-item"></div>
+                    <div class="preview-body">
+                        <div class="preview-side">
+                            <div class="ps-item active"><i data-lucide="layout-dashboard"></i></div>
+                            <div class="ps-item"><i data-lucide="book-open"></i></div>
+                            <div class="ps-item"><i data-lucide="brain"></i></div>
+                            <div class="ps-item"><i data-lucide="trophy"></i></div>
                         </div>
                         <div class="preview-main">
-                            <div class="preview-card"></div>
-                            <div class="preview-cards-row">
-                                <div class="preview-card-sm"></div>
-                                <div class="preview-card-sm"></div>
-                                <div class="preview-card-sm"></div>
+                            <div class="pm-greeting">Welcome back! 👋</div>
+                            <div class="pm-stats-row">
+                                <div class="pm-stat" style="border-left: 3px solid #6366f1;">
+                                    <span class="pm-stat-val">12</span>
+                                    <span class="pm-stat-lbl">Topics</span>
+                                </div>
+                                <div class="pm-stat" style="border-left: 3px solid #10b981;">
+                                    <span class="pm-stat-val">85%</span>
+                                    <span class="pm-stat-lbl">Progress</span>
+                                </div>
+                                <div class="pm-stat" style="border-left: 3px solid #f59e0b;">
+                                    <span class="pm-stat-val">1,250</span>
+                                    <span class="pm-stat-lbl">XP</span>
+                                </div>
                             </div>
-                            <div class="preview-chart"></div>
+                            <div class="pm-chart">
+                                <div class="pm-bar" style="--bar-h: 40%; --bar-color: #6366f1;"></div>
+                                <div class="pm-bar" style="--bar-h: 65%; --bar-color: #818cf8;"></div>
+                                <div class="pm-bar" style="--bar-h: 45%; --bar-color: #6366f1;"></div>
+                                <div class="pm-bar" style="--bar-h: 80%; --bar-color: #818cf8;"></div>
+                                <div class="pm-bar" style="--bar-h: 55%; --bar-color: #6366f1;"></div>
+                                <div class="pm-bar" style="--bar-h: 90%; --bar-color: #818cf8;"></div>
+                                <div class="pm-bar" style="--bar-h: 70%; --bar-color: #6366f1;"></div>
+                            </div>
                         </div>
+                    </div>
+                </div>
+                <div class="float-card fc-1">
+                    <i data-lucide="zap"></i>
+                    <div><strong>Exam Complete!</strong><br><small>Score: 92%</small></div>
+                </div>
+                <div class="float-card fc-2">
+                    <i data-lucide="trophy"></i>
+                    <div><strong>Achievement!</strong><br><small>+100 XP earned</small></div>
+                </div>
+                <div class="float-card fc-3">
+                    <i data-lucide="flame"></i>
+                    <div><strong>7 Day Streak!</strong><br><small>Keep it up!</small></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Bar -->
+    <section class="stats-bar">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item reveal">
+                    <div class="stat-icon"><i data-lucide="brain"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-number" data-target="15">0</span><span class="stat-suffix">+</span>
+                        <span class="stat-text">AI Features</span>
+                    </div>
+                </div>
+                <div class="stat-item reveal">
+                    <div class="stat-icon"><i data-lucide="layers"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-number" data-target="6">0</span>
+                        <span class="stat-text">Study Modes</span>
+                    </div>
+                </div>
+                <div class="stat-item reveal">
+                    <div class="stat-icon"><i data-lucide="bar-chart-3"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-number" data-target="24">0</span><span class="stat-suffix">/7</span>
+                        <span class="stat-text">Progress Tracking</span>
+                    </div>
+                </div>
+                <div class="stat-item reveal">
+                    <div class="stat-icon"><i data-lucide="shield-check"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-number" data-target="100">0</span><span class="stat-suffix">%</span>
+                        <span class="stat-text">Free to Use</span>
                     </div>
                 </div>
             </div>
@@ -117,89 +187,252 @@
     <!-- Features Section -->
     <section id="features" class="features">
         <div class="container">
-            <div class="section-header">
+            <div class="section-header reveal">
                 <span class="section-badge">Features</span>
-                <h2>Everything You Need to Excel</h2>
-                <p>Powerful tools designed to optimize your study sessions and boost your academic performance.</p>
+                <h2>Everything You Need to <span class="text-gradient">Excel</span></h2>
+                <p>A comprehensive suite of intelligent tools designed to transform how you study.</p>
             </div>
             <div class="features-grid">
-                <div class="feature-card">
+                <div class="feature-card reveal">
+                    <div class="feature-glow" style="--glow: 99, 102, 241;"></div>
                     <div class="feature-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
                         <i data-lucide="brain"></i>
                     </div>
                     <h3>AI-Powered Scheduling</h3>
-                    <p>Our intelligent algorithm creates personalized study schedules based on your syllabus, deadlines, and learning patterns.</p>
+                    <p>Personalized study plans based on your syllabus, deadlines, and learning patterns.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal">
+                    <div class="feature-glow" style="--glow: 16, 185, 129;"></div>
                     <div class="feature-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
                         <i data-lucide="trending-up"></i>
                     </div>
-                    <h3>Progress Tracking</h3>
-                    <p>Monitor your study sessions, identify weak topics, and watch your improvement with detailed analytics.</p>
+                    <h3>Progress Analytics</h3>
+                    <p>Detailed heatmaps, charts, and insights to track your improvement over time.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal">
+                    <div class="feature-glow" style="--glow: 245, 158, 11;"></div>
                     <div class="feature-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
-                        <i data-lucide="book-open"></i>
+                        <i data-lucide="layers"></i>
                     </div>
-                    <h3>Smart Revisions</h3>
-                    <p>Spaced repetition and intelligent revision scheduling to ensure long-term retention of concepts.</p>
+                    <h3>Flashcards & Revision</h3>
+                    <p>Create flashcard sets with spaced repetition for long-term knowledge retention.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal">
+                    <div class="feature-glow" style="--glow: 236, 72, 153;"></div>
                     <div class="feature-icon" style="background: linear-gradient(135deg, #ec4899, #f43f5e);">
                         <i data-lucide="zap"></i>
                     </div>
                     <h3>Live Exam Simulator</h3>
-                    <p>AI-generated practice exams with real-time scoring, difficulty analysis, and detailed performance breakdowns to boost your confidence.</p>
+                    <p>AI-generated practice exams with real-time scoring and difficulty analysis.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal">
+                    <div class="feature-glow" style="--glow: 59, 130, 246;"></div>
                     <div class="feature-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">
                         <i data-lucide="git-branch"></i>
                     </div>
-                    <h3>Concept Graph Visualizer</h3>
-                    <p>Interactive visual maps showing how concepts relate and build on each other. Explore knowledge connections in an intuitive network.</p>
+                    <h3>Concept Graph</h3>
+                    <p>Interactive visual maps showing how concepts relate and build on each other.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal">
+                    <div class="feature-glow" style="--glow: 139, 92, 246;"></div>
                     <div class="feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #a855f7);">
                         <i data-lucide="trophy"></i>
                     </div>
-                    <h3>Achievements & Gamification</h3>
-                    <p>Earn XP, unlock badges, climb the leaderboard, and maintain streaks. Studying becomes rewarding and motivating.</p>
+                    <h3>Gamification & XP</h3>
+                    <p>Earn XP, unlock achievements, maintain streaks, and compete on the leaderboard.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-glow" style="--glow: 14, 165, 233;"></div>
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #0ea5e9, #06b6d4);">
+                        <i data-lucide="message-square"></i>
+                    </div>
+                    <h3>AI Study Assistant</h3>
+                    <p>Get instant explanations, generate notes, and receive personalized study advice.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-glow" style="--glow: 34, 197, 94;"></div>
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #22c55e, #16a34a);">
+                        <i data-lucide="users"></i>
+                    </div>
+                    <h3>Study Groups</h3>
+                    <p>Collaborate with peers, share knowledge, and discuss topics in group Q&A.</p>
+                </div>
+                <div class="feature-card reveal">
+                    <div class="feature-glow" style="--glow: 244, 63, 94;"></div>
+                    <div class="feature-icon" style="background: linear-gradient(135deg, #f43f5e, #e11d48);">
+                        <i data-lucide="timer"></i>
+                    </div>
+                    <h3>Study Timer</h3>
+                    <p>Focus timer with session logging, break reminders, and daily study streaks.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AI Showcase Section -->
+    <section id="showcase" class="showcase">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-badge">AI Superpowers</span>
+                <h2>Experience the Future of <span class="text-gradient">Learning</span></h2>
+                <p>Three groundbreaking AI features that set SmartSched apart.</p>
+            </div>
+
+            <!-- Exam Simulator -->
+            <div class="showcase-item reveal">
+                <div class="showcase-text">
+                    <div class="showcase-badge" style="--badge-bg: linear-gradient(135deg, #ec4899, #f43f5e);">
+                        <i data-lucide="zap"></i>
+                    </div>
+                    <h3>Live Exam Simulator</h3>
+                    <p>Generate full practice exams instantly with AI. Choose your subject, set difficulty, and take a timed exam with auto-scoring.</p>
+                    <ul class="showcase-list">
+                        <li><i data-lucide="check"></i> AI generates unique questions each time</li>
+                        <li><i data-lucide="check"></i> Timed exams with question navigator</li>
+                        <li><i data-lucide="check"></i> Topic & difficulty performance breakdown</li>
+                        <li><i data-lucide="check"></i> Detailed explanations for every answer</li>
+                    </ul>
+                </div>
+                <div class="showcase-visual">
+                    <div class="mockup exam-mockup">
+                        <div class="mockup-top">
+                            <span class="mockup-timer"><i data-lucide="clock"></i> 45:00</span>
+                            <span class="mockup-progress">Q 8 / 20</span>
+                        </div>
+                        <div class="mockup-q">What is the primary function of mitochondria in a cell?</div>
+                        <div class="mockup-opts">
+                            <div class="mockup-opt">A. Protein synthesis</div>
+                            <div class="mockup-opt selected">B. ATP production</div>
+                            <div class="mockup-opt">C. Cell division</div>
+                            <div class="mockup-opt">D. DNA replication</div>
+                        </div>
+                        <div class="mockup-ring">
+                            <svg viewBox="0 0 80 80">
+                                <circle cx="40" cy="40" r="32" fill="none" stroke="currentColor" stroke-width="6" opacity="0.15"/>
+                                <circle cx="40" cy="40" r="32" fill="none" stroke="#10b981" stroke-width="6" stroke-dasharray="175" stroke-dashoffset="14" stroke-linecap="round" transform="rotate(-90 40 40)"/>
+                            </svg>
+                            <span>92%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Concept Graph -->
+            <div class="showcase-item reverse reveal">
+                <div class="showcase-text">
+                    <div class="showcase-badge" style="--badge-bg: linear-gradient(135deg, #3b82f6, #6366f1);">
+                        <i data-lucide="git-branch"></i>
+                    </div>
+                    <h3>Concept Graph Visualizer</h3>
+                    <p>See how concepts connect in an interactive network diagram. Understand prerequisites, relationships, and learning paths at a glance.</p>
+                    <ul class="showcase-list">
+                        <li><i data-lucide="check"></i> AI-generated knowledge maps</li>
+                        <li><i data-lucide="check"></i> Color-coded concept clusters</li>
+                        <li><i data-lucide="check"></i> Drag, zoom, and explore nodes</li>
+                        <li><i data-lucide="check"></i> Click nodes for detailed info</li>
+                    </ul>
+                </div>
+                <div class="showcase-visual">
+                    <div class="mockup graph-mockup">
+                        <div class="graph-node gn-center" style="--nc: #6366f1;">Physics</div>
+                        <div class="graph-node gn-1" style="--nc: #ec4899;">Force</div>
+                        <div class="graph-node gn-2" style="--nc: #10b981;">Energy</div>
+                        <div class="graph-node gn-3" style="--nc: #f59e0b;">Motion</div>
+                        <div class="graph-node gn-4" style="--nc: #3b82f6;">Waves</div>
+                        <div class="graph-node gn-5" style="--nc: #8b5cf6;">Gravity</div>
+                        <svg class="graph-lines" viewBox="0 0 300 250">
+                            <line x1="150" y1="125" x2="60" y2="50" stroke="#6366f1" stroke-width="2" opacity="0.4"/>
+                            <line x1="150" y1="125" x2="250" y2="45" stroke="#6366f1" stroke-width="2" opacity="0.4"/>
+                            <line x1="150" y1="125" x2="50" y2="200" stroke="#6366f1" stroke-width="2" opacity="0.4"/>
+                            <line x1="150" y1="125" x2="260" y2="190" stroke="#6366f1" stroke-width="2" opacity="0.4"/>
+                            <line x1="150" y1="125" x2="150" y2="20" stroke="#6366f1" stroke-width="2" opacity="0.4"/>
+                            <line x1="60" y1="50" x2="50" y2="200" stroke="#ec4899" stroke-width="1.5" opacity="0.2" stroke-dasharray="4"/>
+                            <line x1="250" y1="45" x2="260" y2="190" stroke="#10b981" stroke-width="1.5" opacity="0.2" stroke-dasharray="4"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gamification -->
+            <div class="showcase-item reveal">
+                <div class="showcase-text">
+                    <div class="showcase-badge" style="--badge-bg: linear-gradient(135deg, #8b5cf6, #a855f7);">
+                        <i data-lucide="trophy"></i>
+                    </div>
+                    <h3>Gamification & Achievements</h3>
+                    <p>Transform study sessions into a rewarding game. Earn XP for every activity, unlock achievements, and compete on leaderboards.</p>
+                    <ul class="showcase-list">
+                        <li><i data-lucide="check"></i> Earn XP for every study activity</li>
+                        <li><i data-lucide="check"></i> 30+ achievements to unlock</li>
+                        <li><i data-lucide="check"></i> Daily streaks with bonus rewards</li>
+                        <li><i data-lucide="check"></i> Compete on the leaderboard</li>
+                    </ul>
+                </div>
+                <div class="showcase-visual">
+                    <div class="mockup gm-mockup">
+                        <div class="gm-xp-bar">
+                            <div class="gm-xp-fill"></div>
+                            <span>Level 12 — 2,450 XP</span>
+                        </div>
+                        <div class="gm-badges">
+                            <div class="gm-badge" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                                <i data-lucide="flame"></i>
+                            </div>
+                            <div class="gm-badge" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                                <i data-lucide="target"></i>
+                            </div>
+                            <div class="gm-badge" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                                <i data-lucide="award"></i>
+                            </div>
+                            <div class="gm-badge locked">
+                                <i data-lucide="lock"></i>
+                            </div>
+                        </div>
+                        <div class="gm-streak">
+                            <span class="gm-streak-fire">🔥</span>
+                            <span class="gm-streak-num">7</span>
+                            <span class="gm-streak-lbl">Day Streak</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- How It Works -->
-    <section class="how-it-works">
+    <section id="how-it-works" class="how-it-works">
         <div class="container">
-            <div class="section-header">
+            <div class="section-header reveal">
                 <span class="section-badge">How It Works</span>
-                <h2>Get Started in Minutes</h2>
-                <p>Simple setup, powerful results. Start optimizing your study sessions today.</p>
+                <h2>Get Started in <span class="text-gradient">3 Steps</span></h2>
+                <p>Simple setup, powerful results. Begin your learning transformation today.</p>
             </div>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3>Add Your Subjects</h3>
-                        <p>Enter your subjects, topics, and exam dates. Upload your syllabus or notes for automatic topic extraction.</p>
+            <div class="steps-grid">
+                <div class="step-card reveal">
+                    <div class="step-num">1</div>
+                    <div class="step-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+                        <i data-lucide="plus-circle"></i>
                     </div>
+                    <h3>Add Your Subjects</h3>
+                    <p>Enter your subjects, topics, and exam dates. Upload study materials for automatic topic extraction.</p>
                 </div>
-                <div class="step-connector"></div>
-                <div class="step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3>Get Your Schedule</h3>
-                        <p>Our AI generates an optimized study plan considering difficulty, importance, and your available time.</p>
+                <div class="step-line reveal"></div>
+                <div class="step-card reveal">
+                    <div class="step-num">2</div>
+                    <div class="step-icon" style="background: linear-gradient(135deg, #10b981, #14b8a6);">
+                        <i data-lucide="sparkles"></i>
                     </div>
+                    <h3>AI Creates Your Plan</h3>
+                    <p>Our AI generates an optimized study plan with flashcards, practice exams, and concept maps.</p>
                 </div>
-                <div class="step-connector"></div>
-                <div class="step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3>Study & Track</h3>
-                        <p>Follow your personalized schedule, log your progress, and watch as the system adapts to help you improve.</p>
+                <div class="step-line reveal"></div>
+                <div class="step-card reveal">
+                    <div class="step-num">3</div>
+                    <div class="step-icon" style="background: linear-gradient(135deg, #f59e0b, #f97316);">
+                        <i data-lucide="rocket"></i>
                     </div>
+                    <h3>Study, Earn & Excel</h3>
+                    <p>Follow your schedule, earn XP & achievements, track progress, and ace your exams.</p>
                 </div>
             </div>
         </div>
@@ -209,26 +442,19 @@
     <section class="cta">
         <div class="container">
             <div class="cta-card">
-                <div class="cta-content">
-                    <h2>Ready to Transform Your Study Routine?</h2>
-                    <p>Join thousands of students who are already studying smarter with SmartSched.</p>
-                    <a href="/auth/register" class="btn btn-primary btn-lg">
+                <div class="cta-glow cta-glow-1"></div>
+                <div class="cta-glow cta-glow-2"></div>
+                <div class="cta-inner reveal">
+                    <h2>Ready to Transform How You Study?</h2>
+                    <p>Join students who are already learning smarter with AI-powered tools, gamification, and interactive concept maps.</p>
+                    <a href="/auth/register" class="btn btn-white btn-lg">
                         <i data-lucide="arrow-right"></i>
                         Get Started for Free
                     </a>
-                </div>
-                <div class="cta-decoration">
-                    <div class="floating-card card-1">
-                        <i data-lucide="check-circle"></i>
-                        <span>Task Completed!</span>
-                    </div>
-                    <div class="floating-card card-2">
-                        <i data-lucide="trophy"></i>
-                        <span>+50 Points</span>
-                    </div>
-                    <div class="floating-card card-3">
-                        <i data-lucide="flame"></i>
-                        <span>7 Day Streak!</span>
+                    <div class="cta-perks">
+                        <span><i data-lucide="check-circle"></i> No credit card required</span>
+                        <span><i data-lucide="check-circle"></i> Free forever</span>
+                        <span><i data-lucide="check-circle"></i> Setup in 2 minutes</span>
                     </div>
                 </div>
             </div>
@@ -246,18 +472,19 @@
                         </div>
                         <span class="logo-text">SmartSched</span>
                     </a>
-                    <p>Intelligent study scheduling for academic success.</p>
+                    <p>Your AI-powered study companion for academic success.</p>
                 </div>
                 <div class="footer-links">
                     <div class="footer-column">
                         <h4>Product</h4>
                         <a href="#features">Features</a>
+                        <a href="#showcase">AI Power</a>
                         <a href="#how-it-works">How It Works</a>
                     </div>
                     <div class="footer-column">
-                        <h4>Support</h4>
-                        <a href="#">Help Center</a>
-                        <a href="#">Contact Us</a>
+                        <h4>Get Started</h4>
+                        <a href="/auth/register">Create Account</a>
+                        <a href="/auth/login">Log In</a>
                     </div>
                 </div>
             </div>
@@ -275,11 +502,55 @@
             anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
         });
+
+        // Scroll reveal animations
+        const revealEls = document.querySelectorAll('.reveal');
+        const revealObs = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    revealObs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+        revealEls.forEach(el => revealObs.observe(el));
+
+        // Animated counters
+        const counters = document.querySelectorAll('.stat-number');
+        const cntObs = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const t = +entry.target.dataset.target;
+                    let c = 0;
+                    const s = t / 40;
+                    const timer = setInterval(() => {
+                        c += s;
+                        if (c >= t) { c = t; clearInterval(timer); }
+                        entry.target.textContent = Math.floor(c);
+                    }, 30);
+                    cntObs.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        counters.forEach(el => cntObs.observe(el));
+
+        // Navbar scroll effect
+        const nav = document.querySelector('.navbar');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Mobile menu
+        const menuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.querySelector('.navbar-links');
+        if (menuBtn) {
+            menuBtn.addEventListener('click', () => {
+                navLinks.classList.toggle('open');
+            });
+        }
     </script>
 </body>
 </html>
