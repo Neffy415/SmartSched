@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="page-content">
+
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in"><i data-lucide="check-circle"></i><p><%= success_msg %></p></div>
+                <% } %>
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in"><i data-lucide="alert-circle"></i><p><%= error_msg %></p></div>
+                <% } %>
+
+                <!-- Hero -->
+                <div class="cg-hero">
+                    <div class="cg-hero-content">
+                        <div class="cg-hero-icon">
+                            <i data-lucide="git-branch"></i>
+                        </div>
+                        <div>
+                            <h1>Concept Graph</h1>
+                            <p>Visualize how your topics and concepts connect to each other</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generate Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i data-lucide="sparkles"></i> Generate Concept Map</h3>
+                    </div>
+                    <div class="card-body">
+                        <% if (subjects.length === 0) { %>
+                            <div class="empty-state small">
+                                <i data-lucide="book-open"></i>
+                                <p>Add subjects and topics first to generate concept maps</p>
+                                <a href="/subjects" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> Add Subject</a>
+                            </div>
+                        <% } else { %>
+                            <div class="cg-generate-row">
+                                <select id="subjectSelect" class="form-input" style="max-width: 300px;">
+                                    <option value="">Select a subject...</option>
+                                    <% subjects.forEach(s => { %>
+                                        <option value="<%= s.id %>" data-color="<%= s.color %>"><%= s.name %> (<%= s.topic_count %> topics)</option>
+                                    <% }); %>
+                                </select>
+                                <button class="btn btn-primary" id="generateBtn" onclick="generateGraph()">
+                                    <i data-lucide="sparkles"></i> Generate Map
+                                </button>
+                            </div>
+                            <div class="cg-loading" id="loadingState" style="display: none;">
+                                <div class="cg-loading-spinner"></div>
+                                <p>AI is mapping concepts and relationships...</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Saved Graphs -->
+                <% if (graphs.length > 0) { %>
+                    <div class="card" style="margin-top: var(--spacing-xl);">
+                        <div class="card-header">
+                            <h3><i data-lucide="folder"></i> Saved Graphs</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="cg-graph-grid">
+                                <% graphs.forEach(g => { %>
+                                    <a href="/concepts/<%= g.id %>" class="cg-graph-card">
+                                        <div class="cg-graph-icon" style="background: linear-gradient(135deg, <%= g.subject_color || '#6366f1' %>, <%= g.subject_color || '#6366f1' %>90);">
+                                            <i data-lucide="git-branch"></i>
+                                        </div>
+                                        <div class="cg-graph-info">
+                                            <h4><%= g.title %></h4>
+                                            <span><%= g.subject_name %> &bull; <%= new Date(g.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></span>
+                                        </div>
+                                        <i data-lucide="arrow-right" class="cg-graph-arrow"></i>
+                                    </a>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+
+    <script>
+        lucide.createIcons();
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+        async function generateGraph() {
+            const subjectId = document.getElementById('subjectSelect').value;
+            if (!subjectId) {
+                ssAlert('Select Subject', 'Please choose a subject to generate a concept map.', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('generateBtn');
+            const loading = document.getElementById('loadingState');
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Generating...';
+            lucide.createIcons();
+            loading.style.display = 'flex';
+
+            try {
+                const resp = await fetch('/concepts/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject_id: subjectId })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.href = '/concepts/' + data.graphId;
+                } else {
+                    ssAlert('Error', data.error || 'Failed to generate concept map', 'error');
+                }
+            } catch (err) {
+                ssAlert('Error', 'Network error. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i data-lucide="sparkles"></i> Generate Map';
+                lucide.createIcons();
+                loading.style.display = 'none';
+            }
+        }
+    </script>
+
+    <style>
+        .cg-hero {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 50%, #5b21b6 100%);
+            border-radius: var(--radius-xl); padding: 2rem 2.5rem; color: white;
+            margin-bottom: var(--spacing-xl);
+        }
+        .cg-hero-content { display: flex; align-items: center; gap: 1.25rem; }
+        .cg-hero-icon {
+            width: 56px; height: 56px; border-radius: var(--radius-lg);
+            background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+        }
+        .cg-hero-icon svg { width: 28px; height: 28px; }
+        .cg-hero h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+        .cg-hero p { margin: 0.25rem 0 0; opacity: 0.85; font-size: 0.9rem; }
+
+        .cg-generate-row { display: flex; gap: var(--spacing-md); align-items: center; flex-wrap: wrap; }
+
+        .cg-loading {
+            display: flex; align-items: center; gap: 1rem; padding: 1.5rem;
+            margin-top: var(--spacing-md); border-radius: var(--radius-lg);
+            background: var(--primary-50); color: var(--primary);
+        }
+        .cg-loading-spinner {
+            width: 24px; height: 24px; border: 3px solid var(--primary-200);
+            border-top-color: var(--primary); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        .cg-loading p { margin: 0; font-weight: 500; font-size: 0.9rem; }
+
+        .cg-graph-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--spacing-md); }
+        .cg-graph-card {
+            display: flex; align-items: center; gap: 0.85rem; padding: 1rem;
+            border: 1px solid var(--border-color); border-radius: var(--radius-lg);
+            text-decoration: none; transition: all 0.2s; background: var(--bg-primary);
+        }
+        .cg-graph-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+        .cg-graph-icon {
+            width: 44px; height: 44px; border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;
+        }
+        .cg-graph-icon svg { width: 22px; height: 22px; }
+        .cg-graph-info { flex: 1; min-width: 0; }
+        .cg-graph-info h4 { font-size: 0.9rem; font-weight: 600; color: var(--gray-900); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cg-graph-info span { font-size: 0.75rem; color: var(--gray-500); }
+        .cg-graph-arrow { width: 18px; height: 18px; color: var(--gray-400); flex-shrink: 0; }
+
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .cg-hero { padding: 1.5rem; }
+            .cg-graph-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Dark Mode */
+        [data-theme="dark"] .cg-hero { background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 50%, #4c1d95 100%); }
+        [data-theme="dark"] .cg-graph-card { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .cg-graph-card:hover { border-color: #818cf8; }
+        [data-theme="dark"] .cg-loading { background: rgba(99,102,241,0.1); }
+    </style>
+</body>
+</html>

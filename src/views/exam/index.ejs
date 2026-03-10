@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="page-content">
+
+                <% if (typeof success_msg !== 'undefined' && success_msg.length > 0) { %>
+                    <div class="alert alert-success animate-fade-in"><i data-lucide="check-circle"></i><p><%= success_msg %></p></div>
+                <% } %>
+                <% if (typeof error_msg !== 'undefined' && error_msg.length > 0) { %>
+                    <div class="alert alert-error animate-fade-in"><i data-lucide="alert-circle"></i><p><%= error_msg %></p></div>
+                <% } %>
+
+                <!-- Hero Banner -->
+                <div class="exam-hero">
+                    <div class="exam-hero-content">
+                        <div class="exam-hero-icon">
+                            <i data-lucide="file-text"></i>
+                        </div>
+                        <div>
+                            <h1>Live Exam Simulator</h1>
+                            <p>Practice under real exam conditions with AI-generated questions</p>
+                        </div>
+                    </div>
+                    <div class="exam-hero-stats">
+                        <div class="exam-hero-stat">
+                            <span class="exam-hero-stat-value"><%= stats.total_exams || 0 %></span>
+                            <span class="exam-hero-stat-label">Exams Taken</span>
+                        </div>
+                        <div class="exam-hero-stat">
+                            <span class="exam-hero-stat-value"><%= Math.round(stats.avg_score) || 0 %>%</span>
+                            <span class="exam-hero-stat-label">Average Score</span>
+                        </div>
+                        <div class="exam-hero-stat">
+                            <span class="exam-hero-stat-value"><%= stats.best_score || 0 %>%</span>
+                            <span class="exam-hero-stat-label">Best Score</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create Exam Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i data-lucide="plus-circle"></i> Create New Exam</h3>
+                    </div>
+                    <div class="card-body">
+                        <% if (subjects.length === 0) { %>
+                            <div class="empty-state small">
+                                <i data-lucide="book-open"></i>
+                                <p>Add subjects and topics first to generate exams</p>
+                                <a href="/subjects" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> Add Subject</a>
+                            </div>
+                        <% } else { %>
+                            <form action="/exam/generate" method="POST" id="examForm">
+                                <div class="exam-form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Subject</label>
+                                        <select name="subject_id" class="form-input" required>
+                                            <option value="">Select a subject...</option>
+                                            <% subjects.forEach(s => { %>
+                                                <option value="<%= s.id %>"><%= s.name %> (<%= s.topic_count %> topics)</option>
+                                            <% }); %>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Questions</label>
+                                        <select name="question_count" class="form-input">
+                                            <option value="10">10 Questions</option>
+                                            <option value="20" selected>20 Questions</option>
+                                            <option value="30">30 Questions</option>
+                                            <option value="40">40 Questions</option>
+                                            <option value="50">50 Questions</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Time Limit</label>
+                                        <select name="time_limit" class="form-input">
+                                            <option value="15">15 Minutes</option>
+                                            <option value="30">30 Minutes</option>
+                                            <option value="45">45 Minutes</option>
+                                            <option value="60" selected>60 Minutes</option>
+                                            <option value="90">90 Minutes</option>
+                                            <option value="120">2 Hours</option>
+                                            <option value="180">3 Hours</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Difficulty</label>
+                                        <select name="difficulty" class="form-input">
+                                            <option value="mixed" selected>Mixed</option>
+                                            <option value="easy">Easy</option>
+                                            <option value="medium">Medium</option>
+                                            <option value="hard">Hard</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary" id="generateBtn" style="margin-top: var(--spacing-lg);">
+                                    <i data-lucide="sparkles"></i> Generate Exam
+                                </button>
+                            </form>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Recent Attempts -->
+                <div class="card" style="margin-top: var(--spacing-xl);">
+                    <div class="card-header">
+                        <h3><i data-lucide="history"></i> Recent Exams</h3>
+                    </div>
+                    <div class="card-body">
+                        <% if (attempts.length === 0) { %>
+                            <div class="empty-state small">
+                                <i data-lucide="clipboard-list"></i>
+                                <p>No exams taken yet. Generate your first exam above!</p>
+                            </div>
+                        <% } else { %>
+                            <div class="exam-history-list">
+                                <% attempts.forEach(a => { 
+                                    const scoreClass = a.percentage >= 90 ? 'excellent' : a.percentage >= 70 ? 'good' : a.percentage >= 50 ? 'average' : 'poor';
+                                    const timeMins = Math.floor((a.time_taken_seconds || 0) / 60);
+                                %>
+                                    <div class="exam-history-item">
+                                        <div class="exam-history-left">
+                                            <div class="exam-history-color" style="background: <%= a.subject_color || '#6366f1' %>"></div>
+                                            <div>
+                                                <div class="exam-history-title"><%= a.title %></div>
+                                                <div class="exam-history-meta">
+                                                    <%= a.subject_name || 'Unknown' %> &bull;
+                                                    <%= a.question_count %> questions &bull;
+                                                    <% if (a.status === 'completed') { %>
+                                                        <%= timeMins %> min &bull;
+                                                        <%= new Date(a.completed_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %>
+                                                    <% } else { %>
+                                                        <span style="color: var(--warning)">In Progress</span>
+                                                    <% } %>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="exam-history-right">
+                                            <% if (a.status === 'completed') { %>
+                                                <span class="exam-score-badge <%= scoreClass %>"><%= a.percentage %>%</span>
+                                                <a href="/exam/<%= a.id %>/result" class="btn btn-ghost btn-sm">View</a>
+                                            <% } else { %>
+                                                <a href="/exam/<%= a.id %>/take" class="btn btn-primary btn-sm">Continue</a>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+
+    <script>
+        lucide.createIcons();
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+        // Loading state for form
+        const form = document.getElementById('examForm');
+        if (form) {
+            form.addEventListener('submit', () => {
+                const btn = document.getElementById('generateBtn');
+                btn.disabled = true;
+                btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Generating Exam...';
+                lucide.createIcons();
+            });
+        }
+    </script>
+
+    <style>
+        .exam-hero {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 50%, #4338ca 100%);
+            border-radius: var(--radius-xl);
+            padding: 2rem 2.5rem;
+            color: white;
+            margin-bottom: var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .exam-hero-content { display: flex; align-items: center; gap: 1.25rem; }
+        .exam-hero-icon {
+            width: 56px; height: 56px; border-radius: var(--radius-lg);
+            background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center;
+        }
+        .exam-hero-icon svg { width: 28px; height: 28px; }
+        .exam-hero h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+        .exam-hero p { margin: 0.25rem 0 0; opacity: 0.85; font-size: 0.9rem; }
+        .exam-hero-stats { display: flex; gap: 2rem; }
+        .exam-hero-stat { text-align: center; }
+        .exam-hero-stat-value { display: block; font-size: 1.5rem; font-weight: 800; }
+        .exam-hero-stat-label { font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .exam-form-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        /* History List */
+        .exam-history-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .exam-history-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.85rem 1rem; border-radius: var(--radius-md);
+            background: var(--gray-50); transition: background 0.15s;
+        }
+        .exam-history-item:hover { background: var(--gray-100); }
+        .exam-history-left { display: flex; align-items: center; gap: 0.75rem; }
+        .exam-history-color { width: 4px; height: 36px; border-radius: 999px; flex-shrink: 0; }
+        .exam-history-title { font-weight: 600; font-size: 0.9rem; color: var(--gray-900); }
+        .exam-history-meta { font-size: 0.75rem; color: var(--gray-500); margin-top: 0.15rem; }
+        .exam-history-right { display: flex; align-items: center; gap: 0.75rem; }
+
+        .exam-score-badge {
+            display: inline-flex; align-items: center; padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-full); font-weight: 700; font-size: 0.8rem;
+        }
+        .exam-score-badge.excellent { background: #dcfce7; color: #16a34a; }
+        .exam-score-badge.good { background: #dbeafe; color: #2563eb; }
+        .exam-score-badge.average { background: #fef3c7; color: #d97706; }
+        .exam-score-badge.poor { background: #fecaca; color: #dc2626; }
+
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .exam-hero { padding: 1.5rem; flex-direction: column; align-items: flex-start; }
+            .exam-hero-stats { width: 100%; justify-content: space-around; }
+        }
+
+        /* Dark Mode */
+        [data-theme="dark"] .exam-hero {
+            background: linear-gradient(135deg, #4338ca 0%, #3730a3 50%, #312e81 100%);
+        }
+        [data-theme="dark"] .exam-score-badge.excellent { background: #064e3b; color: #6ee7b7; }
+        [data-theme="dark"] .exam-score-badge.good { background: #1e3a5f; color: #93c5fd; }
+        [data-theme="dark"] .exam-score-badge.average { background: #451a03; color: #fcd34d; }
+        [data-theme="dark"] .exam-score-badge.poor { background: #450a0a; color: #fca5a5; }
+    </style>
+</body>
+</html>

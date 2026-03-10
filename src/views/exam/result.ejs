@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="page-content">
+
+                <%
+                    const pct = exam.percentage || 0;
+                    const scoreClass = pct >= 90 ? 'excellent' : pct >= 70 ? 'good' : pct >= 50 ? 'average' : 'poor';
+                    const grade = pct >= 90 ? 'A' : pct >= 80 ? 'B' : pct >= 70 ? 'C' : pct >= 60 ? 'D' : 'F';
+                    const timeMins = Math.floor((exam.time_taken_seconds || 0) / 60);
+                    const timeSecs = (exam.time_taken_seconds || 0) % 60;
+                    const limitMins = Math.floor((exam.time_limit_seconds || 0) / 60);
+                %>
+
+                <!-- Result Hero -->
+                <div class="result-hero <%= scoreClass %>">
+                    <div class="result-score-ring">
+                        <svg viewBox="0 0 140 140">
+                            <circle cx="70" cy="70" r="60" class="ring-bg"/>
+                            <circle cx="70" cy="70" r="60" class="ring-fill" 
+                                style="stroke-dasharray: <%= Math.round(pct * 3.77) %> 377"/>
+                        </svg>
+                        <div class="result-score-inner">
+                            <span class="result-pct"><%= pct %>%</span>
+                            <span class="result-grade">Grade: <%= grade %></span>
+                        </div>
+                    </div>
+                    <div class="result-info">
+                        <h1><%= exam.title %></h1>
+                        <p class="result-subtitle"><%= exam.subject_name %></p>
+                        <div class="result-meta-row">
+                            <span><i data-lucide="check-circle"></i> <%= exam.score %>/<%= exam.question_count %> correct</span>
+                            <span><i data-lucide="clock"></i> <%= timeMins %>m <%= timeSecs %>s / <%= limitMins %> min</span>
+                            <span><i data-lucide="calendar"></i> <%= new Date(exam.completed_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Grid -->
+                <div class="result-analysis-grid">
+                    <!-- Topic Breakdown -->
+                    <div class="card">
+                        <div class="card-header"><h3><i data-lucide="target"></i> Topic Breakdown</h3></div>
+                        <div class="card-body">
+                            <div class="topic-breakdown-list">
+                                <% Object.entries(topicBreakdown).forEach(([topic, data]) => {
+                                    const topicPct = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+                                    const topicClass = topicPct >= 80 ? 'strong' : topicPct >= 50 ? 'moderate' : 'weak';
+                                %>
+                                    <div class="topic-breakdown-item">
+                                        <div class="topic-breakdown-info">
+                                            <span class="topic-breakdown-name"><%= topic %></span>
+                                            <span class="topic-breakdown-score"><%= data.correct %>/<%= data.total %></span>
+                                        </div>
+                                        <div class="topic-breakdown-bar">
+                                            <div class="topic-breakdown-fill <%= topicClass %>" style="width: <%= topicPct %>%"></div>
+                                        </div>
+                                        <span class="topic-breakdown-pct <%= topicClass %>"><%= topicPct %>%</span>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty Breakdown -->
+                    <div class="card">
+                        <div class="card-header"><h3><i data-lucide="bar-chart-3"></i> Difficulty Analysis</h3></div>
+                        <div class="card-body">
+                            <canvas id="diffChart" height="200"></canvas>
+                            <div class="diff-summary">
+                                <% ['easy', 'medium', 'hard'].forEach(d => {
+                                    const dd = difficultyBreakdown[d] || { correct: 0, total: 0 };
+                                    const dp = dd.total > 0 ? Math.round((dd.correct / dd.total) * 100) : 0;
+                                %>
+                                    <div class="diff-summary-item">
+                                        <span class="diff-dot diff-<%= d %>"></span>
+                                        <span class="diff-label"><%= d.charAt(0).toUpperCase() + d.slice(1) %></span>
+                                        <span class="diff-val"><%= dd.correct %>/<%= dd.total %> (<%= dp %>%)</span>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weak Points -->
+                <% 
+                    const weakTopics = Object.entries(topicBreakdown)
+                        .filter(([_, d]) => d.total > 0 && (d.correct / d.total) < 0.7)
+                        .sort((a, b) => (a[1].correct / a[1].total) - (b[1].correct / b[1].total));
+                %>
+                <% if (weakTopics.length > 0) { %>
+                    <div class="card" style="margin-top: var(--spacing-lg);">
+                        <div class="card-header">
+                            <h3><i data-lucide="alert-triangle" style="color: #f59e0b"></i> Areas to Improve</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="weak-list">
+                                <% weakTopics.forEach(([topic, data]) => {
+                                    const wp = Math.round((data.correct / data.total) * 100);
+                                %>
+                                    <div class="weak-item">
+                                        <div class="weak-icon"><i data-lucide="trending-down"></i></div>
+                                        <div class="weak-info">
+                                            <span class="weak-name"><%= topic %></span>
+                                            <span class="weak-detail"><%= data.correct %>/<%= data.total %> correct (<%= wp %>%)</span>
+                                        </div>
+                                        <a href="/practice?topic=<%= encodeURIComponent(topic) %>" class="btn btn-primary btn-sm">
+                                            <i data-lucide="target"></i> Practice
+                                        </a>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Question Review -->
+                <div class="card" style="margin-top: var(--spacing-lg);">
+                    <div class="card-header">
+                        <h3><i data-lucide="list-checks"></i> Question Review</h3>
+                        <button class="btn btn-ghost btn-sm" onclick="toggleAllQuestions()">
+                            <i data-lucide="eye"></i> Toggle All
+                        </button>
+                    </div>
+                    <div class="card-body" style="padding: 0;">
+                        <% questions.forEach((q, i) => {
+                            const ans = answersMap[q.id] || {};
+                            const isCorrect = ans.is_correct;
+                            const userAns = ans.user_answer;
+                        %>
+                            <div class="review-question <%= isCorrect ? 'correct' : userAns ? 'wrong' : 'skipped' %>">
+                                <div class="review-q-header" onclick="toggleQuestion(<%= i %>)">
+                                    <div class="review-q-left">
+                                        <div class="review-q-status">
+                                            <% if (isCorrect) { %>
+                                                <i data-lucide="check-circle-2"></i>
+                                            <% } else if (userAns) { %>
+                                                <i data-lucide="x-circle"></i>
+                                            <% } else { %>
+                                                <i data-lucide="minus-circle"></i>
+                                            <% } %>
+                                        </div>
+                                        <span class="review-q-num">Q<%= i + 1 %></span>
+                                        <span class="review-q-preview"><%= q.question_text.substring(0, 80) %><%= q.question_text.length > 80 ? '...' : '' %></span>
+                                    </div>
+                                    <div class="review-q-right">
+                                        <span class="exam-q-diff diff-<%= q.difficulty %>"><%= q.difficulty %></span>
+                                        <i data-lucide="chevron-down" class="review-arrow"></i>
+                                    </div>
+                                </div>
+                                <div class="review-q-body" id="reviewBody<%= i %>" style="display: none;">
+                                    <div class="review-q-text"><%= q.question_text %></div>
+                                    <div class="review-options">
+                                        <% ['a', 'b', 'c', 'd'].forEach(opt => {
+                                            const optText = q['option_' + opt];
+                                            if (!optText) return;
+                                            const isUserAnswer = userAns === opt;
+                                            const isCorrectOpt = q.correct_option === opt;
+                                            let optClass = '';
+                                            if (isCorrectOpt) optClass = 'correct-option';
+                                            else if (isUserAnswer && !isCorrectOpt) optClass = 'wrong-option';
+                                        %>
+                                            <div class="review-option <%= optClass %>">
+                                                <div class="review-opt-letter"><%= opt.toUpperCase() %></div>
+                                                <div class="review-opt-text"><%= optText %></div>
+                                                <% if (isCorrectOpt) { %><i data-lucide="check" class="review-opt-icon correct-icon"></i><% } %>
+                                                <% if (isUserAnswer && !isCorrectOpt) { %><i data-lucide="x" class="review-opt-icon wrong-icon"></i><% } %>
+                                            </div>
+                                        <% }); %>
+                                    </div>
+                                    <% if (q.explanation) { %>
+                                        <div class="review-explanation">
+                                            <strong><i data-lucide="lightbulb"></i> Explanation:</strong>
+                                            <p><%= q.explanation %></p>
+                                        </div>
+                                    <% } %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="result-actions">
+                    <a href="/exam" class="btn btn-secondary">
+                        <i data-lucide="arrow-left"></i> Back to Exams
+                    </a>
+                    <a href="/exam" class="btn btn-primary">
+                        <i data-lucide="refresh-cw"></i> Take Another Exam
+                    </a>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+
+    <script>
+        lucide.createIcons();
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+        // Difficulty Chart
+        const diffData = <%- JSON.stringify(difficultyBreakdown) %>;
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#d1d5db' : '#374151';
+
+        new Chart(document.getElementById('diffChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Easy', 'Medium', 'Hard'],
+                datasets: [
+                    {
+                        label: 'Correct',
+                        data: [diffData.easy?.correct || 0, diffData.medium?.correct || 0, diffData.hard?.correct || 0],
+                        backgroundColor: '#10b981',
+                        borderRadius: 6,
+                    },
+                    {
+                        label: 'Incorrect',
+                        data: [
+                            (diffData.easy?.total || 0) - (diffData.easy?.correct || 0),
+                            (diffData.medium?.total || 0) - (diffData.medium?.correct || 0),
+                            (diffData.hard?.total || 0) - (diffData.hard?.correct || 0)
+                        ],
+                        backgroundColor: '#ef4444',
+                        borderRadius: 6,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: textColor, padding: 12 } }
+                },
+                scales: {
+                    x: { stacked: true, ticks: { color: textColor }, grid: { display: false } },
+                    y: { stacked: true, beginAtZero: true, ticks: { color: textColor, stepSize: 1 }, grid: { color: isDark ? '#334155' : '#f3f4f6' } }
+                }
+            }
+        });
+
+        function toggleQuestion(idx) {
+            const body = document.getElementById('reviewBody' + idx);
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
+        }
+
+        let allOpen = false;
+        function toggleAllQuestions() {
+            allOpen = !allOpen;
+            document.querySelectorAll('[id^="reviewBody"]').forEach(el => {
+                el.style.display = allOpen ? 'block' : 'none';
+            });
+        }
+    </script>
+
+    <style>
+        /* Result Hero */
+        .result-hero {
+            border-radius: var(--radius-xl); padding: 2rem 2.5rem;
+            display: flex; align-items: center; gap: 2rem;
+            margin-bottom: var(--spacing-xl); color: white;
+        }
+        .result-hero.excellent { background: linear-gradient(135deg, #10b981, #059669); }
+        .result-hero.good { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .result-hero.average { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .result-hero.poor { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+        .result-score-ring { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+        .result-score-ring svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: rgba(255,255,255,0.2); stroke-width: 10; }
+        .ring-fill { fill: none; stroke: white; stroke-width: 10; stroke-linecap: round; transition: stroke-dasharray 1s ease; }
+        .result-score-inner {
+            position: absolute; inset: 0; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+        .result-pct { font-size: 2rem; font-weight: 800; line-height: 1; }
+        .result-grade { font-size: 0.75rem; opacity: 0.85; margin-top: 0.15rem; }
+        .result-info h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+        .result-subtitle { opacity: 0.85; margin: 0.25rem 0 0.75rem; }
+        .result-meta-row { display: flex; gap: 1.25rem; flex-wrap: wrap; font-size: 0.85rem; opacity: 0.9; }
+        .result-meta-row span { display: flex; align-items: center; gap: 0.35rem; }
+        .result-meta-row svg { width: 16px; height: 16px; }
+
+        /* Analysis Grid */
+        .result-analysis-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--spacing-lg); }
+
+        /* Topic Breakdown */
+        .topic-breakdown-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .topic-breakdown-item { display: flex; align-items: center; gap: 0.75rem; }
+        .topic-breakdown-info { flex: 1; min-width: 0; }
+        .topic-breakdown-name { display: block; font-weight: 600; font-size: 0.85rem; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .topic-breakdown-score { font-size: 0.7rem; color: var(--gray-500); }
+        .topic-breakdown-bar { flex: 1; height: 8px; background: var(--gray-100); border-radius: 999px; overflow: hidden; min-width: 60px; }
+        .topic-breakdown-fill { height: 100%; border-radius: 999px; transition: width 0.5s; }
+        .topic-breakdown-fill.strong { background: #10b981; }
+        .topic-breakdown-fill.moderate { background: #f59e0b; }
+        .topic-breakdown-fill.weak { background: #ef4444; }
+        .topic-breakdown-pct { font-weight: 700; font-size: 0.8rem; min-width: 40px; text-align: right; }
+        .topic-breakdown-pct.strong { color: #10b981; }
+        .topic-breakdown-pct.moderate { color: #f59e0b; }
+        .topic-breakdown-pct.weak { color: #ef4444; }
+
+        /* Difficulty */
+        .diff-summary { display: flex; gap: 1.25rem; margin-top: var(--spacing-md); justify-content: center; }
+        .diff-summary-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--gray-600); }
+        .diff-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .diff-dot.diff-easy { background: #10b981; }
+        .diff-dot.diff-medium { background: #f59e0b; }
+        .diff-dot.diff-hard { background: #ef4444; }
+        .diff-label { font-weight: 600; }
+
+        /* Weak Points */
+        .weak-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .weak-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-radius: var(--radius-md); background: var(--gray-50); }
+        .weak-icon { width: 36px; height: 36px; border-radius: var(--radius-md); background: #fef3c7; color: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .weak-icon svg { width: 18px; height: 18px; }
+        .weak-info { flex: 1; }
+        .weak-name { font-weight: 600; font-size: 0.9rem; color: var(--gray-900); display: block; }
+        .weak-detail { font-size: 0.75rem; color: var(--gray-500); }
+
+        /* Question Review */
+        .review-question { border-bottom: 1px solid var(--border-color); }
+        .review-question:last-child { border-bottom: none; }
+        .review-q-header { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 1.25rem; cursor: pointer; transition: background 0.15s; }
+        .review-q-header:hover { background: var(--gray-50); }
+        .review-q-left { display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0; }
+        .review-q-status { flex-shrink: 0; }
+        .review-question.correct .review-q-status { color: #10b981; }
+        .review-question.wrong .review-q-status { color: #ef4444; }
+        .review-question.skipped .review-q-status { color: var(--gray-400); }
+        .review-q-status svg { width: 20px; height: 20px; }
+        .review-q-num { font-weight: 700; font-size: 0.8rem; color: var(--gray-500); }
+        .review-q-preview { font-size: 0.85rem; color: var(--gray-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .review-q-right { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+        .review-arrow { width: 16px; height: 16px; color: var(--gray-400); transition: transform 0.2s; }
+        .review-q-body { padding: 0 1.25rem 1.25rem; }
+        .review-q-text { font-size: 0.95rem; color: var(--gray-900); line-height: 1.6; margin-bottom: var(--spacing-md); font-weight: 500; }
+
+        .review-options { display: flex; flex-direction: column; gap: 0.4rem; }
+        .review-option { display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--gray-200); font-size: 0.875rem; }
+        .review-option.correct-option { background: #dcfce7; border-color: #10b981; }
+        .review-option.wrong-option { background: #fecaca; border-color: #ef4444; }
+        .review-opt-letter { width: 26px; height: 26px; border-radius: var(--radius-sm); background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; color: var(--gray-600); flex-shrink: 0; }
+        .correct-option .review-opt-letter { background: #10b981; color: white; }
+        .wrong-option .review-opt-letter { background: #ef4444; color: white; }
+        .review-opt-text { flex: 1; color: var(--gray-800); }
+        .review-opt-icon { width: 18px; height: 18px; flex-shrink: 0; }
+        .correct-icon { color: #10b981; }
+        .wrong-icon { color: #ef4444; }
+
+        .review-explanation { margin-top: var(--spacing-md); padding: 0.85rem 1rem; background: #eff6ff; border-radius: var(--radius-md); border-left: 3px solid #3b82f6; }
+        .review-explanation strong { font-size: 0.8rem; color: #2563eb; display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem; }
+        .review-explanation strong svg { width: 14px; height: 14px; }
+        .review-explanation p { font-size: 0.85rem; color: #374151; line-height: 1.5; margin: 0; }
+
+        .result-actions { display: flex; gap: var(--spacing-md); justify-content: center; margin-top: var(--spacing-xl); }
+
+        .exam-q-diff { font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: var(--radius-full); text-transform: uppercase; }
+        .diff-easy { background: #dcfce7; color: #16a34a; }
+        .diff-medium { background: #fef3c7; color: #d97706; }
+        .diff-hard { background: #fecaca; color: #dc2626; }
+
+        @media (max-width: 1024px) { .result-analysis-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) {
+            .result-hero { flex-direction: column; align-items: center; text-align: center; padding: 1.5rem; }
+            .result-meta-row { justify-content: center; }
+        }
+
+        /* Dark Mode */
+        [data-theme="dark"] .review-option { border-color: #475569; }
+        [data-theme="dark"] .review-option.correct-option { background: rgba(16,185,129,0.15); border-color: #10b981; }
+        [data-theme="dark"] .review-option.wrong-option { background: rgba(239,68,68,0.15); border-color: #ef4444; }
+        [data-theme="dark"] .review-explanation { background: rgba(59,130,246,0.1); border-color: #3b82f6; }
+        [data-theme="dark"] .review-explanation p { color: #d1d5db; }
+        [data-theme="dark"] .review-explanation strong { color: #93c5fd; }
+        [data-theme="dark"] .weak-item { background: #1e293b; }
+        [data-theme="dark"] .weak-icon { background: rgba(245,158,11,0.15); }
+        [data-theme="dark"] .diff-easy { background: #064e3b; color: #6ee7b7; }
+        [data-theme="dark"] .diff-medium { background: #451a03; color: #fcd34d; }
+        [data-theme="dark"] .diff-hard { background: #450a0a; color: #fca5a5; }
+    </style>
+</body>
+</html>

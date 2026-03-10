@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <!-- Exam Timer Bar -->
+    <div class="exam-timer-bar" id="timerBar">
+        <div class="exam-timer-left">
+            <span class="exam-timer-title"><%= exam.title %></span>
+            <span class="exam-timer-subject"><%= exam.subject_name %></span>
+        </div>
+        <div class="exam-timer-center">
+            <div class="exam-timer-display" id="timerDisplay">
+                <i data-lucide="clock"></i>
+                <span id="timeRemaining">--:--</span>
+            </div>
+            <div class="exam-timer-progress">
+                <div class="exam-timer-progress-fill" id="timerProgress"></div>
+            </div>
+        </div>
+        <div class="exam-timer-right">
+            <span class="exam-q-counter" id="questionCounter">0/<%= questions.length %></span>
+            <button class="btn btn-primary btn-sm" id="submitExamBtn" onclick="submitExam()">
+                <i data-lucide="send"></i> Submit
+            </button>
+        </div>
+    </div>
+
+    <!-- Question Navigator -->
+    <div class="exam-nav" id="questionNav">
+        <% questions.forEach((q, i) => { %>
+            <button class="exam-nav-btn" id="navBtn<%= i %>" onclick="scrollToQuestion(<%= i %>)" title="Question <%= i + 1 %>">
+                <%= i + 1 %>
+            </button>
+        <% }); %>
+    </div>
+
+    <!-- Questions -->
+    <div class="exam-container">
+        <% questions.forEach((q, i) => { %>
+            <div class="exam-question" id="question<%= i %>" data-qid="<%= q.id %>">
+                <div class="exam-q-header">
+                    <div class="exam-q-number">Q<%= i + 1 %></div>
+                    <div class="exam-q-meta">
+                        <span class="exam-q-topic"><%= q.topic_name %></span>
+                        <span class="exam-q-diff diff-<%= q.difficulty %>"><%= q.difficulty %></span>
+                    </div>
+                </div>
+                <div class="exam-q-text"><%= q.question_text %></div>
+                <div class="exam-q-options">
+                    <% ['a', 'b', 'c', 'd'].forEach((opt, oi) => { 
+                        const optText = q['option_' + opt];
+                        if (optText) {
+                    %>
+                        <label class="exam-option" id="opt_<%= q.id %>_<%= opt %>">
+                            <input type="radio" name="answer_<%= q.id %>" value="<%= opt %>" onchange="markAnswered(<%= i %>, '<%= q.id %>', '<%= opt %>')">
+                            <div class="exam-option-letter"><%= opt.toUpperCase() %></div>
+                            <div class="exam-option-text"><%= optText %></div>
+                        </label>
+                    <% } }); %>
+                </div>
+            </div>
+        <% }); %>
+
+        <!-- Submit Section -->
+        <div class="exam-submit-section">
+            <div class="exam-submit-info">
+                <div id="answeredCount">0</div>
+                <span>of <%= questions.length %> answered</span>
+            </div>
+            <button class="btn btn-primary btn-lg" onclick="submitExam()">
+                <i data-lucide="send"></i> Submit Exam
+            </button>
+        </div>
+    </div>
+
+    <%- include('../partials/popup') %>
+
+    <script>
+        lucide.createIcons();
+
+        const EXAM_ID = '<%= exam.id %>';
+        const TOTAL_Q = <%= questions.length %>;
+        const TIME_LIMIT = <%= exam.time_limit_seconds %>;
+        let answers = {};
+        let answeredCount = 0;
+        let startTime = Date.now();
+        let timeRemaining = TIME_LIMIT;
+        let timerInterval;
+
+        // Timer
+        function updateTimer() {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            timeRemaining = Math.max(0, TIME_LIMIT - elapsed);
+            
+            const mins = Math.floor(timeRemaining / 60);
+            const secs = timeRemaining % 60;
+            document.getElementById('timeRemaining').textContent = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+            const pct = ((TIME_LIMIT - timeRemaining) / TIME_LIMIT) * 100;
+            document.getElementById('timerProgress').style.width = pct + '%';
+
+            // Color changes
+            const timerDisplay = document.getElementById('timerDisplay');
+            if (timeRemaining <= 60) {
+                timerDisplay.classList.add('critical');
+                timerDisplay.classList.remove('warning');
+            } else if (timeRemaining <= 300) {
+                timerDisplay.classList.add('warning');
+                timerDisplay.classList.remove('critical');
+            }
+
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                ssAlert('Time\'s Up!', 'Your exam time has expired. Submitting your answers now.', 'warning');
+                submitExam(true);
+            }
+        }
+
+        timerInterval = setInterval(updateTimer, 1000);
+        updateTimer();
+
+        function markAnswered(index, questionId, answer) {
+            const wasNew = !answers[questionId];
+            answers[questionId] = answer;
+            
+            // Update nav button
+            document.getElementById('navBtn' + index).classList.add('answered');
+            
+            if (wasNew) {
+                answeredCount++;
+                document.getElementById('answeredCount').textContent = answeredCount;
+                document.getElementById('questionCounter').textContent = answeredCount + '/' + TOTAL_Q;
+            }
+
+            // Update option styling
+            document.querySelectorAll(`[name="answer_${questionId}"]`).forEach(input => {
+                input.closest('.exam-option').classList.remove('selected');
+            });
+            document.getElementById(`opt_${questionId}_${answer}`).classList.add('selected');
+        }
+
+        function scrollToQuestion(index) {
+            document.getElementById('question' + index).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        async function submitExam(forced = false) {
+            if (!forced && answeredCount < TOTAL_Q) {
+                const unanswered = TOTAL_Q - answeredCount;
+                const confirmed = await ssConfirm(
+                    'Submit Exam?',
+                    `You have ${unanswered} unanswered question${unanswered > 1 ? 's' : ''}. Are you sure you want to submit?`
+                );
+                if (!confirmed) return;
+            } else if (!forced) {
+                const confirmed = await ssConfirm('Submit Exam?', 'Are you sure you want to submit your exam?');
+                if (!confirmed) return;
+            }
+
+            clearInterval(timerInterval);
+            const btn = document.getElementById('submitExamBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Submitting...';
+            lucide.createIcons();
+
+            const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+
+            try {
+                const resp = await fetch(`/exam/${EXAM_ID}/submit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ answers, timeTaken })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.href = `/exam/${EXAM_ID}/result`;
+                } else {
+                    ssAlert('Error', data.error || 'Failed to submit exam', 'error');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i data-lucide="send"></i> Submit';
+                    lucide.createIcons();
+                }
+            } catch (err) {
+                ssAlert('Error', 'Network error. Please try again.', 'error');
+                btn.disabled = false;
+            }
+        }
+
+        // Warn before leaving
+        window.addEventListener('beforeunload', (e) => {
+            if (answeredCount > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
+        // Intersection observer to highlight current question in nav
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const idx = Array.from(document.querySelectorAll('.exam-question')).indexOf(entry.target);
+                    document.querySelectorAll('.exam-nav-btn').forEach(b => b.classList.remove('current'));
+                    if (idx >= 0) document.getElementById('navBtn' + idx)?.classList.add('current');
+                }
+            });
+        }, { threshold: 0.5 });
+
+        document.querySelectorAll('.exam-question').forEach(q => observer.observe(q));
+    </script>
+
+    <style>
+        body { background: var(--gray-50); margin: 0; padding-top: 80px; }
+
+        /* Timer Bar */
+        .exam-timer-bar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: white; border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1.5rem; display: flex; align-items: center;
+            justify-content: space-between; gap: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .exam-timer-left { display: flex; flex-direction: column; }
+        .exam-timer-title { font-weight: 700; font-size: 0.9rem; color: var(--gray-900); }
+        .exam-timer-subject { font-size: 0.75rem; color: var(--gray-500); }
+        .exam-timer-center { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
+        .exam-timer-display {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 1.5rem; font-weight: 800; font-variant-numeric: tabular-nums;
+            color: var(--gray-900);
+        }
+        .exam-timer-display svg { width: 20px; height: 20px; color: var(--gray-400); }
+        .exam-timer-display.warning { color: #d97706; }
+        .exam-timer-display.warning svg { color: #d97706; }
+        .exam-timer-display.critical { color: #dc2626; animation: pulse 1s infinite; }
+        .exam-timer-display.critical svg { color: #dc2626; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .exam-timer-progress { width: 200px; height: 4px; background: var(--gray-200); border-radius: 999px; overflow: hidden; }
+        .exam-timer-progress-fill { height: 100%; background: linear-gradient(90deg, #6366f1, #8b5cf6); border-radius: 999px; transition: width 1s linear; }
+        .exam-timer-right { display: flex; align-items: center; gap: 1rem; }
+        .exam-q-counter { font-weight: 700; color: var(--gray-600); font-size: 0.9rem; }
+
+        /* Question Navigator */
+        .exam-nav {
+            position: fixed; top: 80px; left: 0; right: 0; z-index: 999;
+            background: white; border-bottom: 1px solid var(--border-color);
+            padding: 0.5rem 1.5rem; display: flex; flex-wrap: wrap;
+            gap: 0.35rem; justify-content: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .exam-nav-btn {
+            width: 32px; height: 32px; border-radius: var(--radius-md);
+            border: 1px solid var(--gray-200); background: white;
+            font-size: 0.75rem; font-weight: 600; color: var(--gray-500);
+            cursor: pointer; transition: all 0.15s;
+        }
+        .exam-nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .exam-nav-btn.answered { background: var(--primary); color: white; border-color: var(--primary); }
+        .exam-nav-btn.current { box-shadow: 0 0 0 2px var(--primary); }
+
+        /* Container */
+        .exam-container {
+            max-width: 800px; margin: 0 auto; padding: 6rem var(--spacing-md) var(--spacing-xl);
+        }
+
+        /* Question Card */
+        .exam-question {
+            background: white; border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl); padding: 1.5rem;
+            margin-bottom: var(--spacing-lg); transition: box-shadow 0.2s;
+        }
+        .exam-question:hover { box-shadow: var(--shadow-md); }
+        .exam-q-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--spacing-md); }
+        .exam-q-number {
+            font-size: 0.8rem; font-weight: 800; color: white;
+            background: var(--primary); width: 36px; height: 36px;
+            border-radius: var(--radius-md); display: flex; align-items: center;
+            justify-content: center;
+        }
+        .exam-q-meta { display: flex; gap: 0.5rem; align-items: center; }
+        .exam-q-topic {
+            font-size: 0.7rem; font-weight: 600; color: var(--primary);
+            background: var(--primary-50); padding: 0.2rem 0.6rem;
+            border-radius: var(--radius-full);
+        }
+        .exam-q-diff {
+            font-size: 0.65rem; font-weight: 700; padding: 0.15rem 0.5rem;
+            border-radius: var(--radius-full); text-transform: uppercase;
+        }
+        .diff-easy { background: #dcfce7; color: #16a34a; }
+        .diff-medium { background: #fef3c7; color: #d97706; }
+        .diff-hard { background: #fecaca; color: #dc2626; }
+        .exam-q-text {
+            font-size: 1rem; font-weight: 500; color: var(--gray-900);
+            line-height: 1.6; margin-bottom: var(--spacing-md);
+        }
+
+        /* Options */
+        .exam-q-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .exam-option {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.85rem 1rem; border: 2px solid var(--gray-200);
+            border-radius: var(--radius-lg); cursor: pointer; transition: all 0.15s;
+        }
+        .exam-option:hover { border-color: var(--primary-300); background: var(--primary-50); }
+        .exam-option.selected { border-color: var(--primary); background: var(--primary-50); }
+        .exam-option input[type="radio"] { display: none; }
+        .exam-option-letter {
+            width: 32px; height: 32px; border-radius: var(--radius-md);
+            background: var(--gray-100); color: var(--gray-600);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+            transition: all 0.15s;
+        }
+        .exam-option.selected .exam-option-letter {
+            background: var(--primary); color: white;
+        }
+        .exam-option-text { font-size: 0.9rem; color: var(--gray-800); line-height: 1.4; }
+
+        /* Submit Section */
+        .exam-submit-section {
+            background: white; border: 2px dashed var(--gray-300);
+            border-radius: var(--radius-xl); padding: 2rem;
+            text-align: center; margin-top: var(--spacing-xl);
+        }
+        .exam-submit-info { margin-bottom: var(--spacing-md); }
+        .exam-submit-info div {
+            font-size: 2rem; font-weight: 800; color: var(--primary);
+        }
+        .exam-submit-info span { font-size: 0.9rem; color: var(--gray-500); }
+
+        .spin { animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .exam-timer-bar { padding: 0.5rem 0.75rem; }
+            .exam-timer-title { font-size: 0.8rem; }
+            .exam-timer-display { font-size: 1.1rem; }
+            .exam-timer-progress { width: 100px; }
+            .exam-container { padding-top: 7rem; }
+            .exam-nav { padding: 0.35rem 0.5rem; }
+        }
+
+        /* Dark Mode */
+        [data-theme="dark"] .exam-timer-bar { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .exam-nav { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .exam-nav-btn { background: #334155; border-color: #475569; color: #9ca3af; }
+        [data-theme="dark"] .exam-nav-btn.answered { background: #6366f1; color: white; border-color: #6366f1; }
+        [data-theme="dark"] .exam-question { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .exam-option { border-color: #475569; }
+        [data-theme="dark"] .exam-option:hover { border-color: #818cf8; background: rgba(99,102,241,0.1); }
+        [data-theme="dark"] .exam-option.selected { border-color: #818cf8; background: rgba(99,102,241,0.15); }
+        [data-theme="dark"] .exam-option-letter { background: #334155; color: #d1d5db; }
+        [data-theme="dark"] .exam-option.selected .exam-option-letter { background: #6366f1; color: white; }
+        [data-theme="dark"] .exam-submit-section { background: #1e293b; border-color: #475569; }
+        [data-theme="dark"] .exam-q-topic { background: rgba(99,102,241,0.15); color: #818cf8; }
+        [data-theme="dark"] .diff-easy { background: #064e3b; color: #6ee7b7; }
+        [data-theme="dark"] .diff-medium { background: #451a03; color: #fcd34d; }
+        [data-theme="dark"] .diff-hard { background: #450a0a; color: #fca5a5; }
+        [data-theme="dark"] body { background: #0f172a; }
+    </style>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <%- include('../partials/theme-init') %>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <%- include('../partials/sidebar') %>
+        <main class="main-content">
+            <%- include('../partials/topbar') %>
+            <div class="page-content">
+
+                <!-- Header -->
+                <div class="page-header">
+                    <div>
+                        <h1 style="font-size: 1.3rem; font-weight: 800; margin: 0;"><%= graph.title %></h1>
+                        <p style="color: var(--gray-500); font-size: 0.85rem; margin: 0.25rem 0 0;">
+                            <span style="display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <span class="cg-color-dot" style="background: <%= graph.subject_color || '#6366f1' %>"></span>
+                                <%= graph.subject_name %>
+                            </span>
+                            &bull; Generated <%= new Date(graph.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %>
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary btn-sm" onclick="resetView()"><i data-lucide="maximize"></i> Reset View</button>
+                        <button class="btn btn-secondary btn-sm" onclick="togglePhysics()"><i data-lucide="move"></i> <span id="physicsLabel">Freeze</span></button>
+                        <a href="/concepts" class="btn btn-ghost btn-sm"><i data-lucide="arrow-left"></i> Back</a>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="cg-legend" id="legend"></div>
+
+                <!-- Graph Container -->
+                <div class="cg-graph-container">
+                    <div id="conceptGraph"></div>
+                </div>
+
+                <!-- Node Detail Panel -->
+                <div class="cg-detail-panel" id="detailPanel" style="display: none;">
+                    <button class="cg-detail-close" onclick="closeDetail()"><i data-lucide="x"></i></button>
+                    <h3 id="detailTitle"></h3>
+                    <p id="detailDesc"></p>
+                    <div id="detailMeta"></div>
+                    <div id="detailConnections"></div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/popup') %>
+
+    <script>
+        lucide.createIcons();
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.querySelector('.sidebar');
+        if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+        const graphData = <%- JSON.stringify(graphData) %>;
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+        // Build legend
+        const clusters = graphData.clusters || [];
+        const legendEl = document.getElementById('legend');
+        clusters.forEach(c => {
+            const item = document.createElement('div');
+            item.className = 'cg-legend-item';
+            item.innerHTML = `<span class="cg-legend-dot" style="background: ${c.color}"></span><span>${c.name}</span>`;
+            legendEl.appendChild(item);
+        });
+
+        // Color lookup by group
+        const colorMap = {};
+        clusters.forEach(c => { colorMap[c.name] = c.color; });
+
+        // Importance sizing
+        const sizeMap = { high: 28, medium: 20, low: 14 };
+
+        // Build vis.js nodes
+        const nodes = new vis.DataSet(graphData.nodes.map(n => {
+            const baseColor = colorMap[n.group] || '#6366f1';
+            return {
+                id: n.id,
+                label: n.label,
+                group: n.group,
+                level: n.level,
+                title: n.description || n.label,
+                size: sizeMap[n.importance] || 20,
+                color: {
+                    background: baseColor,
+                    border: baseColor,
+                    highlight: { background: baseColor, border: '#fbbf24' },
+                    hover: { background: baseColor, border: '#fbbf24' }
+                },
+                font: {
+                    color: isDark ? '#f3f4f6' : '#1f2937',
+                    size: n.level === 0 ? 14 : 11,
+                    face: 'Inter, sans-serif',
+                    bold: n.level === 0 ? { color: isDark ? '#f3f4f6' : '#111827' } : undefined
+                },
+                borderWidth: n.level === 0 ? 3 : 1,
+                shadow: n.level === 0,
+                _description: n.description,
+                _importance: n.importance,
+                _group: n.group
+            };
+        }));
+
+        // Edge type styling
+        const edgeColors = {
+            prerequisite: '#ef4444',
+            builds_on: '#f59e0b',
+            related: '#6366f1',
+            part_of: '#10b981',
+            applies_to: '#3b82f6'
+        };
+        const edgeDashes = {
+            prerequisite: false,
+            builds_on: false,
+            related: [5, 5],
+            part_of: false,
+            applies_to: [8, 4]
+        };
+
+        const edges = new vis.DataSet(graphData.edges.map((e, i) => ({
+            id: i,
+            from: e.from,
+            to: e.to,
+            label: e.label || '',
+            arrows: e.type === 'prerequisite' || e.type === 'builds_on' ? 'to' : '',
+            color: {
+                color: edgeColors[e.type] || '#9ca3af',
+                highlight: '#fbbf24',
+                hover: edgeColors[e.type] || '#9ca3af'
+            },
+            dashes: edgeDashes[e.type] || false,
+            width: e.type === 'prerequisite' ? 2.5 : 1.5,
+            font: {
+                size: 9,
+                color: isDark ? '#64748b' : '#9ca3af',
+                face: 'Inter, sans-serif',
+                strokeWidth: 3,
+                strokeColor: isDark ? '#0f172a' : '#ffffff'
+            },
+            smooth: { type: 'curvedCW', roundness: 0.15 }
+        })));
+
+        // Create network
+        const container = document.getElementById('conceptGraph');
+        const network = new vis.Network(container, { nodes, edges }, {
+            layout: {
+                improvedLayout: true,
+                hierarchical: false
+            },
+            physics: {
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -3000,
+                    centralGravity: 0.15,
+                    springLength: 180,
+                    springConstant: 0.02,
+                    damping: 0.09
+                },
+                stabilization: { iterations: 200 }
+            },
+            interaction: {
+                hover: true,
+                tooltipDelay: 150,
+                zoomView: true,
+                dragView: true,
+                multiselect: false
+            },
+            nodes: {
+                shape: 'dot',
+                scaling: { min: 12, max: 36 }
+            },
+            edges: {
+                selectionWidth: 3
+            }
+        });
+
+        // Click handler
+        network.on('click', function(params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const node = nodes.get(nodeId);
+                showDetail(node);
+            } else {
+                closeDetail();
+            }
+        });
+
+        function showDetail(node) {
+            const panel = document.getElementById('detailPanel');
+            document.getElementById('detailTitle').textContent = node.label;
+            document.getElementById('detailDesc').textContent = node._description || 'No description available';
+
+            const badgeColor = colorMap[node._group] || '#6366f1';
+            document.getElementById('detailMeta').innerHTML = `
+                <span class="cg-detail-badge" style="background: ${badgeColor}20; color: ${badgeColor}">${node._group || 'General'}</span>
+                <span class="cg-detail-badge importance-${node._importance}">${(node._importance || 'medium').toUpperCase()}</span>
+            `;
+
+            // Find connections
+            const connected = network.getConnectedNodes(node.id);
+            const connHtml = connected.map(cId => {
+                const cn = nodes.get(cId);
+                const c = colorMap[cn?._group] || '#6366f1';
+                return `<span class="cg-detail-conn"><span class="cg-conn-dot" style="background: ${c}"></span>${cn?.label || cId}</span>`;
+            }).join('');
+            document.getElementById('detailConnections').innerHTML = connected.length > 0 
+                ? `<div class="cg-detail-conns-label">Connected to:</div>${connHtml}` 
+                : '';
+
+            panel.style.display = 'block';
+        }
+
+        function closeDetail() {
+            document.getElementById('detailPanel').style.display = 'none';
+            network.unselectAll();
+        }
+
+        let physicsEnabled = true;
+        function togglePhysics() {
+            physicsEnabled = !physicsEnabled;
+            network.setOptions({ physics: { enabled: physicsEnabled } });
+            document.getElementById('physicsLabel').textContent = physicsEnabled ? 'Freeze' : 'Unfreeze';
+        }
+
+        function resetView() {
+            network.fit({ animation: { duration: 500, easingFunction: 'easeInOutCubic' } });
+        }
+    </script>
+
+    <style>
+        .cg-color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+        .cg-legend {
+            display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: var(--spacing-md);
+            padding: 0.75rem 1rem; background: var(--bg-primary); border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+        }
+        .cg-legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; font-weight: 600; color: var(--gray-700); }
+        .cg-legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+        .cg-graph-container {
+            border: 1px solid var(--border-color); border-radius: var(--radius-xl);
+            overflow: hidden; position: relative; background: var(--bg-primary);
+        }
+        #conceptGraph { width: 100%; height: 600px; }
+
+        /* Detail Panel */
+        .cg-detail-panel {
+            position: fixed; bottom: var(--spacing-lg); right: var(--spacing-lg);
+            width: 320px; background: var(--bg-primary); border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl); padding: 1.5rem;
+            box-shadow: var(--shadow-xl); z-index: 50;
+        }
+        .cg-detail-close {
+            position: absolute; top: 0.75rem; right: 0.75rem;
+            background: none; border: none; cursor: pointer; color: var(--gray-400);
+            padding: 0.25rem;
+        }
+        .cg-detail-close svg { width: 18px; height: 18px; }
+        .cg-detail-panel h3 { font-size: 1.1rem; font-weight: 700; color: var(--gray-900); margin: 0 0 0.35rem; }
+        .cg-detail-panel p { font-size: 0.85rem; color: var(--gray-600); margin: 0 0 0.75rem; line-height: 1.5; }
+        .cg-detail-badge {
+            display: inline-block; padding: 0.15rem 0.6rem; border-radius: var(--radius-full);
+            font-size: 0.7rem; font-weight: 700; margin-right: 0.35rem;
+        }
+        .importance-high { background: #fecaca; color: #dc2626; }
+        .importance-medium { background: #fef3c7; color: #d97706; }
+        .importance-low { background: #dbeafe; color: #2563eb; }
+        .cg-detail-conns-label { font-size: 0.7rem; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.05em; margin: 0.75rem 0 0.35rem; }
+        .cg-detail-conn {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            font-size: 0.8rem; color: var(--gray-700); margin: 0.15rem 0.5rem 0.15rem 0;
+        }
+        .cg-conn-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+        @media (max-width: 768px) {
+            #conceptGraph { height: 400px; }
+            .cg-detail-panel { left: var(--spacing-md); right: var(--spacing-md); width: auto; bottom: var(--spacing-md); }
+        }
+
+        /* Dark Mode */
+        [data-theme="dark"] .cg-graph-container { background: #0f172a; border-color: #334155; }
+        [data-theme="dark"] .cg-legend { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .cg-detail-panel { background: #1e293b; border-color: #334155; }
+        [data-theme="dark"] .importance-high { background: rgba(239,68,68,0.15); color: #fca5a5; }
+        [data-theme="dark"] .importance-medium { background: rgba(245,158,11,0.15); color: #fcd34d; }
+        [data-theme="dark"] .importance-low { background: rgba(59,130,246,0.15); color: #93c5fd; }
+    </style>
+</body>
+</html>

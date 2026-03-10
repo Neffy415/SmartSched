@@ -59,6 +59,8 @@ app.use('/flashcards', require('./routes/flashcards'));
 app.use('/practice', require('./routes/practice'));
 app.use('/groups', require('./routes/groups'));
 app.use('/achievements', require('./routes/achievements'));
+app.use('/exam', require('./routes/exam'));
+app.use('/concepts', require('./routes/concepts'));
 
 // 404 handler
 app.use((req, res) => {
@@ -175,6 +177,79 @@ app.listen(PORT, async () => {
         }
     } catch (e) {
         console.error('Gamification setup failed:', e.message);
+    }
+
+    // Ensure exam simulator tables exist
+    try {
+        const { pool } = require('./config/database');
+        const examCheck = await pool.query(`SELECT to_regclass('public.exam_attempts')`);
+        if (!examCheck.rows[0].to_regclass) {
+            console.log('📝 Creating exam simulator tables...');
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS exam_attempts (
+                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    subject_id UUID REFERENCES subjects(id) ON DELETE SET NULL,
+                    title VARCHAR(255) NOT NULL,
+                    question_count INTEGER NOT NULL DEFAULT 20,
+                    time_limit_seconds INTEGER NOT NULL DEFAULT 3600,
+                    difficulty VARCHAR(20) DEFAULT 'mixed',
+                    status VARCHAR(20) DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed')),
+                    score INTEGER,
+                    percentage INTEGER,
+                    time_taken_seconds INTEGER,
+                    answers JSONB,
+                    topic_breakdown JSONB,
+                    difficulty_breakdown JSONB,
+                    started_at TIMESTAMPTZ,
+                    completed_at TIMESTAMPTZ,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_exam_attempts_user ON exam_attempts(user_id);
+
+                CREATE TABLE IF NOT EXISTS exam_questions (
+                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                    exam_id UUID NOT NULL REFERENCES exam_attempts(id) ON DELETE CASCADE,
+                    question_number INTEGER NOT NULL,
+                    question_text TEXT NOT NULL,
+                    topic_name VARCHAR(200),
+                    difficulty VARCHAR(20) DEFAULT 'medium',
+                    option_a TEXT NOT NULL,
+                    option_b TEXT NOT NULL,
+                    option_c TEXT NOT NULL,
+                    option_d TEXT NOT NULL,
+                    correct_option VARCHAR(1) NOT NULL,
+                    explanation TEXT
+                );
+                CREATE INDEX IF NOT EXISTS idx_exam_questions_exam ON exam_questions(exam_id);
+            `);
+            console.log('✅ Exam simulator tables created');
+        }
+    } catch (e) {
+        console.error('Exam tables setup failed:', e.message);
+    }
+
+    // Ensure concept graph table exists
+    try {
+        const { pool } = require('./config/database');
+        const cgCheck = await pool.query(`SELECT to_regclass('public.concept_graphs')`);
+        if (!cgCheck.rows[0].to_regclass) {
+            console.log('🔗 Creating concept graph table...');
+            await pool.query(`
+                CREATE TABLE IF NOT EXISTS concept_graphs (
+                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    subject_id UUID REFERENCES subjects(id) ON DELETE SET NULL,
+                    title VARCHAR(255) NOT NULL,
+                    graph_data JSONB NOT NULL,
+                    created_at TIMESTAMPTZ DEFAULT NOW()
+                );
+                CREATE INDEX IF NOT EXISTS idx_concept_graphs_user ON concept_graphs(user_id);
+            `);
+            console.log('✅ Concept graph table created');
+        }
+    } catch (e) {
+        console.error('Concept graph table setup failed:', e.message);
     }
 
     // Start background cron jobs (due reminders + streak emails)

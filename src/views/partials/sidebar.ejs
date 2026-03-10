@@ -72,6 +72,16 @@
                 <i data-lucide="brain"></i>
                 <span>Practice Quiz</span>
             </a>
+            <a href="/exam" class="nav-item <%= typeof page !== 'undefined' && page === 'exam' ? 'active' : '' %>">
+                <i data-lucide="file-text"></i>
+                <span>Exam Simulator</span>
+                <span class="nav-badge">New</span>
+            </a>
+            <a href="/concepts" class="nav-item <%= typeof page !== 'undefined' && page === 'concepts' ? 'active' : '' %>">
+                <i data-lucide="git-branch"></i>
+                <span>Concept Graph</span>
+                <span class="nav-badge">New</span>
+            </a>
         </div>
 
         <div class="nav-section">
