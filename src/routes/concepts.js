@@ -152,11 +152,24 @@ router.get('/:id', async (req, res) => {
             return res.redirect('/concepts');
         }
 
+        const graphRow = graph.rows[0];
+        // Ensure graph_data is parsed as object (handles both string and object returns)
+        let graphData = graphRow.graph_data;
+        if (typeof graphData === 'string') {
+            try {
+                graphData = JSON.parse(graphData);
+            } catch (e) {
+                console.error('Failed to parse graph_data:', e);
+                req.flash('error', 'Graph data is corrupted');
+                return res.redirect('/concepts');
+            }
+        }
+
         res.render('concepts/view', {
-            title: graph.rows[0].title + ' - SmartSched',
+            title: graphRow.title + ' - SmartSched',
             page: 'concepts',
-            graph: graph.rows[0],
-            graphData: graph.rows[0].graph_data
+            graph: graphRow,
+            graphData: graphData
         });
     } catch (error) {
         console.error('View graph error:', error);

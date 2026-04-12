@@ -68,7 +68,22 @@
         const sidebar = document.querySelector('.sidebar');
         if (menuToggle) menuToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
 
-        const graphData = <%- JSON.stringify(graphData) %>;
+        // Parse graph data safely
+        let graphData = <%- JSON.stringify(graphData) %>;
+        if (typeof graphData === 'string') {
+            try {
+                graphData = JSON.parse(graphData);
+            } catch (e) {
+                console.error('Failed to parse graph data:', e);
+                graphData = { nodes: [], edges: [], clusters: [] };
+            }
+        }
+        
+        // Validate required structure
+        if (!graphData.nodes || !Array.isArray(graphData.nodes)) graphData.nodes = [];
+        if (!graphData.edges || !Array.isArray(graphData.edges)) graphData.edges = [];
+        if (!graphData.clusters || !Array.isArray(graphData.clusters)) graphData.clusters = [];
+
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
         // Build legend
@@ -92,11 +107,11 @@
         const nodes = new vis.DataSet(graphData.nodes.map(n => {
             const baseColor = colorMap[n.group] || '#6366f1';
             return {
-                id: n.id,
-                label: n.label,
-                group: n.group,
-                level: n.level,
-                title: n.description || n.label,
+                id: n.id || `node-${Math.random()}`,
+                label: n.label || 'Untitled',
+                group: n.group || 'General',
+                level: n.level !== undefined ? n.level : 1,
+                title: n.description || n.label || 'No description',
                 size: sizeMap[n.importance] || 20,
                 color: {
                     background: baseColor,
@@ -157,50 +172,64 @@
             smooth: { type: 'curvedCW', roundness: 0.15 }
         })));
 
+        // Initialize network variable in outer scope
+        let network = null;
+
         // Create network
         const container = document.getElementById('conceptGraph');
-        const network = new vis.Network(container, { nodes, edges }, {
-            layout: {
-                improvedLayout: true,
-                hierarchical: false
-            },
-            physics: {
-                enabled: true,
-                barnesHut: {
-                    gravitationalConstant: -3000,
-                    centralGravity: 0.15,
-                    springLength: 180,
-                    springConstant: 0.02,
-                    damping: 0.09
-                },
-                stabilization: { iterations: 200 }
-            },
-            interaction: {
-                hover: true,
-                tooltipDelay: 150,
-                zoomView: true,
-                dragView: true,
-                multiselect: false
-            },
-            nodes: {
-                shape: 'dot',
-                scaling: { min: 12, max: 36 }
-            },
-            edges: {
-                selectionWidth: 3
-            }
-        });
+        if (!container) {
+            console.error('Graph container not found');
+        } else if (nodes.length === 0) {
+            container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gray-500); font-size: 1rem;">No nodes to display. The concept graph may be empty.</div>';
+        } else {
+            try {
+                network = new vis.Network(container, { nodes, edges }, {
+                    layout: {
+                        improvedLayout: true,
+                        hierarchical: false
+                    },
+                    physics: {
+                        enabled: true,
+                        barnesHut: {
+                            gravitationalConstant: -3000,
+                            centralGravity: 0.15,
+                            springLength: 180,
+                            springConstant: 0.02,
+                            damping: 0.09
+                        },
+                        stabilization: { iterations: 200 }
+                    },
+                    interaction: {
+                        hover: true,
+                        tooltipDelay: 150,
+                        zoomView: true,
+                        dragView: true,
+                        multiselect: false
+                    },
+                    nodes: {
+                        shape: 'dot',
+                        scaling: { min: 12, max: 36 }
+                    },
+                    edges: {
+                        selectionWidth: 3
+                    }
+                });
 
-        // Click handler
-        network.on('click', function(params) {
-            if (params.nodes.length > 0) {
-                const nodeId = params.nodes[0];
-                const node = nodes.get(nodeId);
-                showDetail(node);
-            } else {
-                closeDetail();
+                // Click handler
+                network.on('click', function(params) {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        const node = nodes.get(nodeId);
+                        showDetail(node);
+                    } else {
+                        closeDetail();
+                    }
+                });
+            } catch (e) {
+                console.error('Failed to initialize network:', e);
+                container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--red-500); font-size: 0.9rem;">Error rendering graph. Please check the console.</div>';
             }
-        });
+        }
 
         function showDetail(node) {
             const panel = document.getElementById('detailPanel');
@@ -234,12 +263,14 @@
 
         let physicsEnabled = true;
         function togglePhysics() {
+            if (!network) return;
             physicsEnabled = !physicsEnabled;
             network.setOptions({ physics: { enabled: physicsEnabled } });
             document.getElementById('physicsLabel').textContent = physicsEnabled ? 'Freeze' : 'Unfreeze';
         }
 
         function resetView() {
+            if (!network) return;
             network.fit({ animation: { duration: 500, easingFunction: 'easeInOutCubic' } });
         }
     </script>
