@@ -92,21 +92,36 @@ class AIService {
     }
     
     /**
-     * Parse JSON from AI response, handling markdown code blocks
+     * Parse JSON from AI response, handling markdown code blocks and conversational text
      */
     parseJSONResponse(text) {
-        // Remove markdown code blocks if present
         let cleaned = text.trim();
         
-        // Handle ```json ... ``` format
-        if (cleaned.startsWith('```json')) {
-            cleaned = cleaned.slice(7);
-        } else if (cleaned.startsWith('```')) {
-            cleaned = cleaned.slice(3);
-        }
+        // Try to extract JSON from markdown code blocks anywhere in the text
+        const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
+        const codeBlockRegex = /```\s*([\s\S]*?)\s*```/;
         
-        if (cleaned.endsWith('```')) {
-            cleaned = cleaned.slice(0, -3);
+        let match = cleaned.match(jsonBlockRegex);
+        if (match) {
+            cleaned = match[1];
+        } else {
+            match = cleaned.match(codeBlockRegex);
+            if (match) {
+                cleaned = match[1];
+            } else {
+                // Attempt to find the first '{' or '[' and the last '}' or ']'
+                const firstCurly = cleaned.indexOf('{');
+                const lastCurly = cleaned.lastIndexOf('}');
+                const firstSquare = cleaned.indexOf('[');
+                const lastSquare = cleaned.lastIndexOf(']');
+                
+                const first = (firstCurly !== -1 && (firstSquare === -1 || firstCurly < firstSquare)) ? firstCurly : firstSquare;
+                const last = (lastCurly !== -1 && (lastSquare === -1 || lastCurly > lastSquare)) ? lastCurly : lastSquare;
+                
+                if (first !== -1 && last !== -1 && last > first) {
+                    cleaned = cleaned.substring(first, last + 1);
+                }
+            }
         }
         
         cleaned = cleaned.trim();
@@ -115,6 +130,8 @@ class AIService {
             return JSON.parse(cleaned);
         } catch (e) {
             // If JSON parsing fails, return as structured object
+            console.error('Failed to parse AI JSON response:', e.message);
+            console.error('Cleaned string that failed:', cleaned.substring(0, 100) + '...');
             return { 
                 raw_response: text,
                 parse_error: true 
