@@ -111,7 +111,7 @@
         async function generateGraph() {
             const subjectId = document.getElementById('subjectSelect').value;
             if (!subjectId) {
-                ssAlert('Select Subject', 'Please choose a subject to generate a concept map.', 'warning');
+                ssAlert('Please choose a subject to generate a concept map.', { title: 'Select Subject', type: 'warning' });
                 return;
             }
 
@@ -128,14 +128,30 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ subject_id: subjectId })
                 });
-                const data = await resp.json();
-                if (data.success) {
-                    window.location.href = '/concepts/' + data.graphId;
-                } else {
-                    ssAlert('Error', data.error || 'Failed to generate concept map', 'error');
+
+                const rawBody = await resp.text();
+                let data = {};
+
+                if (rawBody) {
+                    try {
+                        data = JSON.parse(rawBody);
+                    } catch (parseErr) {
+                        data = { error: 'Unexpected server response while generating concept map.' };
+                    }
                 }
+
+                if (!resp.ok || !data.success) {
+                    const fallbackMessage = resp.status >= 500
+                        ? 'Server error while generating concept map. Please try again.'
+                        : `Request failed (${resp.status})`;
+                    const message = data.error || data.message || fallbackMessage;
+                    throw new Error(message);
+                }
+
+                window.location.href = '/concepts/' + data.graphId;
             } catch (err) {
-                ssAlert('Error', 'Network error. Please try again.', 'error');
+                const message = err && err.message ? err.message : 'Network error. Please try again.';
+                ssAlert(message, { title: 'Error', type: 'error' });
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<i data-lucide="sparkles"></i> Generate Map';
