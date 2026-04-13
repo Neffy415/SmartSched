@@ -170,7 +170,7 @@ async function generateMotivation(userName, streakDays) {
 
     try {
         const prompt = `Generate a short, energetic, and inspiring motivational message for a student named ${userName} who is on a ${streakDays}-day study streak. Keep it to 1-2 sentences max. Be specific about the streak number. Make it personal and encouraging. Don't use hashtags. Return ONLY the motivation text, nothing else.`;
-        const result = await aiService.callGemini(prompt);
+        const result = await aiService.callGemini(prompt, { requireJson: false });
         const text = result.raw_response || (typeof result === 'string' ? result : null);
         return text || getDefaultMotivation(streakDays);
     } catch (error) {

@@ -69,23 +69,59 @@ class AIService {
     /**
      * Core method to call Gemini API with retry logic
      */
-    async callGemini(prompt, retries = this.maxRetries) {
+    async callGemini(prompt, optionsOrRetries = {}, retries = this.maxRetries) {
+        let options = {};
+
+        // Backward compatibility for old call signature: callGemini(prompt, retries)
+        if (typeof optionsOrRetries === 'number') {
+            retries = optionsOrRetries;
+        } else if (optionsOrRetries && typeof optionsOrRetries === 'object') {
+            options = optionsOrRetries;
+        }
+
+        const { requireJson = true } = options;
+
         if (!this.isAvailable()) {
             throw new Error('AI service is not available. Please configure GEMINI_API_KEY.');
         }
         
         try {
-            const result = await this.model.generateContent(prompt);
+            let result;
+
+            if (requireJson) {
+                try {
+                    result = await this.model.generateContent({
+                        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            responseMimeType: 'application/json'
+                        }
+                    });
+                } catch (jsonModeError) {
+                    // Fallback to plain text generation if model doesn't support JSON mode
+                    if (!this.isResponseMimeTypeError(jsonModeError)) {
+                        throw jsonModeError;
+                    }
+                    result = await this.model.generateContent(prompt);
+                }
+            } else {
+                result = await this.model.generateContent(prompt);
+            }
+
             const response = await result.response;
             const text = response.text();
             
-            // Try to parse as JSON
-            return this.parseJSONResponse(text);
+            const parsed = this.parseJSONResponse(text);
+
+            if (requireJson && parsed && parsed.parse_error) {
+                throw new Error('AI returned invalid JSON response');
+            }
+
+            return parsed;
         } catch (error) {
             if (retries > 0 && this.isRetryableError(error)) {
                 console.log(`Retrying AI call... (${this.maxRetries - retries + 1}/${this.maxRetries})`);
                 await this.delay(this.retryDelay);
-                return this.callGemini(prompt, retries - 1);
+                return this.callGemini(prompt, options, retries - 1);
             }
             throw error;
         }
@@ -95,7 +131,17 @@ class AIService {
      * Parse JSON from AI response, handling markdown code blocks and conversational text
      */
     parseJSONResponse(text) {
-        let cleaned = text.trim();
+        let cleaned = (text || '').trim();
+
+        if (!cleaned) {
+            return {
+                raw_response: text,
+                parse_error: true
+            };
+        }
+
+        // Remove BOM if present
+        cleaned = cleaned.replace(/^\uFEFF/, '');
         
         // Try to extract JSON from markdown code blocks anywhere in the text
         const jsonBlockRegex = /```json\s*([\s\S]*?)\s*```/;
@@ -129,6 +175,15 @@ class AIService {
         try {
             return JSON.parse(cleaned);
         } catch (e) {
+            const repaired = this.repairCommonJSONIssues(cleaned);
+            if (repaired !== cleaned) {
+                try {
+                    return JSON.parse(repaired);
+                } catch (_) {
+                    // Fall through to parse_error response
+                }
+            }
+
             // If JSON parsing fails, return as structured object
             console.error('Failed to parse AI JSON response:', e.message);
             console.error('Cleaned string that failed:', cleaned.substring(0, 100) + '...');
@@ -137,6 +192,28 @@ class AIService {
                 parse_error: true 
             };
         }
+    }
+
+    /**
+     * Minimal JSON repair for common LLM formatting mistakes.
+     */
+    repairCommonJSONIssues(text) {
+        return text
+            .replace(/[\u201C\u201D]/g, '"')
+            .replace(/[\u2018\u2019]/g, "'")
+            .replace(/,\s*([}\]])/g, '$1')
+            .trim();
+    }
+
+    /**
+     * Detect JSON mode compatibility errors in Gemini responses.
+     */
+    isResponseMimeTypeError(error) {
+        const message = (error && error.message ? error.message : '').toLowerCase();
+        return message.includes('responsemimetype')
+            || message.includes('response mime type')
+            || message.includes('generationconfig')
+            || message.includes('json mode');
     }
     
     /**
@@ -398,6 +475,61 @@ Return ONLY valid JSON in this exact format (no markdown, no code blocks):
 }`;
 
         return this.callGemini(prompt);
+    }
+
+    /**
+     * Generate concept graph data for a subject.
+     */
+    async generateConceptGraph(subjectName, topicNames = []) {
+        const safeSubject = subjectName || 'General Subject';
+        const safeTopics = Array.isArray(topicNames)
+            ? topicNames.filter(t => typeof t === 'string' && t.trim()).slice(0, 40)
+            : [];
+
+        const prompt = `You are an expert educator and curriculum designer.
+
+Create a concept graph for the subject "${safeSubject}" using these topics:
+${safeTopics.join(', ')}
+
+Return ONLY valid JSON with this structure:
+{
+    "title": "Concept Map: ${safeSubject}",
+    "nodes": [
+        {
+            "id": "unique_id",
+            "label": "Concept Name",
+            "group": "topic_name",
+            "level": 0,
+            "description": "Brief description",
+            "importance": "high|medium|low"
+        }
+    ],
+    "edges": [
+        {
+            "from": "node_id_1",
+            "to": "node_id_2",
+            "label": "relationship label",
+            "type": "prerequisite|related|builds_on|part_of|applies_to"
+        }
+    ],
+    "clusters": [
+        {
+            "name": "Cluster Name",
+            "color": "#RRGGBB",
+            "description": "Cluster summary"
+        }
+    ]
+}
+
+Rules:
+- Create 12-30 nodes depending on topic complexity
+- Use concise, meaningful labels
+- Use top-level topics as groups for level 0 concepts
+- Include cross-topic edges
+- Ensure node IDs are unique and referenced correctly in edges
+- Respond with JSON only`;
+
+        return this.callGemini(prompt, { requireJson: true });
     }
     
     /**
