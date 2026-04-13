@@ -23,6 +23,125 @@ function normalizeNodeId(value) {
         .replace(/^-+|-+$/g, '');
 }
 
+function isRateLimitedError(error) {
+    const message = (error && error.message ? error.message : '').toLowerCase();
+    return message.includes('rate')
+        || message.includes('quota')
+        || message.includes('resource_exhausted')
+        || message.includes('too many requests')
+        || message.includes('429');
+}
+
+function buildFallbackConceptGraph(subjectName, topicRows = [], fallbackColor = '#6366F1') {
+    const topics = Array.isArray(topicRows) ? topicRows : [];
+    const nodes = [];
+    const edges = [];
+    const clusters = [];
+    const usedIds = new Set();
+    const primaryColor = isValidHexColor(fallbackColor) ? fallbackColor : '#6366F1';
+    const palette = [primaryColor, ...DEFAULT_CLUSTER_COLORS.filter(color => color !== primaryColor)];
+
+    const makeUniqueId = (base) => {
+        const cleanBase = normalizeNodeId(base) || 'node';
+        let id = cleanBase;
+        let suffix = 2;
+        while (usedIds.has(id)) {
+            id = `${cleanBase}-${suffix++}`;
+        }
+        usedIds.add(id);
+        return id;
+    };
+
+    const normalizedTopics = topics
+        .map((topic, index) => ({
+            name: typeof topic?.name === 'string' && topic.name.trim() ? topic.name.trim() : `Topic ${index + 1}`,
+            difficulty: topic?.difficulty || 'medium',
+            importance: Number(topic?.importance) || 3
+        }))
+        .slice(0, 20);
+
+    normalizedTopics.forEach((topic, index) => {
+        const topicNodeId = makeUniqueId(`topic-${topic.name}`);
+        const color = palette[index % palette.length];
+        const importance = topic.importance >= 4 ? 'high' : (topic.importance <= 2 ? 'low' : 'medium');
+
+        nodes.push({
+            id: topicNodeId,
+            label: topic.name,
+            group: topic.name,
+            level: 0,
+            description: `Core topic in ${subjectName}`,
+            importance
+        });
+
+        const subConcepts = [
+            `Fundamentals of ${topic.name}`,
+            `Key Ideas in ${topic.name}`,
+            topic.difficulty === 'hard' ? `Advanced Applications of ${topic.name}` : `Applications of ${topic.name}`
+        ];
+
+        subConcepts.forEach((label, subIndex) => {
+            const subId = makeUniqueId(`sub-${topic.name}-${subIndex + 1}`);
+            nodes.push({
+                id: subId,
+                label,
+                group: topic.name,
+                level: 1,
+                description: `${label} for structured revision`,
+                importance: subIndex === 0 ? 'medium' : 'low'
+            });
+
+            edges.push({
+                from: topicNodeId,
+                to: subId,
+                label: 'part of',
+                type: 'part_of'
+            });
+        });
+
+        clusters.push({
+            name: topic.name,
+            color,
+            description: `Concepts related to ${topic.name}`
+        });
+
+        if (index > 0) {
+            const prevTopic = normalizedTopics[index - 1];
+            const prevTopicNodeId = nodes.find(n => n.label === prevTopic.name && n.level === 0)?.id;
+            if (prevTopicNodeId) {
+                edges.push({
+                    from: prevTopicNodeId,
+                    to: topicNodeId,
+                    label: 'prerequisite',
+                    type: 'prerequisite'
+                });
+            }
+        }
+    });
+
+    if (nodes.length <= 1 && nodes.length > 0) {
+        // Ensure at least one connection for vis.js usability.
+        const onlyNode = nodes[0];
+        const extraId = makeUniqueId(`${onlyNode.label}-overview`);
+        nodes.push({
+            id: extraId,
+            label: `${onlyNode.label} Overview`,
+            group: onlyNode.group,
+            level: 1,
+            description: `Overview concepts for ${onlyNode.label}`,
+            importance: 'medium'
+        });
+        edges.push({ from: onlyNode.id, to: extraId, label: 'related', type: 'related' });
+    }
+
+    return {
+        title: `Concept Map: ${subjectName}`,
+        nodes,
+        edges,
+        clusters
+    };
+}
+
 function normalizeConceptGraph(rawGraph, subjectName, topicNames = [], fallbackColor = '#6366f1') {
     const graph = rawGraph && typeof rawGraph === 'object' ? rawGraph : {};
     const topics = Array.isArray(topicNames)
@@ -253,13 +372,32 @@ router.post('/generate', async (req, res) => {
 
         console.log(`📊 Generating concept graph for subject: ${subjectName}, topics: ${topicNames.join(', ')}`);
 
-        const response = await aiService.generateConceptGraph(subjectName, topicNames);
-        const normalizedGraph = normalizeConceptGraph(
-            response,
-            subjectName,
-            topicNames,
-            subject.rows[0].color || '#6366f1'
-        );
+        let normalizedGraph;
+        let usedFallback = false;
+
+        try {
+            const response = await aiService.generateConceptGraph(subjectName, topicNames);
+            normalizedGraph = normalizeConceptGraph(
+                response,
+                subjectName,
+                topicNames,
+                subject.rows[0].color || '#6366f1'
+            );
+        } catch (aiError) {
+            if (!isRateLimitedError(aiError)) {
+                throw aiError;
+            }
+
+            console.warn('⚠️ AI rate limited. Generating fallback concept graph.');
+            const fallbackGraph = buildFallbackConceptGraph(subjectName, topics.rows, subject.rows[0].color || '#6366f1');
+            normalizedGraph = normalizeConceptGraph(
+                fallbackGraph,
+                subjectName,
+                topicNames,
+                subject.rows[0].color || '#6366f1'
+            );
+            usedFallback = true;
+        }
 
         console.log('✅ AI response received, validating...');
 
@@ -278,7 +416,12 @@ router.post('/generate', async (req, res) => {
 
         console.log(`✅ Concept graph saved with ID: ${graphResult.rows[0].id}`);
 
-            res.json({ success: true, graphId: graphResult.rows[0].id, graph: normalizedGraph });
+            res.json({
+                success: true,
+                graphId: graphResult.rows[0].id,
+                graph: normalizedGraph,
+                fallback: usedFallback
+            });
     } catch (error) {
         console.error('❌ Concept graph generation error:', error.message);
         console.error('Stack:', error.stack);

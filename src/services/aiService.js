@@ -16,10 +16,20 @@ class AIService {
     constructor() {
         this.apiKey = process.env.GEMINI_API_KEY;
         this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+        this.modelFallbacks = (process.env.GEMINI_FALLBACK_MODELS || 'gemini-1.5-flash,gemini-1.5-flash-8b')
+            .split(',')
+            .map(m => m.trim())
+            .filter(m => m && m !== this.modelName);
         this.genAI = null;
         this.model = null;
-        this.maxRetries = 3;
-        this.retryDelay = 1000;
+        this.modelCache = new Map();
+        this.maxRetries = Math.max(1, parseInt(process.env.GEMINI_MAX_RETRIES, 10) || 4);
+        this.retryDelay = Math.max(500, parseInt(process.env.GEMINI_RETRY_DELAY_MS, 10) || 1200);
+        this.maxRetryDelay = Math.max(this.retryDelay, parseInt(process.env.GEMINI_MAX_RETRY_DELAY_MS, 10) || 20000);
+        this.cacheTtlMs = Math.max(0, parseInt(process.env.GEMINI_CACHE_TTL_MS, 10) || 300000);
+        this.maxCacheEntries = Math.max(10, parseInt(process.env.GEMINI_CACHE_MAX_ENTRIES, 10) || 200);
+        this.responseCache = new Map();
+        this.inflightRequests = new Map();
         this._configured = false;
         
         if (this.apiKey) {
@@ -42,21 +52,46 @@ class AIService {
     initialize() {
         try {
             this.genAI = new GoogleGenerativeAI(this.apiKey);
-            this.model = this.genAI.getGenerativeModel({ 
-                model: this.modelName,
-                generationConfig: {
-                    temperature: 0.7,
-                    topK: 40,
-                    topP: 0.95,
-                    maxOutputTokens: 8192,
-                }
-            });
+            this.model = this.createModel(this.modelName);
+            this.modelCache.set(this.modelName, this.model);
             this._configured = true;
             console.log(`✅ Gemini AI initialized with model: ${this.modelName}`);
         } catch (error) {
             this._configured = false;
             console.error('❌ Failed to initialize Gemini AI:', error.message);
         }
+    }
+
+    /**
+     * Create a model client instance for a specific model name.
+     */
+    createModel(modelName) {
+        return this.genAI.getGenerativeModel({
+            model: modelName,
+            generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 8192,
+            }
+        });
+    }
+
+    /**
+     * Reuse model instances to avoid repeatedly creating clients.
+     */
+    getOrCreateModel(modelName) {
+        if (modelName === this.modelName && this.model) {
+            return this.model;
+        }
+
+        if (this.modelCache.has(modelName)) {
+            return this.modelCache.get(modelName);
+        }
+
+        const model = this.createModel(modelName);
+        this.modelCache.set(modelName, model);
+        return model;
     }
     
     /**
@@ -84,47 +119,122 @@ class AIService {
         if (!this.isAvailable()) {
             throw new Error('AI service is not available. Please configure GEMINI_API_KEY.');
         }
-        
-        try {
-            let result;
 
-            if (requireJson) {
-                try {
-                    result = await this.model.generateContent({
-                        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                        generationConfig: {
-                            responseMimeType: 'application/json'
-                        }
-                    });
-                } catch (jsonModeError) {
-                    // Fallback to plain text generation if model doesn't support JSON mode
-                    if (!this.isResponseMimeTypeError(jsonModeError)) {
-                        throw jsonModeError;
-                    }
-                    result = await this.model.generateContent(prompt);
-                }
-            } else {
-                result = await this.model.generateContent(prompt);
-            }
-
-            const response = await result.response;
-            const text = response.text();
-            
-            const parsed = this.parseJSONResponse(text);
-
-            if (requireJson && parsed && parsed.parse_error) {
-                throw new Error('AI returned invalid JSON response');
-            }
-
-            return parsed;
-        } catch (error) {
-            if (retries > 0 && this.isRetryableError(error)) {
-                console.log(`Retrying AI call... (${this.maxRetries - retries + 1}/${this.maxRetries})`);
-                await this.delay(this.retryDelay);
-                return this.callGemini(prompt, options, retries - 1);
-            }
-            throw error;
+        const cacheKey = this.buildCacheKey(prompt, requireJson);
+        const cached = this.getCachedResponse(cacheKey);
+        if (cached) {
+            return cached;
         }
+
+        if (this.inflightRequests.has(cacheKey)) {
+            return this.cloneData(await this.inflightRequests.get(cacheKey));
+        }
+
+        const requestPromise = this.callWithModelFallback(prompt, { requireJson, retries });
+        this.inflightRequests.set(cacheKey, requestPromise);
+
+        try {
+            const response = await requestPromise;
+            this.setCachedResponse(cacheKey, response);
+            return this.cloneData(response);
+        } finally {
+            this.inflightRequests.delete(cacheKey);
+        }
+    }
+
+    /**
+     * Try primary and fallback Gemini models.
+     */
+    async callWithModelFallback(prompt, { requireJson, retries }) {
+        const modelsToTry = [this.modelName, ...this.modelFallbacks];
+        let lastError = null;
+
+        for (let i = 0; i < modelsToTry.length; i++) {
+            const modelName = modelsToTry[i];
+            try {
+                return await this.callModelWithRetries(modelName, prompt, { requireJson, retries });
+            } catch (error) {
+                lastError = error;
+                const hasNextModel = i < modelsToTry.length - 1;
+
+                if (hasNextModel && (this.isRateLimitError(error) || this.isModelUnavailableError(error))) {
+                    console.warn(`⚠️ Model ${modelName} unavailable or rate-limited. Trying fallback model...`);
+                    continue;
+                }
+
+                throw error;
+            }
+        }
+
+        if (lastError && this.isRateLimitError(lastError)) {
+            throw new Error('AI rate limit reached. Please try again shortly.');
+        }
+
+        throw lastError || new Error('AI request failed');
+    }
+
+    /**
+     * Call one specific model with retry/backoff.
+     */
+    async callModelWithRetries(modelName, prompt, { requireJson, retries }) {
+        const model = this.getOrCreateModel(modelName);
+
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                const text = await this.generateText(model, prompt, requireJson);
+
+                if (!requireJson) {
+                    return { raw_response: text };
+                }
+
+                const parsed = this.parseJSONResponse(text);
+                if (parsed && parsed.parse_error) {
+                    throw new Error('AI returned invalid JSON response');
+                }
+
+                return parsed;
+            } catch (error) {
+                const canRetry = attempt < retries && this.isRetryableError(error);
+                if (!canRetry) {
+                    throw error;
+                }
+
+                const delayMs = this.getRetryDelayMs(error, attempt);
+                console.warn(`Retrying AI call with ${modelName} in ${delayMs}ms (${attempt + 1}/${retries})`);
+                await this.delay(delayMs);
+            }
+        }
+
+        throw new Error('AI request failed after retries');
+    }
+
+    /**
+     * Execute model request and return text response.
+     */
+    async generateText(model, prompt, requireJson) {
+        let result;
+
+        if (requireJson) {
+            try {
+                result = await model.generateContent({
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        responseMimeType: 'application/json'
+                    }
+                });
+            } catch (jsonModeError) {
+                // Fallback to plain generation if JSON mode is unsupported for this model
+                if (!this.isResponseMimeTypeError(jsonModeError)) {
+                    throw jsonModeError;
+                }
+                result = await model.generateContent(prompt);
+            }
+        } else {
+            result = await model.generateContent(prompt);
+        }
+
+        const response = await result.response;
+        return response.text();
     }
     
     /**
@@ -215,15 +325,131 @@ class AIService {
             || message.includes('generationconfig')
             || message.includes('json mode');
     }
+
+    /**
+     * Identify provider rate limit / quota errors.
+     */
+    isRateLimitError(error) {
+        const message = (error && error.message ? error.message : '').toLowerCase();
+        const code = String(error && error.code ? error.code : '').toLowerCase();
+        const status = Number(error && (error.status || error.statusCode));
+
+        return status === 429
+            || code.includes('rate_limit')
+            || code.includes('resource_exhausted')
+            || message.includes('rate limit')
+            || message.includes('too many requests')
+            || message.includes('resource_exhausted')
+            || message.includes('quota')
+            || message.includes('429');
+    }
+
+    /**
+     * Detect temporary model availability issues.
+     */
+    isModelUnavailableError(error) {
+        const message = (error && error.message ? error.message : '').toLowerCase();
+        const status = Number(error && (error.status || error.statusCode));
+
+        return status === 503
+            || status === 500
+            || status === 504
+            || message.includes('unavailable')
+            || message.includes('overloaded')
+            || message.includes('internal');
+    }
     
     /**
      * Check if error is retryable
      */
     isRetryableError(error) {
-        const retryableCodes = ['RATE_LIMIT_EXCEEDED', 'INTERNAL', 'UNAVAILABLE'];
-        return retryableCodes.some(code => 
-            error.message?.includes(code) || error.code === code
-        );
+        const message = (error && error.message ? error.message : '').toLowerCase();
+        const status = Number(error && (error.status || error.statusCode));
+
+        return this.isRateLimitError(error)
+            || this.isModelUnavailableError(error)
+            || status === 408
+            || message.includes('timeout')
+            || message.includes('deadline exceeded')
+            || message.includes('temporarily unavailable');
+    }
+
+    /**
+     * Exponential backoff with jitter, respecting explicit retry-after hints when present.
+     */
+    getRetryDelayMs(error, attempt) {
+        const hinted = this.extractRetryAfterMs(error);
+        if (hinted !== null) {
+            return hinted;
+        }
+
+        const exponential = Math.min(this.maxRetryDelay, this.retryDelay * Math.pow(2, attempt));
+        const jitter = Math.floor(Math.random() * 500);
+        return Math.min(this.maxRetryDelay, exponential + jitter);
+    }
+
+    /**
+     * Parse retry-after durations from error messages.
+     */
+    extractRetryAfterMs(error) {
+        const message = (error && error.message ? error.message : '').toLowerCase();
+        const match = message.match(/retry after\s*(\d+)\s*(ms|millisecond|milliseconds|s|sec|secs|second|seconds)?/i);
+
+        if (!match) return null;
+
+        const value = parseInt(match[1], 10);
+        if (!Number.isFinite(value) || value < 0) return null;
+
+        const unit = (match[2] || 's').toLowerCase();
+        if (unit.startsWith('ms') || unit.startsWith('millisecond')) {
+            return Math.min(this.maxRetryDelay, value);
+        }
+
+        return Math.min(this.maxRetryDelay, value * 1000);
+    }
+
+    /**
+     * Build cache key for deduplicating repeated prompts.
+     */
+    buildCacheKey(prompt, requireJson) {
+        return `${requireJson ? 'json' : 'text'}:${prompt}`;
+    }
+
+    getCachedResponse(cacheKey) {
+        if (this.cacheTtlMs <= 0 || !this.responseCache.has(cacheKey)) {
+            return null;
+        }
+
+        const item = this.responseCache.get(cacheKey);
+        if (!item || Date.now() > item.expiresAt) {
+            this.responseCache.delete(cacheKey);
+            return null;
+        }
+
+        return this.cloneData(item.value);
+    }
+
+    setCachedResponse(cacheKey, value) {
+        if (this.cacheTtlMs <= 0) return;
+
+        if (this.responseCache.size >= this.maxCacheEntries) {
+            const oldestKey = this.responseCache.keys().next().value;
+            if (oldestKey) this.responseCache.delete(oldestKey);
+        }
+
+        this.responseCache.set(cacheKey, {
+            value: this.cloneData(value),
+            expiresAt: Date.now() + this.cacheTtlMs
+        });
+    }
+
+    cloneData(value) {
+        if (value === null || value === undefined) return value;
+        try {
+            return JSON.parse(JSON.stringify(value));
+        } catch (_) {
+            return value;
+        }
     }
     
     /**
