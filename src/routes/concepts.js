@@ -62,6 +62,12 @@ router.post('/generate', async (req, res) => {
 
         if (!subject_id) return res.status(400).json({ error: 'Subject required' });
 
+        // Check if AI service is available
+        if (!aiService.isConfigured()) {
+            console.error('AI Service not configured - GEMINI_API_KEY not set');
+            return res.status(500).json({ error: 'AI service is not configured. Please contact administrator.' });
+        }
+
         const subject = await pool.query('SELECT * FROM subjects WHERE id = $1 AND user_id = $2', [subject_id, userId]);
         if (subject.rows.length === 0) return res.status(404).json({ error: 'Subject not found' });
 
@@ -69,13 +75,19 @@ router.post('/generate', async (req, res) => {
         const topicNames = topics.rows.map(t => t.name);
         const subjectName = subject.rows[0].name;
 
+        if (topicNames.length === 0) {
+            return res.status(400).json({ error: 'Please add at least one topic to this subject first' });
+        }
+
+        console.log(`📊 Generating concept graph for subject: ${subjectName}, topics: ${topicNames.join(', ')}`);
+
         const prompt = `You are an expert educator. Create a concept relationship map for the subject "${subjectName}".
 
 Topics in this subject: ${topicNames.join(', ')}
 
 Generate a concept graph showing how these topics relate to each other. Include sub-concepts within each topic.
 
-Return ONLY valid JSON (no markdown):
+Return ONLY valid JSON (no markdown, no extra text):
 {
   "title": "Concept Map: ${subjectName}",
   "nodes": [
@@ -105,32 +117,75 @@ Return ONLY valid JSON (no markdown):
   ]
 }
 
-Rules:
+Important rules:
 - Create 15-40 nodes depending on complexity
 - Level 0 = main topics, Level 1 = sub-concepts, Level 2 = details
 - Every edge must have a meaningful relationship label
 - Use the actual topic names as group names for top-level nodes
 - Include cross-topic relationships (these are the most valuable)
-- Each cluster should have a distinct, visually pleasing color
-- Think about prerequisite chains: what must you learn first?`;
+- Each cluster should have a distinct, visually pleasing color (use hex like #FF6B6B, #4ECDC4, #FFE66D, #95E1D3, #C7CEEA)
+- Think about prerequisite chains: what must you learn first?
+- RESPOND WITH ONLY VALID JSON, NO MARKDOWN FORMATTING, NO EXPLANATIONS`;
 
         const response = await aiService.callGemini(prompt);
 
-        if (!response.nodes || !response.edges) {
-            return res.status(500).json({ error: 'Failed to generate concept graph' });
+        console.log('✅ AI response received, validating...');
+
+        // Check for parse errors
+        if (response.parse_error) {
+            console.error('AI response parsing failed:', response.raw_response.substring(0, 200));
+            return res.status(500).json({ error: 'Failed to parse AI response. The AI may have returned invalid JSON.' });
         }
+
+        if (!response.nodes || !Array.isArray(response.nodes) || response.nodes.length === 0) {
+            console.error('Invalid response structure: no nodes', response);
+            return res.status(500).json({ error: 'Failed to generate concept graph - no nodes returned' });
+        }
+
+        if (!response.edges || !Array.isArray(response.edges)) {
+            console.error('Invalid response structure: no edges', response);
+            // Edges can be empty, but let's log it
+            response.edges = [];
+        }
+
+        if (!response.clusters || !Array.isArray(response.clusters) || response.clusters.length === 0) {
+            // Add default cluster if missing
+            response.clusters = [{
+                name: subjectName,
+                color: subject.rows[0].color || '#6366f1',
+                description: `Topics in ${subjectName}`
+            }];
+        }
+
+        // Ensure title exists
+        if (!response.title) {
+            response.title = `${subjectName} Concept Map`;
+        }
+
+        console.log(`✅ Concept graph validated: ${response.nodes.length} nodes, ${response.edges.length || 0} edges`);
 
         // Save the graph
         const graphResult = await pool.query(`
             INSERT INTO concept_graphs (user_id, subject_id, title, graph_data)
             VALUES ($1, $2, $3, $4)
             RETURNING id
-        `, [userId, subject_id, response.title || `${subjectName} Concept Map`, JSON.stringify(response)]);
+        `, [userId, subject_id, response.title, JSON.stringify(response)]);
+
+        console.log(`✅ Concept graph saved with ID: ${graphResult.rows[0].id}`);
 
         res.json({ success: true, graphId: graphResult.rows[0].id, graph: response });
     } catch (error) {
-        console.error('Concept graph generation error:', error);
-        res.status(500).json({ error: 'Failed to generate concept graph: ' + error.message });
+        console.error('❌ Concept graph generation error:', error.message);
+        console.error('Stack:', error.stack);
+        
+        // Provide specific error messages
+        if (error.message.includes('AI service')) {
+            res.status(500).json({ error: 'AI service is not available. Please check GEMINI_API_KEY.' });
+        } else if (error.message.includes('rate')) {
+            res.status(503).json({ error: 'AI service rate limited. Please try again in a moment.' });
+        } else {
+            res.status(500).json({ error: 'Failed to generate concept graph: ' + error.message });
+        }
     }
 });
 
