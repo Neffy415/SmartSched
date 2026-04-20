@@ -1,6 +1,6 @@
 /**
  * SmartSched AI Service
- * Phase 4: Gemini AI Integration
+ * Phase 4: Gemini AI Integration + Groq Backup
  * 
  * Provides AI-powered features:
  * - Topic explanations
@@ -8,16 +8,32 @@
  * - Practice questions
  * - Material analysis
  * - Topic complexity estimation
+ * 
+ * Primary: Google Gemini
+ * Fallback: Groq API
  */
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 
 class AIService {
     constructor() {
         this.apiKey = process.env.GEMINI_API_KEY;
         this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+        this.geminiFallbackModels = this.parseModelList(
+            process.env.GEMINI_FALLBACK_MODELS || 'gemini-2.5-flash-lite,gemini-2.5-pro'
+        );
         this.genAI = null;
         this.model = null;
+        
+        // Groq backup
+        this.groqApiKey = process.env.GROQ_API_KEY;
+        this.groqClient = null;
+        this.groqModel = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+        this.groqFallbackModels = this.parseModelList(
+            process.env.GROQ_FALLBACK_MODELS || 'llama-3.1-8b-instant'
+        );
+        
         this.maxRetries = 3;
         this.retryDelay = 1000;
         this._configured = false;
@@ -27,6 +43,11 @@ class AIService {
         } else {
             console.warn('⚠️ GEMINI_API_KEY not set. AI features will be disabled.');
         }
+        
+        // Initialize Groq if available
+        if (this.groqApiKey) {
+            this.initializeGroq();
+        }
     }
 
     /**
@@ -35,6 +56,38 @@ class AIService {
     isConfigured() {
         return this._configured && this.model !== null;
     }
+
+    /**
+     * Parse a comma-separated model list into unique, non-empty entries
+     */
+    parseModelList(value) {
+        return [...new Set(String(value || '')
+            .split(',')
+            .map(model => model.trim())
+            .filter(Boolean))];
+    }
+
+    /**
+     * Shared Gemini generation config
+     */
+    getGeminiGenerationConfig() {
+        return {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 8192,
+        };
+    }
+
+    /**
+     * Build a Gemini model instance for a specific model name
+     */
+    createGeminiModel(modelName) {
+        return this.genAI.getGenerativeModel({
+            model: modelName,
+            generationConfig: this.getGeminiGenerationConfig(),
+        });
+    }
     
     /**
      * Initialize Gemini AI client
@@ -42,20 +95,25 @@ class AIService {
     initialize() {
         try {
             this.genAI = new GoogleGenerativeAI(this.apiKey);
-            this.model = this.genAI.getGenerativeModel({ 
-                model: this.modelName,
-                generationConfig: {
-                    temperature: 0.7,
-                    topK: 40,
-                    topP: 0.95,
-                    maxOutputTokens: 8192,
-                }
-            });
+            this.model = this.createGeminiModel(this.modelName);
             this._configured = true;
             console.log(`✅ Gemini AI initialized with model: ${this.modelName}`);
         } catch (error) {
             this._configured = false;
             console.error('❌ Failed to initialize Gemini AI:', error.message);
+        }
+    }
+    
+    /**
+     * Initialize Groq AI client (backup)
+     */
+    initializeGroq() {
+        try {
+            this.groqClient = new Groq({ apiKey: this.groqApiKey });
+            console.log(`✅ Groq AI initialized with model: ${this.groqModel}`);
+        } catch (error) {
+            console.error('❌ Failed to initialize Groq AI:', error.message);
+            this.groqClient = null;
         }
     }
     
@@ -67,28 +125,134 @@ class AIService {
     }
     
     /**
-     * Core method to call Gemini API with retry logic
+     * Core method to call Gemini API with exponential backoff retry logic
      */
-    async callGemini(prompt, retries = this.maxRetries) {
+    async callGemini(prompt, retries = this.maxRetries, currentDelay = this.retryDelay) {
         if (!this.isAvailable()) {
             throw new Error('AI service is not available. Please configure GEMINI_API_KEY.');
         }
         
         try {
-            const result = await this.model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-            
-            // Try to parse as JSON
-            return this.parseJSONResponse(text);
+            return await this.generateWithGeminiModel(this.modelName, prompt);
         } catch (error) {
-            if (retries > 0 && this.isRetryableError(error)) {
-                console.log(`Retrying AI call... (${this.maxRetries - retries + 1}/${this.maxRetries})`);
-                await this.delay(this.retryDelay);
-                return this.callGemini(prompt, retries - 1);
+            if (error.status === 429) {
+                console.warn(`⚠️ Gemini quota/rate limit reached for ${this.modelName}. Trying fallback model(s)...`);
+                return this.tryFallbackModel(prompt, error);
             }
+
+            if (retries > 0 && this.isRetryableError(error)) {
+                const nextDelay = currentDelay * 1.5 + Math.random() * 1000; // exponential backoff with jitter
+                console.log(`⏳ Retrying AI call with ${this.modelName} in ${Math.round(nextDelay)}ms (${this.maxRetries - retries + 1}/${this.maxRetries})`);
+                await this.delay(nextDelay);
+                return this.callGemini(prompt, retries - 1, nextDelay);
+            }
+            
+            // If max retries exceeded, try fallback model
+            if (retries === 0 && this.isRetryableError(error)) {
+                return this.tryFallbackModel(prompt, error);
+            }
+            
             throw error;
         }
+    }
+    
+    /**
+     * Try fallback model when primary model fails
+     */
+    async tryFallbackModel(prompt, originalError) {
+        // Try fallback for quota, rate limit, and transient upstream failures
+        const shouldTryFallback = this.isRetryableError(originalError);
+        
+        if (!shouldTryFallback) {
+            console.error('❌ Non-retryable error, skipping fallback:', originalError.message);
+            throw new Error(`AI service failed: ${originalError.message}`);
+        }
+        
+        // First try Gemini fallback models
+        const fallbackModels = this.geminiFallbackModels;
+        
+        for (const fallbackModel of fallbackModels) {
+            try {
+                console.warn(`⚠️ Model ${this.modelName} temporarily unavailable. Trying fallback: ${fallbackModel}...`);
+                const text = await this.generateWithGeminiModel(fallbackModel, prompt);
+                
+                console.log(`✅ Successfully switched to fallback model: ${fallbackModel}`);
+                return text;
+            } catch (fallbackError) {
+                console.error(`❌ Fallback model ${fallbackModel} also failed:`, fallbackError.message);
+                continue;
+            }
+        }
+        
+        // If Gemini models all fail, try Groq as last resort
+        if (this.groqClient) {
+            try {
+                console.warn(`⚠️ All Gemini models failed. Trying Groq (${this.groqModel}) as backup...`);
+                return await this.callGroq(prompt);
+            } catch (groqError) {
+                console.error(`❌ Groq backup also failed:`, groqError.message);
+            }
+        }
+        
+        // All models failed
+        console.error('❌ All models exhausted. Google API and Groq temporarily unavailable.');
+        throw new Error(`All AI services temporarily unavailable. Please try again in a few minutes.`);
+    }
+    
+    /**
+     * Call Groq API as backup
+     */
+    async callGroq(prompt) {
+        if (!this.groqClient) {
+            throw new Error('Groq client not initialized. GROQ_API_KEY not set.');
+        }
+        
+        try {
+            const modelsToTry = [...new Set([this.groqModel, ...this.groqFallbackModels].filter(Boolean))];
+            let lastError = null;
+
+            for (const groqModel of modelsToTry) {
+                try {
+                    const response = await this.groqClient.chat.completions.create({
+                        messages: [
+                            {
+                                role: 'user',
+                                content: prompt
+                            }
+                        ],
+                        model: groqModel,
+                        temperature: 0.7,
+                        max_tokens: 8192,
+                    });
+
+                    const text = response.choices[0].message.content;
+                    console.log(`✅ Successfully got response from Groq (${groqModel})`);
+                    return this.parseJSONResponse(text);
+                } catch (error) {
+                    lastError = error;
+                    console.error(`❌ Groq model ${groqModel} failed:`, error.message);
+                }
+            }
+
+            throw lastError || new Error('Groq request failed');
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * Generate and parse JSON using a specific Gemini model
+     */
+    async generateWithGeminiModel(modelName, prompt) {
+        const model = (modelName === this.modelName && this.model)
+            ? this.model
+            : this.createGeminiModel(modelName);
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        return this.parseJSONResponse(text);
     }
     
     /**
@@ -143,10 +307,17 @@ class AIService {
      * Check if error is retryable
      */
     isRetryableError(error) {
+        // Check for retryable status codes and messages
         const retryableCodes = ['RATE_LIMIT_EXCEEDED', 'INTERNAL', 'UNAVAILABLE'];
-        return retryableCodes.some(code => 
+        const retryableStatuses = [429, 500, 502, 503, 504]; // Too Many Requests, Internal Server Error, Bad Gateway, Service Unavailable, Gateway Timeout
+        
+        const isRetryableCode = retryableCodes.some(code => 
             error.message?.includes(code) || error.code === code
         );
+        
+        const isRetryableStatus = retryableStatuses.includes(error.status);
+        
+        return isRetryableCode || isRetryableStatus;
     }
     
     /**
