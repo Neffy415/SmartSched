@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <%- include('../partials/theme-init') %>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -273,6 +274,14 @@
                 el.style.display = allOpen ? 'block' : 'none';
             });
         }
+
+        // Process markdown in review questions
+        document.querySelectorAll('.review-q-text').forEach(el => {
+            if (typeof marked !== 'undefined') {
+                el.innerHTML = marked.parse(el.textContent);
+                el.querySelectorAll('table').forEach(t => t.classList.add('exam-table'));
+            }
+        });
     </script>
 
     <style>
@@ -357,6 +366,17 @@
         .review-arrow { width: 16px; height: 16px; color: var(--gray-400); transition: transform 0.2s; }
         .review-q-body { padding: 0 1.25rem 1.25rem; }
         .review-q-text { font-size: 0.95rem; color: var(--gray-900); line-height: 1.6; margin-bottom: var(--spacing-md); font-weight: 500; }
+        .review-q-text p { margin: 0 0 0.5rem 0; }
+        .review-q-text:last-child p { margin-bottom: 0; }
+        .exam-table {
+            width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem;
+        }
+        .exam-table th, .exam-table td {
+            border: 1px solid var(--gray-200); padding: 0.5rem 0.75rem; text-align: left;
+        }
+        .exam-table th { background: var(--gray-50); font-weight: 600; }
+        [data-theme="dark"] .exam-table th { background: #334155; color: #f3f4f6; border-color: #475569; }
+        [data-theme="dark"] .exam-table td { border-color: #334155; color: #d1d5db; }
 
         .review-options { display: flex; flex-direction: column; gap: 0.4rem; }
         .review-option { display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 0.85rem; border-radius: var(--radius-md); border: 1px solid var(--gray-200); font-size: 0.875rem; }

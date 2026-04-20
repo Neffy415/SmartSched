@@ -137,6 +137,22 @@
             font-weight: 500;
             line-height: 1.5;
         }
+        .md-content p { margin: 0 0 0.5rem 0; }
+        .md-content:last-child p { margin-bottom: 0; }
+        .quiz-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: var(--spacing-md) 0;
+            font-size: 0.9375rem;
+        }
+        .quiz-table th, .quiz-table td {
+            border: 1px solid var(--gray-200);
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+        }
+        .quiz-table th { background: var(--gray-50); font-weight: 600; }
+        [data-theme="dark"] .quiz-table th { background: #334155; color: #f3f4f6; border-color: #475569; }
+        [data-theme="dark"] .quiz-table td { border-color: #334155; color: #d1d5db; }
 
         .answer-comparison {
             display: grid;
@@ -290,7 +306,7 @@
                                 <% } %>
                             </div>
                             <div class="question-result-text">
-                                <strong>Q<%= index + 1 %>:</strong> <%= q.question_text %>
+                                <strong>Q<%= index + 1 %>:</strong> <span class="md-content"><%= q.question_text %></span>
                             </div>
                         </div>
 
@@ -312,7 +328,7 @@
                         <% if (q.explanation) { %>
                         <div class="explanation-box">
                             <div class="explanation-box-label">Explanation</div>
-                            <%= q.explanation %>
+                            <div class="md-content"><%= q.explanation %></div>
                         </div>
                         <% } %>
                     </div>
@@ -322,8 +338,16 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         lucide.createIcons();
+
+        document.querySelectorAll('.md-content').forEach(function(el) {
+            if (typeof marked !== 'undefined') {
+                el.innerHTML = marked.parse(el.textContent);
+                el.querySelectorAll('table').forEach(t => t.classList.add('quiz-table'));
+            }
+        });
     </script>
 </body>
 </html>

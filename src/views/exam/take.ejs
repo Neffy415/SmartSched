@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <%- include('../partials/theme-init') %>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/dashboard.css">
@@ -217,6 +218,14 @@
         }, { threshold: 0.5 });
 
         document.querySelectorAll('.exam-question').forEach(q => observer.observe(q));
+
+        // Markdown parsing for question text
+        document.querySelectorAll('.exam-q-text').forEach(el => {
+            if (typeof marked !== 'undefined') {
+                el.innerHTML = marked.parse(el.textContent);
+                el.querySelectorAll('table').forEach(t => t.classList.add('exam-table'));
+            }
+        });
     </script>
 
     <style>
@@ -304,6 +313,17 @@
             font-size: 1rem; font-weight: 500; color: var(--gray-900);
             line-height: 1.6; margin-bottom: var(--spacing-md);
         }
+        .exam-q-text p { margin: 0 0 0.5rem 0; }
+        .exam-q-text:last-child p { margin-bottom: 0; }
+        .exam-table {
+            width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem;
+        }
+        .exam-table th, .exam-table td {
+            border: 1px solid var(--gray-200); padding: 0.5rem 0.75rem; text-align: left;
+        }
+        .exam-table th { background: var(--gray-50); font-weight: 600; }
+        [data-theme="dark"] .exam-table th { background: #334155; color: #f3f4f6; border-color: #475569; }
+        [data-theme="dark"] .exam-table td { border-color: #334155; color: #d1d5db; }
 
         /* Options */
         .exam-q-options { display: flex; flex-direction: column; gap: 0.5rem; }

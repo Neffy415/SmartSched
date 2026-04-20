@@ -303,46 +303,16 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         lucide.createIcons();
 
-        // Convert any markdown tables in question text to HTML tables
+        // Convert any markdown (including tables) in question text to HTML
         document.querySelectorAll('.question-text').forEach(function(el) {
-            var text = el.textContent;
-            if (text.indexOf('|') !== -1) {
-                var lines = text.split('\n').filter(function(l) { return l.trim().length > 0; });
-                var tableLines = [];
-                var beforeTable = [];
-                var afterTable = [];
-                var inTable = false;
-                lines.forEach(function(line) {
-                    if (line.trim().match(/^\|.*\|$/)) {
-                        inTable = true;
-                        if (!line.trim().match(/^\|[\s\-:|]+\|$/)) {
-                            tableLines.push(line);
-                        }
-                    } else {
-                        if (inTable) afterTable.push(line);
-                        else beforeTable.push(line);
-                    }
-                });
-                if (tableLines.length > 0) {
-                    var html = beforeTable.map(function(l) { return '<p>' + l.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>'; }).join('');
-                    html += '<table class="quiz-table"><thead><tr>';
-                    var headerCells = tableLines[0].split('|').filter(function(c) { return c.trim(); });
-                    headerCells.forEach(function(c) { html += '<th>' + c.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</th>'; });
-                    html += '</tr></thead><tbody>';
-                    for (var i = 1; i < tableLines.length; i++) {
-                        html += '<tr>';
-                        tableLines[i].split('|').filter(function(c) { return c.trim(); }).forEach(function(c) {
-                            html += '<td>' + c.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</td>';
-                        });
-                        html += '</tr>';
-                    }
-                    html += '</tbody></table>';
-                    html += afterTable.map(function(l) { return '<p>' + l.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</p>'; }).join('');
-                    el.innerHTML = html;
-                }
+            if (typeof marked !== 'undefined') {
+                el.innerHTML = marked.parse(el.textContent);
+                // Add default styling to tables
+                el.querySelectorAll('table').forEach(t => t.classList.add('quiz-table'));
             }
         });
 
