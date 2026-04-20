@@ -784,7 +784,7 @@ Provide a clear, helpful, and educational answer. Use simple language. If the qu
 
 Keep your answer focused and under 800 words.`;
 
-        const result = await aiService.callGemini(prompt);
+        const result = await aiService.callGemini(prompt, { requireJson: false });
         const responseText = result.raw_response || (typeof result === 'string' ? result : JSON.stringify(result));
 
         await db.query(`

@@ -12,7 +12,10 @@ const rateLimit = require('express-rate-limit');
 // Rate limiting for AI endpoints (prevent abuse)
 const aiLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
-    max: 10, // 10 requests per minute
+    max: parseInt(process.env.AI_ROUTE_RATE_LIMIT_PER_MIN || '30', 10),
+    keyGenerator: (req) => req.session?.user?.id || req.ip,
+    standardHeaders: true,
+    legacyHeaders: false,
     message: { error: 'Too many AI requests. Please wait a moment before trying again.' }
 });
 
