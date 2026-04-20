@@ -16,7 +16,7 @@ class AIService {
     constructor() {
         this.apiKey = process.env.GEMINI_API_KEY;
         this.modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-        this.modelFallbacks = (process.env.GEMINI_FALLBACK_MODELS || 'gemini-1.5-flash,gemini-1.5-flash-8b')
+        this.modelFallbacks = (process.env.GEMINI_FALLBACK_MODELS || 'gemini-2.5-flash-lite,gemini-2.5-pro')
             .split(',')
             .map(m => m.trim())
             .filter(m => m && m !== this.modelName);
